@@ -335,11 +335,16 @@ class RadioBrowser(
 class Podcasts(
     private val searchBase: String = "https://itunes.apple.com",
     private val client: OkHttpClient = GeminiProvider.defaultClient(),
+    /** Annuaire libre gpodder.net : Apple ne donne plus l'adresse des flux de Radio France (Affaires sensibles…). */
+    private val fallbackBase: String = "https://gpodder.net",
 ) : fr.assistantvocal.core.media.PodcastDirectory {
     override suspend fun search(term: String): List<fr.assistantvocal.core.media.PodcastShow> {
         val url = "${searchBase.trimEnd('/')}/search".toHttpUrl().newBuilder().addQueryParameter("term", term)
             .addQueryParameter("media", "podcast").addQueryParameter("country", "fr").addQueryParameter("limit", "5").build()
-        return parseSearch(client.fetch(Request.Builder().url(url).build()))
+        val apple = parseSearch(client.fetch(Request.Builder().url(url).build()))
+        if (apple.isNotEmpty()) return apple
+        val g = "${fallbackBase.trimEnd('/')}/search.json".toHttpUrl().newBuilder().addQueryParameter("q", term).build()
+        return parseGpodder(client.fetch(Request.Builder().url(g).build()))
     }
 
     override suspend fun episodes(feedUrl: String): List<fr.assistantvocal.core.media.Episode> =
@@ -351,6 +356,13 @@ class Podcasts(
                 val o = e.jsonObject
                 fr.assistantvocal.core.media.PodcastShow(o.str("collectionName") ?: return@mapNotNull null, o.str("artistName"), o.str("feedUrl") ?: return@mapNotNull null)
             }
+
+        fun parseGpodder(body: String?): List<fr.assistantvocal.core.media.PodcastShow> =
+            ((parseJson(body) as? JsonArray).orEmpty()).mapNotNull { e ->
+                val o = e as? JsonObject ?: return@mapNotNull null
+                val feed = o.str("url")?.replaceFirst("http://", "https://") ?: return@mapNotNull null
+                fr.assistantvocal.core.media.PodcastShow(o.str("title") ?: return@mapNotNull null, o.str("author"), feed)
+            }.distinctBy { it.feedUrl }.take(5)
 
         /** « 01:02:03 », « 45:10 » ou « 3600 » (secondes). */
         fun durationMs(v: String?): Long? {

@@ -183,4 +183,24 @@ class MediaServicesTest {
         assertEquals(2, Podcasts().episodes(server.url("/feed.xml").toString()).size)
         server.shutdown()
     }
+
+    @Test fun `podcast Radio France sans flux chez Apple, trouve via gpodder`() = kotlinx.coroutines.runBlocking {
+        val server = MockWebServer().apply {
+            dispatcher = object : okhttp3.mockwebserver.Dispatcher() {
+                override fun dispatch(request: okhttp3.mockwebserver.RecordedRequest) = when {
+                    request.path!!.startsWith("/search.json") -> MockResponse().setBody(
+                        """[{"title":"Affaires sensibles","author":"France Inter","url":"https://radiofrance-podcast.net/podcast09/rss_13940.xml"}]""")
+                    request.path!!.startsWith("/search") -> MockResponse().setBody(
+                        """{"resultCount":1,"results":[{"collectionName":"Affaires sensibles","artistName":"France Inter"}]}""")
+                    else -> MockResponse().setResponseCode(404)
+                }
+            }
+            start()
+        }
+        val base = server.url("/").toString()
+        val shows = Podcasts(searchBase = base, fallbackBase = base).search("affaires sensibles")
+        assertEquals("https://radiofrance-podcast.net/podcast09/rss_13940.xml", shows.single().feedUrl)
+        assertEquals("Affaires sensibles", shows.single().title)
+        server.shutdown()
+    }
 }
