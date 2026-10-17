@@ -68,7 +68,19 @@ class AssistantScenarioTest {
         val a = assistant()
         a.handle("Quelle heure est-il ?")
         assertEquals("Je ne vous avais rien demandé. Que voulez-vous faire ?", a.handle("oui").speech)
+        a.handle("Quelle heure est-il ?")
         assertEquals("Je ne vous avais rien demandé. Que voulez-vous faire ?", a.handle("non").speech)
+        assertTrue(llm.requests.isEmpty())
+    }
+
+    @Test fun `non apres une question de l'assistant lui-meme`() = runTest {
+        val a = assistant()
+        // Une réponse locale qui se termine par une question : « non » y répond, ce n'est pas un « oui » isolé.
+        val q = a.handle("qui es-tu ?").speech
+        assertTrue(q, q.endsWith("?"))
+        assertEquals("D'accord.", a.handle("non").speech)
+        a.handle("qui es-tu ?")
+        assertEquals("Je vous écoute.", a.handle("oui").speech)
         assertTrue(llm.requests.isEmpty())
     }
 

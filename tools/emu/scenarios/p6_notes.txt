@@ -1,0 +1,9 @@
+15|enregistre un mémo
+8|écoute mes mémos
+6|note que le code du portail est 1 2 3 4
+6|lis mes notes
+6|ajoute du pain et du lait à la liste
+6|il faut acheter des œufs
+6|lis ma liste
+6|enlève le pain de la liste
+6|lis ma liste

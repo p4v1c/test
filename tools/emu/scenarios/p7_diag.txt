@@ -1,0 +1,3 @@
+40|est-ce que tout marche ?
+12|sauvegarde mes réglages
+8|signale un problème

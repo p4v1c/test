@@ -1,0 +1,11 @@
+15|mets France Inter
+10|pause
+15|mets RTL
+12|radio suivante
+8|pause
+20|abonne-moi au podcast Affaires sensibles
+8|oui
+20|écoute le podcast Affaires sensibles
+8|pause
+15|mets de la musique
+8|pause

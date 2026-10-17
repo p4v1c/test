@@ -1,0 +1,4 @@
+12|reprends mon livre
+12|rappelle-moi de prendre mon médicament à 8 heures
+15|au secours
+15|qu'est-ce que tu sais faire ?

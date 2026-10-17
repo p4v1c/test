@@ -1,0 +1,9 @@
+12|envoie ma position à Paul Martin
+8|oui
+12|quel temps fait-il ?
+12|va-t-il pleuvoir demain ?
+15|météo à Lyon
+15|les infos
+10|la suite
+15|lis le deuxième
+25|cherche sur internet les horaires de la mairie de Valence

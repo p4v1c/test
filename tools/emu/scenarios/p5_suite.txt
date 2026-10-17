@@ -1,0 +1,4 @@
+12|à quelle distance est la maison ?
+10|où est la maison ?
+20|où est la pharmacie la plus proche ?
+8|oui

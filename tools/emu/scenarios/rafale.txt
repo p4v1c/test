@@ -1,0 +1,40 @@
+4|quelle heure est-il ?
+4|quel jour sommes-nous ?
+4|combien de batterie ?
+4|répète
+4|combien font 7 fois 8
+4|racine carrée de 81
+4|100 euros en francs
+4|quels sont mes rappels ?
+4|lis ma liste
+4|lis mes notes
+4|qui m'a appelé ?
+4|lis mon dernier message
+4|où suis-je ?
+4|à quelle distance est la maison ?
+4|quel temps fait-il ?
+4|stop
+4|qui es-tu ?
+4|parle plus vite
+4|parle moins vite
+4|sois plus bref
+4|donne plus de détails
+4|aide pour les livres
+4|aide pour les appels
+4|qu'est-ce que tu sais faire ?
+4|mes podcasts
+4|mes radios
+4|combien de temps reste-t-il ?
+4|ai-je pris mon Doliprane ?
+4|quels sont mes lieux ?
+4|est-ce que j'ai internet ?
+4|bonjour
+4|merci
+4|annule
+4|oui
+4|non
+4|blablabla
+4|appelle Jean-Michel Inconnu
+4|non
+4|quelle heure est-il ?
+4|c'est quoi la capitale de l'Australie ?

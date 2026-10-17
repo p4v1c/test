@@ -129,12 +129,16 @@ class Assistant(
 
     /** Vrai si la dernière réponse venait de l'IA et finissait par une question : un « oui » seul lui revient. */
     private var llmAskedQuestion = false
+    /** Vrai si la dernière réponse, locale, finissait par une question (« Pouvez-vous redire le nom ? »). */
+    private var localAskedQuestion = false
     private var answeredByLlm = false
 
     private suspend fun process(text: String, image: ByteArray?, quality: Quality): AssistantReply {
         answeredByLlm = false
         val reply = processInner(text, image, quality)
-        llmAskedQuestion = answeredByLlm && reply.speech.trimEnd().endsWith("?")
+        val asked = reply.speech.trimEnd().endsWith("?")
+        llmAskedQuestion = answeredByLlm && asked
+        localAskedQuestion = !answeredByLlm && asked
         return reply
     }
 
@@ -171,9 +175,13 @@ class Assistant(
         if (match != null && match.confidence >= 0.8) return remember(text, handleIntent(match.intent))
 
         // 2 bis. « Oui » ou « non » tout seul, sans question posée : ne pas laisser l'IA l'interpréter (elle inventait une action).
-        if (image == null && !llmAskedQuestion && text.split(' ').size <= 3 &&
-            fr.assistantvocal.core.dialog.YesNoParser.parse(text) != fr.assistantvocal.core.dialog.YesNo.UNKNOWN) {
-            return AssistantReply("Je ne vous avais rien demandé. Que voulez-vous faire ?", Earcon.CONFIRM, listenAgain = true)
+        val yesNo = if (image == null && text.split(' ').size <= 3) fr.assistantvocal.core.dialog.YesNoParser.parse(text) else null
+        if (yesNo != null && yesNo != fr.assistantvocal.core.dialog.YesNo.UNKNOWN && !llmAskedQuestion) {
+            return when {
+                !localAskedQuestion -> AssistantReply("Je ne vous avais rien demandé. Que voulez-vous faire ?", Earcon.CONFIRM, listenAgain = true)
+                yesNo == fr.assistantvocal.core.dialog.YesNo.NO -> AssistantReply("D'accord.", Earcon.CANCELLED)
+                else -> AssistantReply("Je vous écoute.", Earcon.CONFIRM, listenAgain = true)
+            }
         }
 
         // 3. IA si possible.
