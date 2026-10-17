@@ -252,7 +252,7 @@ class AssistantService : Service() {
         }
         interrupt()
         session = scope.launch {
-            try { block() } finally { abandonFocus(); speakingNow = false; if (isActive) startWake() else restartWakeSoon() }
+            try { block() } finally { abandonFocus(); speakingNow = false; if (isActive) startWake() else restartWakeSoon(); flushDeferredSoon() }
         }
     }
 
@@ -452,6 +452,7 @@ class AssistantService : Service() {
                 ringing = false
                 announcedNumber = null
                 restartWakeSoon()
+                flushDeferredSoon()
             }
         }
     }
@@ -460,9 +461,23 @@ class AssistantService : Service() {
 
     private fun busy() = session?.isActive == true || graph.phone.actions.state() != CallState.IDLE
 
+    /** Annonces arrivées pendant un échange ou un appel : dites dès que l'assistant est libre, au lieu d'être perdues. */
+    private val deferred = ArrayDeque<() -> Unit>()
+
+    private fun deferIfBusy(action: () -> Unit): Boolean {
+        if (!busy()) return false
+        if (deferred.size < MAX_DEFERRED) deferred.addLast(action)
+        return true
+    }
+
+    private fun flushDeferredSoon() {
+        if (deferred.isEmpty()) return
+        scope.launch { delay(500); if (!busy()) deferred.removeFirstOrNull()?.invoke() }
+    }
+
     private fun onSms(number: String, body: String, time: Long) {
         val mode = graph.settings.smsAnnounce
-        if (mode == "off" || busy()) return
+        if (mode == "off" || deferIfBusy { onSms(number, body, time) }) return
         val msg = fr.assistantvocal.core.phone.SmsMessage(0, number, null, body,
             java.time.Instant.ofEpochMilli(time).atZone(java.time.ZoneId.systemDefault()))
         runSession {
@@ -473,7 +488,7 @@ class AssistantService : Service() {
     }
 
     private fun announceIfIdle(text: String) {
-        if (busy()) return
+        if (deferIfBusy { announceIfIdle(text) }) return
         runSession { applyVoiceSettings(); sounds.play(Earcon.CONFIRM); speak(fr.assistantvocal.core.assistant.FrenchSpeech.clean(text)) }
     }
 
@@ -651,6 +666,7 @@ class AssistantService : Service() {
         const val ACTION_REMINDER_FIRE = "fr.assistantvocal.REMINDER_FIRE"
         const val ACTION_SOS = "fr.assistantvocal.SOS"
         private const val OWN_NAME_ECHO_MS = 1_500L
+        private const val MAX_DEFERRED = 5
         const val ACTION_POWER_OFF = "fr.assistantvocal.POWER_OFF"
         const val ACTION_POWER_ON = "fr.assistantvocal.POWER_ON"
         const val ACTION_CALL_STATE = "fr.assistantvocal.CALL_STATE"

@@ -273,6 +273,32 @@ class Phase3ServiceTest {
         assertTrue(phone.scheduled.containsKey(id))
     }
 
+    @Test fun `une alerte ou un SMS arrives pendant un echange sont dits apres, pas perdus`() {
+        val out = FakeOutput()
+        // Il est en train de dicter : l'écoute ne rend la main que quand on le décide.
+        val heard = kotlinx.coroutines.CompletableDeferred<Heard>()
+        val slowInput = object : fr.assistantvocal.app.audio.SpeechInput {
+            override suspend fun listen(preferOffline: Boolean): Heard = if (!heard.isCompleted) heard.await() else Heard.Nothing
+            override fun cancel() {}
+        }
+        testGraph(app, slowInput, out)
+        val service = Robolectric.buildService(AssistantService::class.java).create()
+        service.withIntent(AssistantService.intent(app, AssistantService.ACTION_LISTEN)).startCommand(0, 1)
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+        // Pendant l'échange : batterie faible, puis un SMS.
+        service.withIntent(AssistantService.intent(app, AssistantService.ACTION_ANNOUNCE)
+            .putExtra(AssistantService.EXTRA_TEXT, "Batterie faible : 19 pour cent.")).startCommand(0, 2)
+        service.withIntent(AssistantService.intent(app, AssistantService.ACTION_SMS_RECEIVED)
+            .putExtra(AssistantService.EXTRA_NUMBER, "0612345678").putExtra(AssistantService.EXTRA_TEXT, "Coucou")).startCommand(0, 3)
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+        assertTrue("rien n'interrompt l'échange", out.spoken.isEmpty())
+        heard.complete(Heard.Text("quelle heure est-il ?"))
+        awaitMain { out.spoken.any { it.startsWith("Batterie faible") } && out.spoken.any { it.startsWith("Nouveau message de Paul Martin") } }
+        assertEquals("Il est 14 heures 30.", out.spoken.first())
+        assertTrue(out.spoken.toString(), out.spoken.any { it.startsWith("Batterie faible") })
+        assertTrue(out.spoken.toString(), out.spoken.any { it.startsWith("Nouveau message de Paul Martin") })
+    }
+
     @Test fun `SMS recu annonce`() {
         val out = FakeOutput()
         testGraph(app, output = out)
