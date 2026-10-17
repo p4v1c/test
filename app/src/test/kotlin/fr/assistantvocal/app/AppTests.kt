@@ -209,6 +209,41 @@ class Phase3ServiceTest {
         assertTrue(phone.sent.isEmpty() && phone.calls.isEmpty())
     }
 
+    @Test fun `un rappel qui sonne pendant le compte a rebours du SOS ne l'annule pas, il sonne apres`() {
+        val out = FakeOutput(); val phone = AppFakePhone()
+        val graph = testGraph(app, FakeInput(Heard.Text("rappelle-moi de prendre mon Doliprane tous les jours à 8 heures")), out, phone = phone)
+        graph.people.emergencyContacts = listOf(fr.assistantvocal.core.phone.EmergencyContact("Marie", "0611223344"))
+        graph.settings.ownerName = "Jean"
+        // Une seule instance du service, comme sur le téléphone.
+        val service = Robolectric.buildService(AssistantService::class.java, AssistantService.intent(app, AssistantService.ACTION_LISTEN)).create().startCommand(0, 1)
+        awaitMain { phone.scheduled.isNotEmpty() && out.spoken.isNotEmpty() }
+        val id = phone.scheduled.keys.single()
+        out.spoken.clear()
+
+        service.withIntent(AssistantService.intent(app, AssistantService.ACTION_SOS)).startCommand(0, 2)
+        awaitMain { out.spoken.any { it.startsWith("Alerte de secours") } }
+        service.withIntent(AssistantService.intent(app, AssistantService.ACTION_REMINDER_FIRE)
+            .putExtra(fr.assistantvocal.app.phone.ReminderReceiver.EXTRA_ID, id)).startCommand(0, 3)
+
+        awaitMain(8_000) { phone.calls.isNotEmpty() && out.spoken.any { it.startsWith("C'est l'heure de prendre") } }
+        assertTrue(phone.sent.single().second.startsWith("ALERTE : Jean a demandé de l'aide"))
+        assertEquals("0611223344", phone.calls.single())
+        // Le rappel passe après l'alerte, pas pendant.
+        assertTrue(out.spoken.indexOfFirst { it.startsWith("C'est l'heure") } > out.spoken.indexOfFirst { it.startsWith("Message d'alerte envoyé") })
+    }
+
+    @Test fun `au secours a la voix, un bouton volume pendant le compte a rebours n'annule pas l'alerte`() {
+        val out = FakeOutput(); val phone = AppFakePhone()
+        val graph = testGraph(app, FakeInput(Heard.Text("au secours")), out, phone = phone)
+        graph.people.emergencyContacts = listOf(fr.assistantvocal.core.phone.EmergencyContact("Marie", "0611223344"))
+        val service = Robolectric.buildService(AssistantService::class.java, AssistantService.intent(app, AssistantService.ACTION_LISTEN)).create().startCommand(0, 1)
+        awaitMain { out.spoken.any { it.startsWith("Alerte de secours") } }
+        service.withIntent(AssistantService.intent(app, AssistantService.ACTION_STOP_SPEAKING)).startCommand(0, 2)
+        awaitMain(8_000) { phone.calls.isNotEmpty() }
+        assertEquals(1, phone.sent.size)
+        assertEquals("0611223344", phone.calls.single())
+    }
+
     @Test fun `SMS recu annonce`() {
         val out = FakeOutput()
         testGraph(app, output = out)

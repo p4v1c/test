@@ -94,7 +94,7 @@ class AssistantService : Service() {
             ACTION_TUTORIAL -> startConversation(firstText = "tutoriel")
             // Tests sur émulateur (versions de debug uniquement) : la phrase est traitée comme si elle avait été entendue.
             ACTION_DEBUG_HEAR -> if (isDebuggable()) intent.getStringExtra(EXTRA_TEXT)?.let { startConversation(firstText = it) }
-            ACTION_STOP_SPEAKING -> { interrupt(); restartWakeSoon() }
+            ACTION_STOP_SPEAKING -> if (!sosRunning) { interrupt(); restartWakeSoon() }
             ACTION_SHUTDOWN -> { interrupt(); wake.stop(); stopSelf() }
             ACTION_SAY -> intent.getStringExtra(EXTRA_TEXT)?.let { say(it) }
             ACTION_CALIBRATE -> runSession { calibrateName() }
@@ -109,7 +109,10 @@ class AssistantService : Service() {
                     id >= 0 -> runSession { fireReminder(id) }
                 }
             }
-            ACTION_SOS -> runSession { sos() }
+            ACTION_SOS -> if (!sosRunning) {
+                runSession { sos() } // passe devant tout ce qui est en cours
+                sosRunning = true // dès maintenant : une demande arrivée juste après attend la fin de l'alerte
+            }
             ACTION_CALL_STATE -> onCallState(intent.getStringExtra(EXTRA_STATE), intent.getStringExtra(EXTRA_NUMBER))
             ACTION_SMS_RECEIVED -> onSms(intent.getStringExtra(EXTRA_NUMBER).orEmpty(), intent.getStringExtra(EXTRA_TEXT).orEmpty(),
                 intent.getLongExtra(EXTRA_TIME, System.currentTimeMillis()))
@@ -209,7 +212,16 @@ class AssistantService : Service() {
         abandonFocus()
     }
 
+    /** Vrai pendant une alerte de secours : seul « stop » dit pendant le compte à rebours peut l'annuler. */
+    @Volatile private var sosRunning = false
+
     private fun runSession(block: suspend () -> Unit) {
+        val current = session
+        if (sosRunning && current?.isActive == true) {
+            // Rappel, appel entrant, bouton Parler… pendant un SOS : ça passe après l'alerte, sans l'interrompre.
+            scope.launch { current.join(); runSession(block) }
+            return
+        }
         interrupt()
         session = scope.launch {
             try { block() } finally { abandonFocus(); speakingNow = false; if (isActive) startWake() else restartWakeSoon() }
@@ -440,6 +452,11 @@ class AssistantService : Service() {
     // ------------------------------------------------------------------ sécurité
 
     private suspend fun sos() {
+        sosRunning = true
+        try { sosFlow() } finally { sosRunning = false }
+    }
+
+    private suspend fun sosFlow() {
         wake.stop()
         applyVoiceSettings()
         val ui = object : SosUi {
