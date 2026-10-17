@@ -37,6 +37,7 @@ class MemoryTest {
         val system = llm.requests.single().system
         assertTrue(system, system.contains("Tu parles à Jean."))
         assertTrue(system, system.contains("j'aime le jazz"))
+        assertTrue(system, system.contains("Vouvoie toujours la personne")) // sur émulateur, Gemini s'était mis à tutoyer
     }
 
     @Test fun `oublier une information ou tout, avec confirmation`() = runTest {

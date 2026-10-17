@@ -16,6 +16,7 @@ object Prompts {
         append(BASE.replace("[NOM]", name))
         val who = owner?.trim()?.takeIf { it.isNotEmpty() && it != "Votre proche" }
         if (who != null) append(" Tu parles à $who.")
+        append(" Vouvoie toujours la personne, même si tu connais son prénom.")
         if (memory.isNotEmpty()) {
             append(" Voici ce que ${who ?: "la personne"} t'a demandé de retenir (c'est elle qui parle, à la première personne) : ")
             append(memory.joinToString(" ; ") { "« $it »" })
