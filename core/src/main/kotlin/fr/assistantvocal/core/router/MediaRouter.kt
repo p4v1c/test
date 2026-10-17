@@ -127,7 +127,7 @@ class MediaRouter {
     private val readList = r("^(?:lis|relis|quelle est|qu y a t il sur|qu est ce qu il y a sur|dis moi|donne moi)(?: moi)? (?:la|ma) liste(?: de courses| des courses| de commissions)?$|^(?:ma liste de courses|la liste de courses|ma liste)$")
     private val removeList = r("^(?:enleve|retire|supprime|barre|efface|raye) (.+?) (?:de|sur|dans) (?:la|ma) liste(?: de courses| des courses)?$")
     private val clearList = r("^(?:vide|efface|supprime|remets a zero) (?:la|ma|toute la) liste(?: de courses| des courses)?$")
-    private val addNote = r("^(?:note|notes|prends note|ecris|retiens|souviens toi|n oublie pas)(?: bien)? (?:que|qu) (.+)$|^(?:note|prends note de) (.+)$")
+    private val addNote = r("^(?:note|notes|prends note|ecris)(?: bien)? (?:que|qu) (.+)$|^(?:note|prends note de) (.+)$")
     private val readNotes = r("^(?:lis|relis|quelles sont|dis moi)(?: moi)? (?:mes|les) notes(?: ecrites)?$|^mes notes$")
     private val deleteNote = r("^(?:supprime|efface) (?:la )?note (?:numero )?(\\d+)$|^(?:supprime|efface) (?:toutes )?(?:mes|les) notes$")
 

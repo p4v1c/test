@@ -71,6 +71,21 @@ class AssistantSettings(private val store: KeyValueStore) {
         get() = store.getBoolean(K_ENABLED, true)
         set(value) = store.putBoolean(K_ENABLED, value)
 
+    /**
+     * Mémoire de l'assistant (comme un « gemini.md ») : ce que la personne lui a demandé de retenir, une information
+     * par ligne. Donnée à l'IA avec chaque question ; un proche peut la lire et la corriger dans les réglages.
+     */
+    var memoryText: String
+        get() = store.getString(K_MEMORY).orEmpty()
+        set(value) = store.putString(K_MEMORY, value.lines().map { it.trim().take(MEMORY_LINE_MAX) }.filter { it.isNotEmpty() }
+            .takeLast(MEMORY_MAX).joinToString("\n"))
+
+    val memoryFacts: List<String> get() = memoryText.lines().filter { it.isNotBlank() }
+
+    fun remember(fact: String) { memoryText = (memoryFacts.filterNot { it.equals(fact.trim(), ignoreCase = true) } + fact.trim()).joinToString("\n") }
+
+    fun forgetFact(fact: String) { memoryText = memoryFacts.filterNot { it == fact }.joinToString("\n") }
+
     /** Écoute du nom en permanence (mot d'activation). */
     var wakeWordEnabled: Boolean
         get() = store.getBoolean(K_WAKE_ENABLED, true)
@@ -205,6 +220,9 @@ class AssistantSettings(private val store: KeyValueStore) {
         private const val K_SPEAKER = "calls.speakerOnAnswer"
         private const val K_VOLUME_KEY = "trigger.volumeKey"
         private const val K_ENABLED = "assistant.enabled"
+        private const val K_MEMORY = "memory.facts"
+        const val MEMORY_MAX = 60
+        const val MEMORY_LINE_MAX = 200
         private const val K_NEWS_LOCAL = "news.localFeed"
         private const val K_LIBRARY = "media.libraryUri"
         private const val K_MAIL = "mail.address"

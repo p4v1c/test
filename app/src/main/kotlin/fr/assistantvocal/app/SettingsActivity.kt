@@ -58,6 +58,7 @@ class SettingsActivity : Activity() {
     lateinit var emergencyField: EditText; private set
     lateinit var favoritesField: EditText; private set
     lateinit var aliasesField: EditText; private set
+    lateinit var memoryField: EditText; private set
     private lateinit var wellbeingField: EditText
     private lateinit var remoteField: EditText
     lateinit var newsFeedField: EditText; private set
@@ -116,6 +117,16 @@ class SettingsActivity : Activity() {
         notifBox = check(c, R.string.notif_announce, s.announceNotifications)
         speakerBox = check(c, R.string.speaker_on_answer, s.speakerOnAnswer)
         button(c, R.string.notification_access) { startActivity(Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS")) }
+        // Mémoire de l'assistant (comme un « gemini.md ») : lisible et modifiable par un proche.
+        c = section(root, R.string.section_memory)
+        memoryField = field(c, R.string.label_memory, s.memoryText,
+            InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES).apply {
+            minLines = 4; gravity = android.view.Gravity.TOP or android.view.Gravity.START
+        }
+        c.addView(TextView(this).apply {
+            setText(R.string.memory_hint); textSize = 14f; setTextColor(getColor(R.color.text_muted)); setPadding(dp(2), dp(8), 0, 0)
+        })
+
         c = section(root, R.string.section_ai)
         geminiKeyField = secretField(c, R.string.label_gemini_key, AppGraph.SECRET_GEMINI)
         geminiModelField = field(c, R.string.label_gemini_model, s.geminiModel)
@@ -365,6 +376,7 @@ class SettingsActivity : Activity() {
         graph.people.emergencyContacts = PeopleStore.parseEmergency(emergencyField.text.toString())
         graph.people.favorites = pairs(favoritesField.text.toString()).filterKeys { it.toIntOrNull() in 1..9 }
         graph.people.aliases = pairs(aliasesField.text.toString()).mapKeys { PeopleStore.normalizeAlias(it.key) }
+        s.memoryText = memoryField.text.toString()
         s.wellbeingTime = wellbeingField.text.toString().replace('h', ':').let { t ->
             runCatching { java.time.LocalTime.parse(if (t.length == 4) "0$t" else t).toString() }.getOrDefault("")
         }

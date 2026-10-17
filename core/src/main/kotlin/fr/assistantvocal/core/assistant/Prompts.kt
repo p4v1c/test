@@ -11,8 +11,17 @@ object Prompts {
         "pas (obstacles, textes, personnes, positions avec des repères type horloge ou gauche/droite, distances " +
         "approximatives). Si tu n'es pas sûr, dis-le."
 
-    fun system(name: String, verbosity: Verbosity, now: ZonedDateTime): String = buildString {
+    /** [owner] : prénom de la personne (« Votre proche » = inconnu) ; [memory] : ce qu'elle a demandé de retenir. */
+    fun system(name: String, verbosity: Verbosity, now: ZonedDateTime, owner: String? = null, memory: List<String> = emptyList()): String = buildString {
         append(BASE.replace("[NOM]", name))
+        val who = owner?.trim()?.takeIf { it.isNotEmpty() && it != "Votre proche" }
+        if (who != null) append(" Tu parles à $who.")
+        if (memory.isNotEmpty()) {
+            append(" Voici ce que ${who ?: "la personne"} t'a demandé de retenir (c'est elle qui parle, à la première personne) : ")
+            append(memory.joinToString(" ; ") { "« $it »" })
+            append(". Sers-t'en avec naturel quand c'est utile, sans réciter cette liste. ")
+            append("Si on te demande de retenir autre chose, utilise la fonction remember.")
+        } else append(" Si on te demande de retenir une information sur la personne, utilise la fonction remember.")
         append(' ')
         append(
             when (verbosity) {

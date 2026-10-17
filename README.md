@@ -95,6 +95,12 @@ Commandes liées : « apprends mon nom », « change ton nom en … » (suivi au
 - Questions libres envoyées à Gemini (`gemini-3.5-flash-lite` par défaut), avec bascule automatique
   et annoncée vers Claude (`claude-haiku-5-5`) en cas de quota épuisé ou de panne.
 - Toute action sensible demandée par l'IA est relue et doit être confirmée par « oui ».
+- **Mémoire** (comme un « gemini.md ») : « souviens-toi que j'aime le jazz », « retiens que mon petit-fils s'appelle Lucas »,
+  « qu'est-ce que tu sais sur moi ? », « oublie que … », « oublie tout ce que tu sais sur moi » (confirmé). L'IA la reçoit avec
+  chaque question, avec le prénom de la personne, et peut elle-même retenir ce qu'on lui demande de garder en tête.
+  Un proche la lit et la corrige dans **Réglages → Mémoire de l'assistant** (une information par ligne).
+- **Interrupteur marche / arrêt** sur l'écran principal : éteint, plus rien ne fonctionne (écoute, annonces, rappels,
+  **secours compris**) jusqu'à ce qu'on le rallume ; éteindre demande une confirmation.
 - Sons distincts (écoute, réflexion, succès, erreur, question, annulé) et vibrations.
 - Compteur de requêtes par jour, avec annonce à 80 % de la limite.
 
@@ -242,6 +248,8 @@ Pas pris en charge : livres DAISY en texte seul, EPUB protégés (DRM), Audible,
   ou une photo pour décrire une scène. Adresse, météo, actualités et radios passent par des services publics, sans IA.
 - **Le palier gratuit de Gemini autorise Google à utiliser les données pour améliorer ses produits.**
 - « Active le mode privé » : plus rien n'est envoyé à l'IA, seules les commandes simples fonctionnent.
+- La **mémoire de l'assistant** (« souviens-toi que … ») et le prénom de la personne sont envoyés à l'IA avec chaque question :
+  ne pas y mettre de code bancaire ni de mot de passe (« note que … » reste sur le téléphone et n'est pas envoyé à l'IA).
 - Les clés API sont chiffrées sur le téléphone (Android Keystore).
 - Le journal des derniers échanges (pour « signale un problème ») reste sur le téléphone ; il ne part que si un proche le partage.
 - Les sauvegardes ne contiennent ni clés ni mots de passe.

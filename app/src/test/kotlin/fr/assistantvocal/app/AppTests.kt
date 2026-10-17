@@ -470,6 +470,17 @@ class MainActivityTest {
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
 class SettingsActivityTest {
+    @Test fun `le proche lit et corrige la memoire de l'assistant`() {
+        val app = ApplicationProvider.getApplicationContext<App>()
+        val graph = testGraph(app)
+        graph.settings.remember("J'aime le jazz")
+        val activity = Robolectric.buildActivity(SettingsActivity::class.java).setup().get()
+        assertEquals("J'aime le jazz", activity.memoryField.text.toString())
+        activity.memoryField.setText("J'aime le jazz\n\n  Mon petit-fils s'appelle Lucas  ")
+        activity.save()
+        assertEquals(listOf("J'aime le jazz", "Mon petit-fils s'appelle Lucas"), graph.settings.memoryFacts)
+    }
+
     @Test fun `le proche enregistre le nom et les cles`() {
         val app = ApplicationProvider.getApplicationContext<App>()
         val graph = testGraph(app)

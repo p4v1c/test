@@ -24,6 +24,11 @@ sealed interface Intent {
     /** Apprendre la façon dont la personne prononce le nom (mot d'activation). */
     data object CalibrateName : Intent
     data class WakeWord(val enable: Boolean) : Intent
+    /** « Souviens-toi que … » : mémoire donnée à l'IA. */
+    data class Remember(val fact: String) : Intent
+    data object RecallMemory : Intent
+    /** « Oublie que … » ; null = tout oublier. */
+    data class ForgetMemory(val fact: String?) : Intent
 }
 
 /** [confidence] entre 0 et 1. ≥ 0.8 : on agit ; entre 0.5 et 0.8 : on vérifie (IA ou question fermée). */
@@ -92,6 +97,7 @@ class LocalRouter {
             if (original.isNotBlank()) return RouteMatch(Intent.ChangeName(original), 0.95)
         }
         helpCategory.find(key)?.let { m -> return RouteMatch(Intent.HelpCategory(m.groupValues[1].trim()), 0.9) }
+        memory(utterance, key)?.let { return RouteMatch(it, 0.95) }
         tasks.route(utterance)?.let { return RouteMatch(it, 0.93) }
 
         for (rule in rules) {
@@ -105,6 +111,25 @@ class LocalRouter {
             }
             return RouteMatch(intent, confidence)
         }
+        return null
+    }
+
+    // Mémoire : le texte est gardé tel qu'il a été dit (accents, apostrophes), sans la ponctuation finale.
+    private val rememberRaw = Regex("^\\s*(?:souviens[- ]toi|rappelle[- ]toi|retiens|n['’ ]?oublie pas|garde (?:bien )?en (?:tête|tete|mémoire|memoire))(?: bien)?(?:\\s+que\\s+|\\s+qu['’]\\s*)(.+?)[.!?\\s]*$", RegexOption.IGNORE_CASE)
+    private val forgetRaw = Regex("^\\s*oublie(?:s)?(?:\\s+que\\s+|\\s+qu['’]\\s*)(.+?)[.!?\\s]*$", RegexOption.IGNORE_CASE)
+    private val forgetAll = Regex("^(oublie tout ce que tu sais (sur|de) moi|efface ta memoire|vide ta memoire|oublie tout ce que je t ai dit de retenir)$")
+    private val recall = Regex("^(qu est ce que tu sais (sur|de) moi|que sais tu (sur|de) moi|qu est ce que tu te rappelles|qu est ce que tu as retenu|qu est ce que tu sais de moi|lis ta memoire)$")
+    /** « retiens que Pierre c'est mon fils » est un surnom, traité ailleurs. */
+    private val aliasLike = Regex("\\b(c est|est) (mon|ma|mes) ")
+
+    private fun memory(utterance: String, key: String): Intent? {
+        if (recall.containsMatchIn(key)) return Intent.RecallMemory
+        if (forgetAll.containsMatchIn(key)) return Intent.ForgetMemory(null)
+        rememberRaw.find(utterance)?.let { m ->
+            val fact = m.groupValues[1].trim()
+            if (fact.isNotEmpty() && !aliasLike.containsMatchIn(FrenchText.key(fact))) return Intent.Remember(fact)
+        }
+        forgetRaw.find(utterance)?.let { m -> m.groupValues[1].trim().takeIf { it.isNotEmpty() }?.let { return Intent.ForgetMemory(it) } }
         return null
     }
 

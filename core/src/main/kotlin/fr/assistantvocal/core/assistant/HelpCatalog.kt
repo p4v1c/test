@@ -36,6 +36,10 @@ class HelpCatalog(private val topics: List<HelpTopic>) {
             listOf("parle plus vite", "parle moins vite", "parle plus fort", "sois plus bref", "donne plus de détails",
                 "change ton nom en Orphée", "apprends mon nom", "n'écoute plus ton nom", "active le mode privé"),
         )
+        val MEMORY = HelpTopic(
+            "ce que je retiens sur vous", listOf("memoire", "mémoire", "souvenir", "retenir"),
+            listOf("souviens-toi que j'aime le jazz", "qu'est-ce que tu sais sur moi ?", "oublie que j'aime le jazz", "oublie tout ce que tu sais sur moi"),
+        )
         val QUESTIONS = HelpTopic(
             "les questions de tous les jours", listOf("questions", "question", "culture", "recettes"),
             listOf("comment faire une pâte à crêpes ?", "c'est quoi une hernie discale ?", "raconte-moi une histoire courte"),
@@ -101,7 +105,7 @@ class HelpCatalog(private val topics: List<HelpTopic>) {
             "la prise en main", listOf("tutoriel", "prise en main", "probleme", "sauvegarde", "diagnostic", "apprendre"),
             listOf("tutoriel", "reprends le tutoriel", "est-ce que tout marche ?", "signale un problème", "sauvegarde mes réglages"),
         )
-        val PHASE7 = HelpCatalog(listOf(CALLS, MESSAGES, READING, NOTES, REMINDERS, VISION, ORIENTATION, NEWS, INFOS, QUESTIONS, SAFETY, TRIGGERS, SETTINGS, MAINTENANCE))
+        val PHASE7 = HelpCatalog(listOf(CALLS, MESSAGES, READING, NOTES, REMINDERS, VISION, ORIENTATION, NEWS, INFOS, QUESTIONS, MEMORY, SAFETY, TRIGGERS, SETTINGS, MAINTENANCE))
         val PHASE6 = HelpCatalog(listOf(CALLS, MESSAGES, READING, NOTES, REMINDERS, VISION, ORIENTATION, NEWS, INFOS, QUESTIONS, SAFETY, TRIGGERS, SETTINGS))
         val PHASE5 = HelpCatalog(listOf(CALLS, MESSAGES, REMINDERS, VISION, ORIENTATION, NEWS, INFOS, QUESTIONS, SAFETY, TRIGGERS, SETTINGS))
         val PHASE1 = HelpCatalog(listOf(INFOS, QUESTIONS, SETTINGS))

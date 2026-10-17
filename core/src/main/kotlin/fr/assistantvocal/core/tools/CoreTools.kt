@@ -13,8 +13,22 @@ import kotlinx.serialization.json.put
 object CoreTools {
 
     fun all(settings: AssistantSettings, device: DeviceStatus): List<Tool> = listOf(
-        DateTimeTool(device), PhoneStatusTool(device), PreferencesTool(settings), RenameTool(settings),
+        DateTimeTool(device), PhoneStatusTool(device), PreferencesTool(settings), RenameTool(settings), RememberTool(settings),
     )
+
+    /** Mémoire : l'IA retient une information durable que la personne lui demande de garder. */
+    class RememberTool(private val settings: AssistantSettings) : Tool {
+        override val spec = toolSpec("remember", "Retient durablement une information sur la personne, quand elle demande de s'en souvenir.") {
+            string("fact", "L'information à retenir, en une phrase courte, telle que la personne l'a dite")
+        }
+        override val risk = Risk.SAFE
+        override suspend fun execute(args: JsonObject): ToolOutcome {
+            val fact = args.str("fact")?.trim()?.take(AssistantSettings.MEMORY_LINE_MAX).orEmpty()
+            if (fact.isEmpty()) return ToolOutcome.error("Rien à retenir.")
+            settings.remember(fact)
+            return ToolOutcome.ok("C'est retenu : $fact.")
+        }
+    }
 
     /** Fonctions de la phase 3, confiées aux compétences locales. */
     fun phase3(): List<Tool> = listOf(

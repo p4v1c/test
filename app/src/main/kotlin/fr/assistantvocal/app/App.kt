@@ -155,7 +155,7 @@ class AppGraph(
         camera = visionBackend.camera, ocr = visionBackend.ocr, barcodes = visionBackend.barcodes,
         products = visionBackend.products, medications = visionBackend.medications, llm = llm,
         canUseLlm = { !settings.privateMode && device.isOnline() && llm.isConfigured() },
-        systemPrompt = { Prompts.system(settings.name, settings.verbosity, device.now()) },
+        systemPrompt = { Prompts.system(settings.name, settings.verbosity, device.now(), settings.ownerName, settings.memoryFacts) },
         today = { device.now().toLocalDate() }, nowMs = { System.currentTimeMillis() },
     )
     private val infoBackend: InfoBackend = infoFactory?.invoke(context) { secrets.get(SECRET_TAVILY) }
@@ -165,7 +165,7 @@ class AppGraph(
             infoBackend.news, infoBackend.search, infoBackend.navigator),
         SavedPlaces(store), dialog, device, comms, llm,
         canUseLlm = { !settings.privateMode && device.isOnline() && llm.isConfigured() },
-        systemPrompt = { Prompts.system(settings.name, settings.verbosity, device.now()) },
+        systemPrompt = { Prompts.system(settings.name, settings.verbosity, device.now(), settings.ownerName, settings.memoryFacts) },
         localFeed = { settings.newsLocalFeed },
     )
     val mediaBackend: MediaBackend = mediaFactory?.invoke(context, this) ?: MediaBackend.android(context, this)
@@ -174,7 +174,7 @@ class AppGraph(
         textPlayer = mediaBackend.textPlayer, downloader = mediaBackend.downloader)
     val mail = MailSkill(mediaBackend.mail, mediaBackend.emailContacts, dialog, device, { settings.ownerName }, llm,
         canUseLlm = { !settings.privateMode && device.isOnline() && llm.isConfigured() },
-        systemPrompt = { Prompts.system(settings.name, settings.verbosity, device.now()) })
+        systemPrompt = { Prompts.system(settings.name, settings.verbosity, device.now(), settings.ownerName, settings.memoryFacts) })
     val organizer = OrganizerSkill(MediaState(store), mediaBackend.calendar, ReminderStore(store), dialog, device,
         weatherToday = { if (device.isOnline()) runCatching { info.weather("météo aujourd'hui", null) }.getOrNull() else null },
         unreadSms = { runCatching { comms.unreadSmsCount() }.getOrDefault(0) },

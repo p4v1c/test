@@ -127,6 +127,23 @@ class Assistant(
 
     private fun isRepeat(reply: AssistantReply) = reply.speech == lastSpeech
 
+    private fun forgetMemory(query: String?): AssistantReply {
+        val facts = settings.memoryFacts
+        if (facts.isEmpty()) return AssistantReply("Je n'ai rien retenu pour l'instant.")
+        if (query == null) {
+            val n = if (facts.size == 1) "1 information" else "${facts.size} informations"
+            return dialog.confirm("J'oublie tout ce que vous m'avez demandé de retenir, soit $n ? Répondez oui ou non.", "D'accord, je garde tout.") {
+                settings.memoryText = ""; "C'est fait, j'ai tout oublié."
+            }
+        }
+        val q = FrenchText.key(query)
+        val hit = facts.firstOrNull { FrenchText.key(it) == q } ?: facts.firstOrNull { FrenchText.key(it).contains(q) || q.contains(FrenchText.key(it)) }
+            ?: return AssistantReply("Je n'ai rien retenu qui ressemble à « $query ».")
+        return dialog.confirm("J'oublie « $hit » ? Répondez oui ou non.", "D'accord, je m'en souviens toujours.") {
+            settings.forgetFact(hit); "C'est oublié."
+        }
+    }
+
     /** Vrai si la dernière réponse venait de l'IA et finissait par une question : un « oui » seul lui revient. */
     private var llmAskedQuestion = false
     /** Vrai si la dernière réponse, locale, finissait par une question (« Pouvez-vous redire le nom ? »). */
@@ -243,6 +260,15 @@ class Assistant(
         Intent.Repeat -> AssistantReply(lastSpeech.ifBlank { "Je n'ai encore rien dit." })
         Intent.Help -> AssistantReply(help.overview(name))
         is Intent.HelpCategory -> AssistantReply(help.topic(intent.category) ?: help.overview(name))
+        is Intent.Remember -> {
+            settings.remember(intent.fact)
+            AssistantReply("C'est retenu : « ${intent.fact} ». Je m'en souviendrai.", Earcon.SUCCESS)
+        }
+        Intent.RecallMemory -> settings.memoryFacts.let { facts ->
+            if (facts.isEmpty()) AssistantReply("Vous ne m'avez encore rien demandé de retenir. Dites par exemple : souviens-toi que j'aime le jazz.")
+            else AssistantReply("Vous m'avez demandé de retenir : " + facts.joinToString(" ; ") { "« $it »" } + ".")
+        }
+        is Intent.ForgetMemory -> forgetMemory(intent.fact)
         Intent.WhoAreYou -> AssistantReply("Je suis $name, votre assistant vocal. Que puis-je faire pour vous ?", listenAgain = true)
         Intent.Greeting -> AssistantReply("Bonjour ! Je suis $name, que puis-je faire ?", listenAgain = true)
         Intent.Thanks -> AssistantReply("Avec plaisir.")
@@ -362,7 +388,7 @@ class Assistant(
 
         repeat(MAX_TOOL_ROUNDS) {
             val request = LlmRequest(
-                system = Prompts.system(name, settings.verbosity, device.now()),
+                system = Prompts.system(name, settings.verbosity, device.now(), settings.ownerName, settings.memoryFacts),
                 messages = history.toList() + turn,
                 tools = tools.specs(),
                 maxOutputTokens = if (settings.verbosity == Verbosity.DETAILED) 2048 else 1024,

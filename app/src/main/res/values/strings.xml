@@ -92,4 +92,7 @@
     <string name="section_books">Livres et mails</string>
     <string name="section_voice">Voix</string>
     <string name="section_backup">Sauvegarde et dépannage</string>
+    <string name="section_memory">Mémoire de l\'assistant</string>
+    <string name="label_memory">Ce qu\'il sait de la personne, une information par ligne (ex. « J\'aime le jazz », « Mon petit-fils s\'appelle Lucas »)</string>
+    <string name="memory_hint">Rempli aussi à la voix : « souviens-toi que… ». Envoyé à l\'intelligence artificielle avec chaque question (sauf en mode privé). Ne pas y mettre de code bancaire ni de mot de passe.</string>
 </resources>
