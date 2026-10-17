@@ -235,7 +235,8 @@ object FrenchTime {
     }
 
     fun speakDuration(d: Duration): String {
-        val h = d.toHours(); val m = d.toMinutesPart(); val s = d.toSecondsPart()
+        // Pas de toMinutesPart() / toSecondsPart() : absentes d'Android avant la version 12.
+        val h = d.toHours(); val m = (d.toMinutes() % 60).toInt(); val s = (d.seconds % 60).toInt()
         val parts = buildList {
             if (h > 0) add(if (h == 1L) "1 heure" else "$h heures")
             if (m > 0) add(if (m == 1) "1 minute" else "$m minutes")
