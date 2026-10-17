@@ -234,6 +234,10 @@ fun testGraph(
 ).also { it.settings.name = "Orphée"; app.graph = it }
 
 /** Fait tourner la boucle principale jusqu'à ce que [done] soit vrai (les appels réseau se font sur un autre fil). */
+/** Laisse tourner le thread principal (horloge simulée comprise) pendant [ms]. */
+fun idleMain(ms: Long) = shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofMillis(ms))
+
+/** Attend que [done] soit vrai ; échoue si ce n'est jamais le cas (un test ne doit pas passer sur un délai dépassé). */
 fun awaitMain(timeoutMs: Long = 5_000, done: () -> Boolean) {
     val end = System.currentTimeMillis() + timeoutMs
     while (System.currentTimeMillis() < end) {
@@ -243,4 +247,5 @@ fun awaitMain(timeoutMs: Long = 5_000, done: () -> Boolean) {
         Thread.sleep(20)
     }
     shadowOf(Looper.getMainLooper()).idle()
+    if (!done()) throw AssertionError("Condition jamais remplie en $timeoutMs ms")
 }

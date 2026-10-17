@@ -109,7 +109,7 @@ class ServiceScenarioTest {
         awaitMain { out.spoken.isNotEmpty() }
         assertTrue(out.spoken.single().startsWith("D'accord, je ne réagis plus à mon nom"))
         assertEquals(false, graph.settings.wakeWordEnabled)
-        awaitMain { false }
+        idleMain(5_000)
         assertEquals(false, wake.isListening)
     }
 
