@@ -65,6 +65,8 @@ class LocalRouter {
         Rule({ _, _ -> Intent.WakeWord(enable = false) }, r("\\b(n ecoute plus|arrete d ecouter|desactive|coupe) (ton nom|le mot d activation|l ecoute)\\b|\\bne reagis plus a ton nom\\b")),
         Rule({ _, _ -> Intent.WakeWord(enable = true) }, r("\\b(reactive|active|remets) (ton nom|le mot d activation|l ecoute)\\b|\\becoute (a nouveau|de nouveau) ton nom\\b")),
 
+        // Ces phrases complètes ne parlent que de l'assistant : liste locale, jamais une liste inventée par l'IA.
+        Rule({ _, _ -> Intent.Help }, r("^(dis moi )?(qu est ce que tu sais faire|que sais tu faire|que peux tu faire|qu est ce que tu peux faire|tu sais faire quoi)$"), strong = true),
         Rule({ _, _ -> Intent.Help }, r("\\b(qu est ce que tu sais faire|que sais tu faire|que peux tu faire|qu est ce que tu peux faire|tu sais faire quoi|aide moi a t utiliser|^aide$|liste des commandes|comment ca marche)\\b")),
         Rule({ _, _ -> Intent.WhoAreYou }, r("\\b(qui es tu|qui est tu|t es qui|comment tu t appelles|comment t appelles tu|quel est ton nom|c est quoi ton nom)\\b")),
         Rule({ _, _ -> Intent.Thanks }, r("^(merci|merci beaucoup|merci bien|c est gentil|super merci)$"), strong = true),

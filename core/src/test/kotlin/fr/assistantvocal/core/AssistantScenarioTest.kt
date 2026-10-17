@@ -57,6 +57,13 @@ class AssistantScenarioTest {
         assertTrue(llm.requests.isEmpty())
     }
 
+    @Test fun `il demande ce que l'assistant sait faire, il entend la liste sans passer par l'IA`() = runTest {
+        val a = assistant()
+        assertTrue(a.handle("Qu'est-ce que tu sais faire ?").speech.startsWith("Je peux vous aider pour"))
+        assertTrue(a.handle("qu'est-ce que tu peux faire").speech.startsWith("Je peux vous aider pour"))
+        assertTrue(llm.requests.isEmpty())
+    }
+
     @Test fun `il demande la batterie en charge`() = runTest {
         device.batteryInfo = BatteryInfo(42, true)
         assertEquals("La batterie est à 42 pour cent, en charge.", assistant().handle("batterie").speech)
