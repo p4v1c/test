@@ -695,7 +695,7 @@ class Phase7AppTest {
         start(AssistantService.ACTION_LISTEN)
         awaitMain { out.spoken.isNotEmpty() }
         val r = out.spoken.last()
-        assertTrue(r, r.startsWith("Il y a ") && r.contains("l'intelligence artificielle : aucune clé") && r.contains("Le reste va bien : le micro"))
+        assertTrue(r, r.startsWith("Il y a ") && r.contains("L'intelligence artificielle : aucune clé") && r.contains("Le reste va bien : le micro"))
     }
 
     @Test fun `sauvegarde a la voix puis restauration depuis les reglages`() {

@@ -205,11 +205,13 @@ class InfoSkill(
         val exists = saved.find(clean) != null
         return dialog.confirm(
             (if (exists) "Le lieu « $clean » existe déjà, je le remplace. " else "") +
-                "J'enregistre ma position actuelle" + (label?.let { ", $it," } ?: "") + " sous le nom « $clean » ? Répondez oui ou non.",
+                "J'enregistre votre position actuelle" + (label?.let { ", $it," } ?: "") + " sous le nom « $clean » ? Répondez oui ou non.",
             "D'accord, je n'enregistre rien.",
         ) {
             saved.save(SavedPlace(clean, p.lat, p.lon, label))
-            "C'est enregistré. Vous pourrez dire : à quelle distance est $clean, ou : emmène-moi à $clean."
+            val place = SavedPlace(clean, p.lat, p.lon, label)
+            val the = when (FrenchText.key(clean)) { "maison" -> "la maison"; "chez moi" -> "chez moi"; else -> "« $clean »" }
+            "C'est enregistré. Vous pourrez dire : à quelle distance est $the, ou : emmène-moi ${placeName(place)}."
         }
     }
 

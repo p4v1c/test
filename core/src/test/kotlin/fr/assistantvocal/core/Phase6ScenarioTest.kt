@@ -331,7 +331,7 @@ class Phase6ScenarioTest {
         assertEquals("J'ajoute du pain et du lait à la liste de courses.", say("ajoute du pain et du lait à la liste de courses"))
         assertEquals("J'ajoute des œufs à la liste de courses.", say("il faut acheter des œufs"))
         assertEquals("Sur la liste de courses, 3 articles : du pain, du lait et des œufs.", say("lis ma liste de courses"))
-        assertEquals("J'enlève du pain de la liste.", say("enlève le pain de la liste"))
+        assertEquals("J'enlève le pain de la liste.", say("enlève le pain de la liste"))
         assertEquals("Je vide la liste de courses ? Répondez oui ou non.", say("vide la liste"))
         say("oui")
         assertTrue(MediaState(store).shoppingList.isEmpty())

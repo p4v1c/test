@@ -151,7 +151,7 @@ class SupportSkill(
         val important = bad.filter { it.important }
         val text = buildString {
             append(if (important.isEmpty()) "L'essentiel fonctionne. " else "Il y a ${bad.size} ${if (bad.size == 1) "point" else "points"} à régler. ")
-            bad.sortedByDescending { it.important }.forEach { c -> append("${c.label} : ${c.fix} ") }
+            bad.sortedByDescending { it.important }.forEach { c -> append("${c.label.replaceFirstChar { it.uppercase() }} : ${c.fix} ") }
             val good = list.filter { it.ok }
             if (good.isNotEmpty()) append("Le reste va bien : ${good.joinToString(", ") { it.label }}.")
         }

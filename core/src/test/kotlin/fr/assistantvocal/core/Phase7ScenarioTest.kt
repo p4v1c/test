@@ -75,7 +75,7 @@ class Phase7ScenarioTest {
         assertEquals("Tout fonctionne : le micro, le mot d'activation, l'intelligence artificielle.", say("est-ce que tout marche ?"))
         checks = listOf(Check("le micro", true), Check("internet", false, "pas de connexion, vérifiez le wifi."),
             Check("les livres", false, "aucun dossier choisi dans les réglages.", important = false))
-        assertEquals("Il y a 2 points à régler. internet : pas de connexion, vérifiez le wifi. les livres : aucun dossier choisi dans les réglages. Le reste va bien : le micro.",
+        assertEquals("Il y a 2 points à régler. Internet : pas de connexion, vérifiez le wifi. Les livres : aucun dossier choisi dans les réglages. Le reste va bien : le micro.",
             say("fais un diagnostic"))
     }
 

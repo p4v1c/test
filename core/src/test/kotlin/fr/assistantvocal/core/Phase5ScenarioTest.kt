@@ -154,7 +154,7 @@ class Phase5ScenarioTest {
 
     @Test fun `enregistrer la maison puis distance et direction`() = runTest {
         val q = say("enregistre ici comme maison")
-        assertEquals("J'enregistre ma position actuelle, 12 Rue des Lilas, Saint-Marcel, sous le nom « maison » ? Répondez oui ou non.", q)
+        assertEquals("J'enregistre votre position actuelle, 12 Rue des Lilas, Saint-Marcel, sous le nom « maison » ? Répondez oui ou non.", q)
         assertTrue(say("oui").startsWith("C'est enregistré."))
         // Hors ligne, à la maison : il le dit sans internet.
         device.online = false
@@ -381,6 +381,11 @@ class Phase5ScenarioTest {
         assertEquals("moins 3 degrés", WeatherSpeech.degrees(-2.6))
         assertFalse(WeatherSpeech.describe(61).isEmpty())
     }
+    @Test fun `apres enregistrement de la maison, les exemples sont en bon francais`() = runTest {
+        say("enregistre ici comme maison")
+        assertEquals("C'est enregistré. Vous pourrez dire : à quelle distance est la maison, ou : emmène-moi à la maison.", say("oui"))
+    }
+
 }
 
 /** InfoSkill neuf, sans actualités chargées. */

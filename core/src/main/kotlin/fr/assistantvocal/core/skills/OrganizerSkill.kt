@@ -118,7 +118,10 @@ class OrganizerSkill(
         val k = FrenchText.key(item).replace(Regex("^(le|la|les|l|du|de la|des|de|un|une) "), "")
         val hit = list.firstOrNull { FrenchText.key(it).contains(k) } ?: return AssistantReply("Je ne trouve pas « $item » sur la liste.", Earcon.ERROR)
         state.shoppingList = list - hit
-        return AssistantReply("J'enlève $hit de la liste.")
+        // « du pain » (tel que noté) -> « J'enlève le pain ».
+        val definite = listOf("du " to "le ", "de la " to "la ", "de l'" to "l'", "des " to "les ")
+            .firstOrNull { hit.startsWith(it.first) }?.let { (from, to) -> to + hit.removePrefix(from) } ?: hit
+        return AssistantReply("J'enlève $definite de la liste.")
     }
 
     private fun clearList(): AssistantReply {
