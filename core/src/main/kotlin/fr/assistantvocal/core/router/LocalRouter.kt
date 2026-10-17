@@ -34,6 +34,7 @@ data class RouteMatch(val intent: Intent, val confidence: Double)
  * un mot-clé (« quelle heure commence le match ») obtient une confiance moyenne et sera vérifiée.
  */
 class LocalRouter {
+    private val tasks = TaskRouter()
 
     private data class Rule(val intent: (MatchResult, String) -> Intent?, val regex: Regex, val strong: Boolean = false)
 
@@ -89,6 +90,7 @@ class LocalRouter {
             if (original.isNotBlank()) return RouteMatch(Intent.ChangeName(original), 0.95)
         }
         helpCategory.find(key)?.let { m -> return RouteMatch(Intent.HelpCategory(m.groupValues[1].trim()), 0.9) }
+        tasks.route(utterance)?.let { return RouteMatch(it, 0.93) }
 
         for (rule in rules) {
             val m = rule.regex.find(key) ?: continue

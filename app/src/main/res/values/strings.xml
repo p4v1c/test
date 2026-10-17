@@ -37,4 +37,17 @@
     <string name="calibrate">Apprendre la prononciation du nom (3 essais)</string>
     <string name="default_assistant">Choisir comme assistant par défaut</string>
     <string name="accessibility_settings">Activer les boutons volume (accessibilité)</string>
+    <string name="label_owner">Prénom de la personne (pour les messages d\'alerte)</string>
+    <string name="label_emergency">Contacts d\'urgence (SOS), ex. « Marie: 0612345678; Pierre: 0698765432 »</string>
+    <string name="label_favorites">Favoris (« appelle le numéro 1 »), ex. « 1: Marie Dupont; 2: 0475000000 »</string>
+    <string name="label_aliases">Surnoms, ex. « mon fils: Pierre Dupont; le docteur: Docteur Martin »</string>
+    <string name="label_wellbeing">« Tout va bien ? » chaque matin à (ex. 11:00, vide = désactivé)</string>
+    <string name="label_remote">Mot secret pour retrouver le téléphone par SMS (« où es-tu » + mot), vide = désactivé</string>
+    <string name="label_sms_mode">SMS reçus</string>
+    <string name="sms_read">Les lire directement</string>
+    <string name="sms_announce">Annoncer seulement qui écrit</string>
+    <string name="sms_off">Ne rien dire</string>
+    <string name="notif_announce">Annoncer les notifications de messagerie (Gmail, Meet…)</string>
+    <string name="speaker_on_answer">Haut-parleur automatique quand il décroche à la voix</string>
+    <string name="notification_access">Autoriser la lecture des notifications</string>
 </resources>

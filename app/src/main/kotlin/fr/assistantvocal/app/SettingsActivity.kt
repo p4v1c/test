@@ -24,6 +24,7 @@ import fr.assistantvocal.core.llm.LlmMessage
 import fr.assistantvocal.core.llm.LlmRequest
 import fr.assistantvocal.core.llm.LlmResult
 import fr.assistantvocal.core.name.AssistantNameRules
+import fr.assistantvocal.core.phone.PeopleStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -53,6 +54,16 @@ class SettingsActivity : Activity() {
     private lateinit var headsetBox: CheckBox
     private lateinit var volumeBox: CheckBox
     lateinit var triggersStatus: TextView; private set
+    lateinit var ownerField: EditText; private set
+    lateinit var emergencyField: EditText; private set
+    lateinit var favoritesField: EditText; private set
+    lateinit var aliasesField: EditText; private set
+    private lateinit var wellbeingField: EditText
+    private lateinit var remoteField: EditText
+    private lateinit var smsRead: RadioButton
+    private lateinit var smsAnnounce: RadioButton
+    private lateinit var notifBox: CheckBox
+    private lateinit var speakerBox: CheckBox
     lateinit var status: TextView; private set
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -73,6 +84,25 @@ class SettingsActivity : Activity() {
         button(root, R.string.accessibility_settings) { startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
         triggersStatus = TextView(this).apply { textSize = 16f; setPadding(0, 8, 0, 8) }
         root.addView(triggersStatus)
+
+        // Proches et sécurité
+        ownerField = field(root, R.string.label_owner, if (s.ownerName == "Votre proche") "" else s.ownerName, InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_WORDS)
+        emergencyField = field(root, R.string.label_emergency, PeopleStore.formatEmergency(graph.people.emergencyContacts), InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE)
+        favoritesField = field(root, R.string.label_favorites, graph.people.favorites.entries.sortedBy { it.key }.joinToString("; ") { "${it.key}: ${it.value}" })
+        aliasesField = field(root, R.string.label_aliases, graph.people.aliases.entries.joinToString("; ") { "${it.key}: ${it.value}" })
+        wellbeingField = field(root, R.string.label_wellbeing, s.wellbeingTime, InputType.TYPE_CLASS_DATETIME or InputType.TYPE_DATETIME_VARIATION_TIME)
+        remoteField = field(root, R.string.label_remote, s.remoteSecret)
+        root.addView(label(R.string.label_sms_mode))
+        val smsGroup = RadioGroup(this)
+        smsRead = RadioButton(this).apply { id = ids.next(); setText(R.string.sms_read) }
+        smsAnnounce = RadioButton(this).apply { id = ids.next(); setText(R.string.sms_announce) }
+        val smsOff = RadioButton(this).apply { id = ids.next(); setText(R.string.sms_off) }
+        listOf(smsRead, smsAnnounce, smsOff).forEach { smsGroup.addView(it) }
+        smsGroup.check(when (s.smsAnnounce) { "read" -> smsRead.id; "off" -> smsOff.id; else -> smsAnnounce.id })
+        root.addView(smsGroup)
+        notifBox = check(root, R.string.notif_announce, s.announceNotifications)
+        speakerBox = check(root, R.string.speaker_on_answer, s.speakerOnAnswer)
+        button(root, R.string.notification_access) { startActivity(Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS")) }
         geminiKeyField = secretField(root, R.string.label_gemini_key, AppGraph.SECRET_GEMINI)
         geminiModelField = field(root, R.string.label_gemini_model, s.geminiModel)
         geminiHighModelField = field(root, R.string.label_gemini_high_model, s.geminiHighModel)
@@ -119,6 +149,10 @@ class SettingsActivity : Activity() {
             (if (assistant) "✔ " else "✘ ") + "Assistant par défaut" + (if (assistant) "" else " : à activer pour l'écoute au démarrage et écran éteint"),
             (if (keys) "✔ " else "✘ ") + "Boutons volume" + (if (keys) "" else " : service d'accessibilité à activer"),
             (if (s.isWakeCalibrated) "✔ " else "• ") + "Nom " + (if (s.isWakeCalibrated) "appris" else "pas encore appris : touchez « Apprendre la prononciation du nom »"),
+            (if (graph.people.emergencyContacts.isNotEmpty()) "✔ " else "✘ ") + "Contacts d'urgence" +
+                (if (graph.people.emergencyContacts.isNotEmpty()) " : " + graph.people.emergencyContacts.joinToString { it.name } else " : à remplir pour le SOS"),
+            (if (android.provider.Settings.Secure.getString(contentResolver, "enabled_notification_listeners")?.contains(packageName) == true) "✔ " else "✘ ") +
+                "Lecture des notifications",
         ).joinToString("\n")
     }
 
@@ -126,6 +160,12 @@ class SettingsActivity : Activity() {
         val candidates = listOf(Intent(Settings.ACTION_VOICE_INPUT_SETTINGS), Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS), Intent(Settings.ACTION_SETTINGS))
         candidates.firstOrNull { runCatching { startActivity(it) }.isSuccess }
     }
+
+    /** « 1: Pierre Dupont; 2: 0612345678 » -> map. */
+    private fun pairs(text: String): Map<String, String> = text.split(';', '\n').mapNotNull { part ->
+        val i = part.indexOf(':')
+        if (i <= 0) null else part.substring(0, i).trim() to part.substring(i + 1).trim()
+    }.filter { it.first.isNotEmpty() && it.second.isNotEmpty() }.toMap()
 
     private fun check(root: LinearLayout, textRes: Int, checked: Boolean): CheckBox =
         CheckBox(this).apply { setText(textRes); isChecked = checked; textSize = 18f; minHeight = 96 }.also { root.addView(it) }
@@ -181,6 +221,17 @@ class SettingsActivity : Activity() {
         geminiLimitField.text.toString().toIntOrNull()?.let { s.setDailyLimit("gemini", it) }
         claudeLimitField.text.toString().toIntOrNull()?.let { s.setDailyLimit("claude", it) }
         rateField.text.toString().replace(',', '.').toFloatOrNull()?.let { s.speechRate = it }
+        s.ownerName = ownerField.text.toString()
+        graph.people.emergencyContacts = PeopleStore.parseEmergency(emergencyField.text.toString())
+        graph.people.favorites = pairs(favoritesField.text.toString()).filterKeys { it.toIntOrNull() in 1..9 }
+        graph.people.aliases = pairs(aliasesField.text.toString()).mapKeys { PeopleStore.normalizeAlias(it.key) }
+        s.wellbeingTime = wellbeingField.text.toString().replace('h', ':').let { t ->
+            runCatching { java.time.LocalTime.parse(if (t.length == 4) "0$t" else t).toString() }.getOrDefault("")
+        }
+        s.remoteSecret = remoteField.text.toString()
+        s.smsAnnounce = when { smsRead.isChecked -> "read"; smsAnnounce.isChecked -> "announce"; else -> "off" }
+        s.announceNotifications = notifBox.isChecked
+        s.speakerOnAnswer = speakerBox.isChecked
         s.wakeWordEnabled = wakeBox.isChecked
         s.headsetButtonEnabled = headsetBox.isChecked
         s.volumeKeyEnabled = volumeBox.isChecked

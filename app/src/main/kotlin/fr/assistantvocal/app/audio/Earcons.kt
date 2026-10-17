@@ -79,6 +79,30 @@ class Earcons(private val context: Context) : Sounds {
         }
     }
 
+    override suspend fun alarm(ms: Long, loud: Boolean) {
+        val am = context.getSystemService(android.media.AudioManager::class.java)
+        val before = am?.getStreamVolume(android.media.AudioManager.STREAM_ALARM)
+        if (loud && am != null) am.setStreamVolume(android.media.AudioManager.STREAM_ALARM, am.getStreamMaxVolume(android.media.AudioManager.STREAM_ALARM), 0)
+        val uri = android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_ALARM)
+            ?: android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_RINGTONE)
+        val player = runCatching {
+            android.media.MediaPlayer().apply {
+                setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ALARM)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build())
+                setDataSource(context, uri)
+                isLooping = true
+                prepare()
+                start()
+            }
+        }.getOrNull()
+        try {
+            if (player == null) repeat((ms / 700).toInt()) { play(Earcon.ERROR) } else delay(ms)
+        } finally {
+            runCatching { player?.stop() }; player?.release()
+            if (loud && am != null && before != null) am.setStreamVolume(android.media.AudioManager.STREAM_ALARM, before, 0)
+        }
+    }
+
     private fun synth(notes: List<Note>): ShortArray {
         val total = notes.sumOf { it.ms * RATE / 1000 + GAP }
         val out = ShortArray(total)

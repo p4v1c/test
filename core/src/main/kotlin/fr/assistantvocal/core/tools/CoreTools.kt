@@ -16,6 +16,31 @@ object CoreTools {
         DateTimeTool(device), PhoneStatusTool(device), PreferencesTool(settings), RenameTool(settings),
     )
 
+    /** Fonctions de la phase 3, confiées aux compétences locales. */
+    fun phase3(): List<Tool> = listOf(
+        IntentTool(toolSpec("call_contact", "Appelle un contact du téléphone (une confirmation sera demandée).") {
+            string("name", "Nom, prénom ou surnom du contact (ex. « mon fils »)")
+        }) { a -> a.str("name")?.let { fr.assistantvocal.core.router.CallContact(it) } },
+        IntentTool(toolSpec("send_sms", "Envoie un SMS à un contact (le texte sera relu et confirmé).") {
+            string("name", "Nom du contact"); string("message", "Texte du message", required = false)
+        }) { a -> a.str("name")?.let { fr.assistantvocal.core.router.SendSms(it, a.str("message")) } },
+        IntentTool(toolSpec("read_sms", "Lit les nouveaux SMS reçus.")) { fr.assistantvocal.core.router.ReadMessages(false) },
+        IntentTool(toolSpec("missed_calls", "Indique les appels manqués récents.")) { fr.assistantvocal.core.router.MissedCalls },
+        IntentTool(toolSpec("set_alarm", "Règle un réveil.") { string("when", "Moment en français, ex. « demain à 7 heures »") })
+            { a -> fr.assistantvocal.core.router.SetAlarm(a.str("when") ?: "") },
+        IntentTool(toolSpec("set_timer", "Lance un minuteur.") {
+            string("duration", "Durée en français, ex. « 10 minutes »"); string("label", "Pour quoi (ex. « pâtes »)", required = false)
+        }) { a -> fr.assistantvocal.core.router.SetTimer("minuteur de ${a.str("duration") ?: ""}" + (a.str("label")?.let { " pour les $it" } ?: "")) },
+        IntentTool(toolSpec("create_reminder", "Crée un rappel ou un rappel de médicament.") {
+            string("what", "Ce qu'il faut rappeler, ex. « prendre mon Doliprane »")
+            string("when", "Quand, en français, ex. « demain à 10 heures » ou « tous les jours à 8 heures »")
+        }) { a -> fr.assistantvocal.core.router.CreateReminder("de ${a.str("what") ?: ""} ${a.str("when") ?: ""}") },
+        IntentTool(toolSpec("list_reminders", "Liste les rappels, réveils et minuteurs prévus.")) { fr.assistantvocal.core.router.ListReminders },
+        IntentTool(toolSpec("emergency_sos", "Déclenche l'alerte de secours aux proches. Seulement si la personne est en danger, blessée ou demande de l'aide.")) {
+            fr.assistantvocal.core.router.Sos
+        },
+    )
+
     class DateTimeTool(private val device: DeviceStatus) : Tool {
         override val spec = toolSpec("get_datetime", "Donne la date et l'heure actuelles en France.")
         override val risk = Risk.SAFE

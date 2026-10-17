@@ -11,7 +11,34 @@ import fr.assistantvocal.core.llm.LlmResult
 import fr.assistantvocal.core.llm.Quality
 import fr.assistantvocal.core.llm.Role
 import fr.assistantvocal.core.name.AssistantNameRules
+import fr.assistantvocal.core.router.AnswerCall
+import fr.assistantvocal.core.router.CallBack
+import fr.assistantvocal.core.router.CallContact
+import fr.assistantvocal.core.router.CallFavorite
+import fr.assistantvocal.core.router.CallNumber
+import fr.assistantvocal.core.router.CancelTimer
+import fr.assistantvocal.core.router.ContactNumber
+import fr.assistantvocal.core.router.CreateReminder
+import fr.assistantvocal.core.router.DeleteReminder
+import fr.assistantvocal.core.router.HangUp
 import fr.assistantvocal.core.router.Intent
+import fr.assistantvocal.core.router.ListReminders
+import fr.assistantvocal.core.router.MedicationQuestion
+import fr.assistantvocal.core.router.MedicationTaken
+import fr.assistantvocal.core.router.MissedCalls
+import fr.assistantvocal.core.router.ReadMessages
+import fr.assistantvocal.core.router.ReadNotifications
+import fr.assistantvocal.core.router.Reply
+import fr.assistantvocal.core.router.SendSms
+import fr.assistantvocal.core.router.SetAlarm
+import fr.assistantvocal.core.router.SetAlias
+import fr.assistantvocal.core.router.SetTimer
+import fr.assistantvocal.core.router.Sos
+import fr.assistantvocal.core.router.Speaker
+import fr.assistantvocal.core.router.TimerStatus
+import fr.assistantvocal.core.skills.Skills
+import fr.assistantvocal.core.text.FrenchText
+import fr.assistantvocal.core.tools.IntentTool
 import fr.assistantvocal.core.router.LocalRouter
 import fr.assistantvocal.core.router.RouteMatch
 import fr.assistantvocal.core.settings.AssistantSettings
@@ -23,7 +50,7 @@ import kotlinx.serialization.json.put
 import java.time.ZonedDateTime
 
 /** Action à lancer par l'application après avoir prononcé la réponse. */
-enum class FollowUp { NONE, CALIBRATE_NAME, WAKE_WORD_CHANGED }
+enum class FollowUp { NONE, CALIBRATE_NAME, WAKE_WORD_CHANGED, SOS }
 
 /** Sons courts joués avec la réponse. */
 enum class Earcon { NONE, LISTENING, THINKING, SUCCESS, ERROR, CONFIRM, CANCELLED }
@@ -62,11 +89,14 @@ class Assistant(
     private val device: DeviceStatus,
     private val llm: LlmProvider?,
     private val tools: ToolRegistry,
-    private val help: HelpCatalog = HelpCatalog.PHASE2,
+    private val help: HelpCatalog = HelpCatalog.PHASE3,
     private val router: LocalRouter = LocalRouter(),
-    nowMillis: () -> Long = { System.currentTimeMillis() },
+    private val nowMillis: () -> Long = { System.currentTimeMillis() },
+    /** Appels, SMS, rappels… (absents dans certains tests). */
+    private val skills: Skills? = null,
+    val dialog: Dialog = skills?.dialog ?: Dialog(nowMillis),
 ) {
-    val confirmations = ConfirmationMachine(nowMillis)
+    val confirmations: ConfirmationMachine get() = dialog.confirmations
     private val history = ArrayDeque<LlmMessage>()
 
     /** Dernière phrase prononcée, pour « répète ». */
@@ -91,6 +121,15 @@ class Assistant(
     private fun isRepeat(reply: AssistantReply) = reply.speech == lastSpeech
 
     private suspend fun process(text: String, image: ByteArray?, quality: Quality): AssistantReply {
+        settings.lastInteractionMs = nowMillis()
+        // 0. Une question ouverte est en attente (« Que voulez-vous lui dire ? ») : la phrase est la réponse.
+        dialog.takePending()?.let { q ->
+            val k = FrenchText.key(text)
+            if (k in setOf("stop", "annule", "laisse tomber", "rien", "oublie", "arrete", "non rien")) {
+                return remember(text, AssistantReply("D'accord, j'annule.", Earcon.CANCELLED))
+            }
+            return remember(text, q.handler(text))
+        }
         // 1. Une confirmation est en attente : la phrase est une réponse oui/non.
         if (confirmations.hasPending()) {
             when (val outcome = confirmations.answer(text)) {
@@ -162,8 +201,8 @@ class Assistant(
         Intent.AskNetwork -> AssistantReply(
             if (device.isOnline()) "Oui, vous êtes connecté à internet." else "Non, il n'y a pas de connexion internet pour l'instant."
         )
-        Intent.Stop -> { confirmations.clear(); AssistantReply("", Earcon.CANCELLED, stopAll = true) }
-        Intent.Cancel -> { confirmations.clear(); AssistantReply("D'accord.", Earcon.CANCELLED) }
+        Intent.Stop -> { dialog.clear(); AssistantReply("", Earcon.CANCELLED, stopAll = true) }
+        Intent.Cancel -> { dialog.clear(); AssistantReply("D'accord.", Earcon.CANCELLED) }
         Intent.Repeat -> AssistantReply(lastSpeech.ifBlank { "Je n'ai encore rien dit." })
         Intent.Help -> AssistantReply(help.overview(name))
         is Intent.HelpCategory -> AssistantReply(help.topic(intent.category) ?: help.overview(name))
@@ -212,6 +251,12 @@ class Assistant(
             )
         }
         is Intent.ChangeName -> proposeRename(intent.newName)
+        Sos -> AssistantReply("", Earcon.NONE, followUp = FollowUp.SOS)
+        is CallContact, is CallNumber, is CallFavorite, CallBack, AnswerCall, HangUp, is Speaker, MissedCalls,
+        is ReadMessages, is SendSms, is Reply, ReadNotifications, is SetAlias, is ContactNumber,
+        is SetAlarm, is SetTimer, TimerStatus, is CancelTimer, is CreateReminder, ListReminders, is DeleteReminder,
+        is MedicationTaken, is MedicationQuestion -> skills?.handle(intent)
+            ?: AssistantReply("Cette fonction n'est pas encore disponible.", Earcon.ERROR)
         Intent.CalibrateName -> AssistantReply(
             "D'accord. Après chaque bip, dites simplement mon nom, $name. Je vais vous le demander trois fois.",
             followUp = FollowUp.CALIBRATE_NAME,
@@ -272,6 +317,13 @@ class Assistant(
                         val answer = FrenchSpeech.clean(result.text).ifEmpty { "Je n'ai pas de réponse à cette question." }
                         rememberLlm(text, answer)
                         return AssistantReply(join(notices, answer))
+                    }
+                    // Une fonction « intention » (appeler, écrire, rappeler…) est confiée aux compétences locales,
+                    // qui posent elles-mêmes les questions et confirmations nécessaires.
+                    calls.firstNotNullOfOrNull { c -> (tools[c.name] as? IntentTool)?.toIntent(c.args) }?.let { intent ->
+                        val reply = handleIntent(intent)
+                        rememberLlm(text, reply.speech)
+                        return reply.copy(speech = join(notices, reply.speech))
                     }
                     // Un appel sensible arrête la boucle : le code demande confirmation, l'IA n'exécute rien.
                     val sensitive = calls.firstOrNull { tools[it.name]?.risk?.let { r -> r != Risk.SAFE } == true }

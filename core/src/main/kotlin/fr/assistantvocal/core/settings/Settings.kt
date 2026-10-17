@@ -90,6 +90,41 @@ class AssistantSettings(private val store: KeyValueStore) {
         get() = store.getBoolean(K_VOLUME_KEY, true)
         set(value) = store.putBoolean(K_VOLUME_KEY, value)
 
+    /** Prénom de la personne (utilisé dans les messages d'alerte envoyés aux proches). */
+    var ownerName: String
+        get() = store.getString(K_OWNER)?.takeIf { it.isNotBlank() } ?: "Votre proche"
+        set(value) = store.putString(K_OWNER, value.trim())
+
+    /** Dernière fois que la personne a parlé à l'assistant (pour le « je vais bien » quotidien). */
+    var lastInteractionMs: Long
+        get() = store.getString(K_LAST_INTERACTION)?.toLongOrNull() ?: 0L
+        set(value) = store.putString(K_LAST_INTERACTION, value.toString())
+
+    /** « Je vais bien » quotidien : heure (« 11:00 ») ou vide si désactivé. */
+    var wellbeingTime: String
+        get() = store.getString(K_WELLBEING) ?: ""
+        set(value) = store.putString(K_WELLBEING, value.trim())
+
+    /** Mot secret pour retrouver le téléphone par SMS (vide = désactivé). */
+    var remoteSecret: String
+        get() = store.getString(K_REMOTE) ?: ""
+        set(value) = store.putString(K_REMOTE, value.trim())
+
+    /** SMS reçus : « read » (lu directement), « announce » (annonce seulement), « off ». */
+    var smsAnnounce: String
+        get() = store.getString(K_SMS_ANNOUNCE) ?: "announce"
+        set(value) = store.putString(K_SMS_ANNOUNCE, value)
+
+    /** Annoncer les notifications des applications de messagerie (Gmail, Meet…). */
+    var announceNotifications: Boolean
+        get() = store.getBoolean(K_NOTIF_ANNOUNCE, true)
+        set(value) = store.putBoolean(K_NOTIF_ANNOUNCE, value)
+
+    /** Haut-parleur activé automatiquement quand on décroche à la voix. */
+    var speakerOnAnswer: Boolean
+        get() = store.getBoolean(K_SPEAKER, true)
+        set(value) = store.putBoolean(K_SPEAKER, value)
+
     /** Ordre des fournisseurs IA, ex. "gemini,claude". */
     var providerOrder: List<String>
         get() = (store.getString(K_PROVIDERS) ?: "gemini,claude").split(',').map { it.trim() }.filter { it.isNotEmpty() }
@@ -135,6 +170,13 @@ class AssistantSettings(private val store: KeyValueStore) {
         private const val K_WAKE_THRESHOLD = "wake.threshold"
         private const val K_WAKE_STRICT = "wake.strict"
         private const val K_HEADSET = "trigger.headset"
+        private const val K_OWNER = "owner.name"
+        private const val K_LAST_INTERACTION = "owner.lastInteraction"
+        private const val K_WELLBEING = "safety.wellbeingTime"
+        private const val K_REMOTE = "safety.remoteSecret"
+        private const val K_SMS_ANNOUNCE = "sms.announce"
+        private const val K_NOTIF_ANNOUNCE = "notifications.announce"
+        private const val K_SPEAKER = "calls.speakerOnAnswer"
         private const val K_VOLUME_KEY = "trigger.volumeKey"
     }
 }

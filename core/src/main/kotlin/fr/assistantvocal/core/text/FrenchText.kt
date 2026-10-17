@@ -19,6 +19,14 @@ object FrenchText {
     fun stripAccents(input: String): String =
         Normalizer.normalize(input, Normalizer.Form.NFD).replace(Regex("\\p{M}+"), "")
 
+    /** Retire les accents caractère par caractère, sans changer la longueur (positions conservées). */
+    fun stripAccentsSameLength(input: String): String = buildString(input.length) {
+        for (c in input) {
+            val d = Normalizer.normalize(c.toString(), Normalizer.Form.NFD)
+            append(if (d.isNotEmpty() && d[0].code < 0x300) d[0] else c)
+        }
+    }
+
     /** Forme de comparaison : normalisée, sans accents, sans tirets ni apostrophes. */
     fun key(input: String): String =
         stripAccents(normalize(input)).replace(Regex("['-]"), " ").replace(Regex("\\s+"), " ").trim()

@@ -80,7 +80,7 @@ class AssistantScenarioTest {
     @Test fun `l'IA demande un appel, rien ne se passe sans oui`() = runTest {
         val a = assistant()
         llm.enqueue(ScriptedLlm.call("call_contact", buildJsonObject { put("name", "Paul") }))
-        val q = a.handle("appelle Paul")
+        val q = a.handle("j'aimerais bien parler à Paul")
         assertEquals(Earcon.CONFIRM, q.earcon)
         assertTrue(q.listenAgain)
         assertEquals("Voulez-vous appeler Paul ?", q.speech)
@@ -94,7 +94,7 @@ class AssistantScenarioTest {
     @Test fun `l'IA demande un appel, il dit oui, l'appel part`() = runTest {
         val a = assistant()
         llm.enqueue(ScriptedLlm.call("call_contact", buildJsonObject { put("name", "Paul") }))
-        a.handle("appelle Paul")
+        a.handle("j'aimerais bien parler à Paul")
         val yes = a.handle("oui vas-y")
         assertEquals("J'appelle Paul.", yes.speech)
         assertEquals(Earcon.SUCCESS, yes.earcon)

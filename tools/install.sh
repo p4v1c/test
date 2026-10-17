@@ -9,9 +9,14 @@ KEYS_SERVICE="$PKG/$PKG.triggers.KeyAccessibilityService"
 echo "1/6 Installation de l'application…"
 adb install -r "$APK"
 
-echo "2/6 Autorisations (micro, notifications)…"
-adb shell pm grant "$PKG" android.permission.RECORD_AUDIO
-adb shell pm grant "$PKG" android.permission.POST_NOTIFICATIONS 2>/dev/null || true
+echo "2/6 Autorisations (micro, notifications, contacts, appels, SMS, position)…"
+for P in RECORD_AUDIO POST_NOTIFICATIONS READ_CONTACTS CALL_PHONE ANSWER_PHONE_CALLS READ_PHONE_STATE READ_CALL_LOG \
+         READ_SMS RECEIVE_SMS SEND_SMS ACCESS_FINE_LOCATION ACCESS_COARSE_LOCATION ACCESS_BACKGROUND_LOCATION; do
+  adb shell pm grant "$PKG" "android.permission.$P" 2>/dev/null || echo "   (autorisation $P à accorder à la main)"
+done
+echo "   Accès aux notifications (lecture des notifications Gmail, Meet…)…"
+adb shell cmd notification allow_listener "$PKG/$PKG.phone.AssistantNotificationListener" 2>/dev/null || \
+  echo "   -> à faire à la main : Paramètres > Notifications > Accès aux notifications"
 
 echo "3/6 Fonctionnement en arrière-plan (pas d'économie de batterie pour l'assistant)…"
 adb shell dumpsys deviceidle whitelist +"$PKG" >/dev/null

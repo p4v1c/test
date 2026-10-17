@@ -28,5 +28,7 @@ interface SpeechOutput {
 interface Sounds {
     /** Joue l'earcon (et la vibration associée) et attend la fin du son. */
     suspend fun play(earcon: Earcon)
+    /** Sonnerie d'alarme du téléphone pendant [ms] (réveil, minuteur, SOS, téléphone perdu). */
+    suspend fun alarm(ms: Long, loud: Boolean = false) {}
     fun release() {}
 }

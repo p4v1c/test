@@ -4,10 +4,10 @@ package fr.assistantvocal.app.triggers
  * Logique des boutons volume (sans dépendance Android, testable) :
  * - pendant que l'assistant parle : n'importe quel bouton volume l'interrompt ;
  * - appui long (≥ [longPressMs]) sur « volume bas » : l'assistant écoute ;
- * - appui court sur « volume bas » : le volume baisse normalement.
- * « Volume haut » seul n'est jamais modifié (hors interruption).
+ * - appui court sur « volume bas » : le volume baisse normalement ;
+ * - appui de 3 secondes sur « volume haut » : alerte SOS (annulable 10 s) ; appui court : le volume monte.
  */
-class VolumeKeyGesture(private val longPressMs: Long = 800) {
+class VolumeKeyGesture(private val longPressMs: Long = 800, private val sosPressMs: Long = 3_000) {
 
     enum class Key { UP, DOWN }
 
@@ -24,8 +24,16 @@ class VolumeKeyGesture(private val longPressMs: Long = 800) {
         STOP_SPEAKING,
         /** Lancer l'écoute (appui long détecté). */
         LISTEN,
+        /** Consommer et programmer la vérification d'appui SOS dans [sosPressMs]. */
+        CONSUME_AND_START_SOS_TIMER,
+        /** Consommer, puis monter le volume (appui court sur volume haut). */
+        CONSUME_AND_RAISE_VOLUME,
+        /** Déclencher l'alerte SOS. */
+        SOS,
     }
 
+    private var upHeld = false
+    private var sosTriggered = false
     private var downHeld = false
     private var triggered = false
     private var swallowUntilUp: Key? = null
@@ -38,7 +46,18 @@ class VolumeKeyGesture(private val longPressMs: Long = 800) {
             cancel()
             return Decision.STOP_SPEAKING
         }
-        if (key == Key.UP) return if (swallowUntilUp == Key.UP) Decision.CONSUME else Decision.PASS
+        if (key == Key.UP) {
+            if (swallowUntilUp == Key.UP) return Decision.CONSUME
+            return when {
+                pressed && repeat -> if (upHeld) Decision.CONSUME else Decision.PASS
+                pressed -> { upHeld = true; sosTriggered = false; Decision.CONSUME_AND_START_SOS_TIMER }
+                else -> {
+                    val wasHeld = upHeld; val wasSos = sosTriggered
+                    upHeld = false; sosTriggered = false
+                    when { !wasHeld -> Decision.PASS; wasSos -> Decision.CONSUME; else -> Decision.CONSUME_AND_RAISE_VOLUME }
+                }
+            }
+        }
         // Volume bas
         return when {
             pressed && repeat -> if (downHeld) Decision.CONSUME else Decision.PASS
@@ -63,7 +82,15 @@ class VolumeKeyGesture(private val longPressMs: Long = 800) {
         return Decision.LISTEN
     }
 
-    val longPressDelayMs get() = longPressMs
+    /** Appelé [sosPressMs] après l'appui sur volume haut : SOS si toujours enfoncé. */
+    fun onSosTimer(): Decision? {
+        if (!upHeld || sosTriggered) return null
+        sosTriggered = true
+        return Decision.SOS
+    }
 
-    private fun cancel() { downHeld = false; triggered = false }
+    val longPressDelayMs get() = longPressMs
+    val sosDelayMs get() = sosPressMs
+
+    private fun cancel() { downHeld = false; triggered = false; upHeld = false; sosTriggered = false }
 }

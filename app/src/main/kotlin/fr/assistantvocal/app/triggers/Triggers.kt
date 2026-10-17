@@ -82,6 +82,9 @@ class AssistantSessionService : VoiceInteractionSessionService() {
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != Intent.ACTION_BOOT_COMPLETED && intent.action != Intent.ACTION_MY_PACKAGE_REPLACED) return
+        // Android oublie les alarmes au redémarrage : on reprogramme rappels, réveils et « tout va bien ».
+        runCatching { val g = App.graph(context); g.reminders.rescheduleAll(); fr.assistantvocal.app.DailyJobs.scheduleWellbeing(g) }
+            .onFailure { Log.e(TAG, "Reprogrammation impossible", it) }
         try {
             context.startForegroundService(AssistantService.intent(context, AssistantService.ACTION_ENSURE_RUNNING))
         } catch (e: Exception) {
@@ -139,13 +142,31 @@ class KeyAccessibilityService : AccessibilityService() {
                 runCatching { startService(AssistantService.intent(this, AssistantService.ACTION_STOP_SPEAKING)) }
                 true
             }
-            VolumeKeyGesture.Decision.LISTEN -> true
+            VolumeKeyGesture.Decision.CONSUME_AND_START_SOS_TIMER -> {
+                handler.postDelayed({ if (gesture.onSosTimer() == VolumeKeyGesture.Decision.SOS) onSosPress() }, gesture.sosDelayMs)
+                true
+            }
+            VolumeKeyGesture.Decision.CONSUME_AND_RAISE_VOLUME -> {
+                getSystemService(AudioManager::class.java)
+                    ?.adjustSuggestedStreamVolume(AudioManager.ADJUST_RAISE, AudioManager.USE_DEFAULT_STREAM_TYPE, AudioManager.FLAG_SHOW_UI)
+                true
+            }
+            VolumeKeyGesture.Decision.LISTEN, VolumeKeyGesture.Decision.SOS -> true
         }
     }
 
     private fun onLongPress() {
         getSystemService(Vibrator::class.java)?.vibrate(VibrationEffect.createOneShot(60, VibrationEffect.DEFAULT_AMPLITUDE))
+        val phone = App.graph(this).phone.actions
+        // Pendant un appel : l'appui long raccroche.
+        if (phone.state() == fr.assistantvocal.core.phone.CallState.OFFHOOK) { phone.hangUp(); return }
         requestListen(this, foreground = false)
+    }
+
+    private fun onSosPress() {
+        getSystemService(Vibrator::class.java)?.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 200, 100, 200, 100, 200), -1))
+        runCatching { startForegroundService(AssistantService.intent(this, AssistantService.ACTION_SOS)) }
+            .onFailure { runCatching { startService(AssistantService.intent(this, AssistantService.ACTION_SOS)) } }
     }
 }
 

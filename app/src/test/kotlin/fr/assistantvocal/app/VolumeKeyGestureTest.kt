@@ -24,9 +24,18 @@ class VolumeKeyGestureTest {
         assertNull("relâché avant le délai : pas d'écoute", g.onTimer())
     }
 
-    @Test fun volumeUpIsUntouched() {
-        assertEquals(Decision.PASS, g.onKey(Key.UP, pressed = true, repeat = false, assistantSpeaking = false))
-        assertEquals(Decision.PASS, g.onKey(Key.UP, pressed = false, repeat = false, assistantSpeaking = false))
+    @Test fun shortPressUpStillRaisesVolume() {
+        assertEquals(Decision.CONSUME_AND_START_SOS_TIMER, g.onKey(Key.UP, pressed = true, repeat = false, assistantSpeaking = false))
+        assertEquals(Decision.CONSUME_AND_RAISE_VOLUME, g.onKey(Key.UP, pressed = false, repeat = false, assistantSpeaking = false))
+        assertNull(g.onSosTimer())
+    }
+
+    @Test fun threeSecondsOnVolumeUpIsSos() {
+        g.onKey(Key.UP, pressed = true, repeat = false, assistantSpeaking = false)
+        assertEquals(Decision.CONSUME, g.onKey(Key.UP, pressed = true, repeat = true, assistantSpeaking = false))
+        assertEquals(Decision.SOS, g.onSosTimer())
+        assertNull("une seule alerte par appui", g.onSosTimer())
+        assertEquals(Decision.CONSUME, g.onKey(Key.UP, pressed = false, repeat = false, assistantSpeaking = false))
     }
 
     @Test fun anyVolumeKeyInterruptsSpeech() {

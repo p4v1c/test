@@ -44,7 +44,28 @@ class HelpCatalog(private val topics: List<HelpTopic>) {
             listOf("dites mon nom puis attendez le bip", "appuyez sur le bouton du casque",
                 "gardez le bouton volume bas appuyé une seconde", "appuyez sur le grand bouton de l'écran"),
         )
+        val CALLS = HelpTopic(
+            "les appels", listOf("appels", "appel", "telephone", "telephoner"),
+            listOf("appelle mon fils", "appelle Paul Martin", "qui m'a appelé ?", "rappelle-le", "décroche", "raccroche",
+                "mets le haut-parleur", "Pierre, c'est mon fils"),
+        )
+        val MESSAGES = HelpTopic(
+            "les messages", listOf("messages", "sms", "texto", "notifications", "ecrire"),
+            listOf("lis mes messages", "lis mon dernier message", "envoie un message à Marie pour lui dire que j'arrive",
+                "réponds", "lis mes notifications"),
+        )
+        val REMINDERS = HelpTopic(
+            "les réveils, minuteurs et rappels", listOf("rappels", "rappel", "reveil", "minuteur", "medicaments", "medicament"),
+            listOf("réveille-moi demain à 7 heures", "minuteur de 10 minutes pour les pâtes", "combien de temps reste-t-il ?",
+                "rappelle-moi d'appeler le médecin demain à 10 heures", "rappelle-moi de prendre mon Doliprane tous les jours à 8 heures",
+                "j'ai pris mon Doliprane", "ai-je pris mon médicament ce matin ?", "quels sont mes rappels ?"),
+        )
+        val SAFETY = HelpTopic(
+            "la sécurité", listOf("securite", "secours", "urgence", "sos"),
+            listOf("au secours : j'alerte vos proches après 10 secondes, dites stop pour annuler", "je suis tombé"),
+        )
         val PHASE1 = HelpCatalog(listOf(INFOS, QUESTIONS, SETTINGS))
+        val PHASE3 = HelpCatalog(listOf(CALLS, MESSAGES, REMINDERS, INFOS, QUESTIONS, SAFETY, TRIGGERS, SETTINGS))
         val PHASE2 = HelpCatalog(listOf(INFOS, QUESTIONS, TRIGGERS, SETTINGS))
     }
 }

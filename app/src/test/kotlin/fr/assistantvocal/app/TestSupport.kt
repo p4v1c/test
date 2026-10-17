@@ -69,6 +69,32 @@ class FakeDevice(var online: Boolean = true) : DeviceStatus {
     override fun adjustVolume(louder: Boolean) = 60
 }
 
+/** Téléphone simulé pour les tests Android. */
+class AppFakePhone : fr.assistantvocal.core.phone.PhoneActions, fr.assistantvocal.core.phone.ContactsSource,
+    fr.assistantvocal.core.phone.CallLogSource, fr.assistantvocal.core.phone.SmsSource, fr.assistantvocal.core.phone.SmsSender,
+    fr.assistantvocal.core.phone.NotificationSource, fr.assistantvocal.core.reminders.AlarmScheduler, fr.assistantvocal.core.phone.LocationSource {
+    var state = fr.assistantvocal.core.phone.CallState.IDLE
+    var answered = false
+    val calls = mutableListOf<String>()
+    val sent = mutableListOf<Pair<String, String>>()
+    val scheduled = mutableMapOf<Int, Long>()
+    override fun all() = listOf(fr.assistantvocal.core.phone.Contact("1", "Paul Martin", listOf(fr.assistantvocal.core.phone.PhoneNumber("0612345678", "mobile"))))
+    override fun call(number: String, speaker: Boolean): Boolean { calls += number; return true }
+    override fun answer(): Boolean { answered = true; state = fr.assistantvocal.core.phone.CallState.OFFHOOK; return true }
+    override fun hangUp(): Boolean { state = fr.assistantvocal.core.phone.CallState.IDLE; return true }
+    override fun setSpeaker(on: Boolean) = true
+    override fun state() = state
+    override fun recent(limit: Int) = emptyList<fr.assistantvocal.core.phone.CallLogEntry>()
+    override fun inbox(limit: Int) = emptyList<fr.assistantvocal.core.phone.SmsMessage>()
+    override suspend fun send(number: String, text: String): Boolean { sent += number to text; return true }
+    override fun recent() = emptyList<fr.assistantvocal.core.phone.AppNotification>()
+    override fun reply(key: String, text: String) = false
+    override fun schedule(id: Int, atEpochMs: Long) { scheduled[id] = atEpochMs }
+    override fun cancel(id: Int) { scheduled.remove(id) }
+    override suspend fun current(timeoutMs: Long) = fr.assistantvocal.core.phone.GeoPoint(44.9, 4.9, 10f)
+    fun backend() = PhoneBackend(this, this, this, this, this, this, this, this)
+}
+
 fun testGraph(
     app: App,
     input: SpeechInput = FakeInput(),
@@ -78,15 +104,18 @@ fun testGraph(
     geminiBaseUrl: String = "http://127.0.0.1:1",
     secrets: SecretStore = InMemorySecrets(),
     wake: WakeEngine = FakeWake(),
+    phone: AppFakePhone = AppFakePhone(),
 ): AppGraph = AppGraph(
-    app, InMemoryStore(), secrets, device, { input }, { output }, { sounds }, { wake }, geminiBaseUrl = geminiBaseUrl,
+    app, InMemoryStore(), secrets, device, { input }, { output }, { sounds }, { wake },
+    phoneFactory = { _, _ -> phone.backend() }, sosCountdownMs = 300, geminiBaseUrl = geminiBaseUrl,
 ).also { it.settings.name = "Orphée"; app.graph = it }
 
 /** Fait tourner la boucle principale jusqu'à ce que [done] soit vrai (les appels réseau se font sur un autre fil). */
 fun awaitMain(timeoutMs: Long = 5_000, done: () -> Boolean) {
     val end = System.currentTimeMillis() + timeoutMs
     while (System.currentTimeMillis() < end) {
-        shadowOf(Looper.getMainLooper()).idle()
+        // Avance aussi l'horloge simulée : les delay() des coroutines s'exécutent.
+        shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofMillis(100))
         if (done()) return
         Thread.sleep(20)
     }

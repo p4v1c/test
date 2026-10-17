@@ -85,3 +85,13 @@ class SchemaBuilder {
 }
 
 fun JsonObject.str(key: String): String? = this[key]?.jsonPrimitive?.contentOrNull
+
+/**
+ * Fonction proposée à l'IA qui se traduit en intention locale : l'exécution (avec questions et
+ * confirmations) est faite par les compétences de l'app, jamais directement par l'IA.
+ */
+class IntentTool(override val spec: ToolSpec, private val mapper: (JsonObject) -> fr.assistantvocal.core.router.Intent?) : Tool {
+    override val risk = Risk.SAFE
+    fun toIntent(args: JsonObject) = mapper(args)
+    override suspend fun execute(args: JsonObject) = ToolOutcome.error("à traiter par l'assistant")
+}

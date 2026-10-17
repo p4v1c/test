@@ -37,6 +37,11 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
+import fr.assistantvocal.core.phone.CallState
+import fr.assistantvocal.core.safety.DeviceAlerts
+import fr.assistantvocal.core.safety.SosFlow
+import fr.assistantvocal.core.safety.SosUi
 
 /**
  * Service au premier plan qui possède le micro, la voix et la conversation.
@@ -72,6 +77,8 @@ class AssistantService : Service() {
         scope.launch {
             if (wake.ensureModel()) startWake() else Log.w(TAG, "Mot d'activation indisponible : modèle absent")
         }
+        startDeviceWatch()
+        DailyJobs.scheduleWellbeing(graph)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -81,7 +88,23 @@ class AssistantService : Service() {
             ACTION_SHUTDOWN -> { interrupt(); wake.stop(); stopSelf() }
             ACTION_SAY -> intent.getStringExtra(EXTRA_TEXT)?.let { say(it) }
             ACTION_CALIBRATE -> runSession { calibrateName() }
-            ACTION_SETTINGS_CHANGED -> { headset?.enabled = graph.settings.headsetButtonEnabled; if (session?.isActive != true) startWake() }
+            ACTION_SETTINGS_CHANGED -> {
+                headset?.enabled = graph.settings.headsetButtonEnabled
+                DailyJobs.scheduleWellbeing(graph)
+                if (session?.isActive != true) startWake()
+            }
+            ACTION_REMINDER_FIRE -> intent.getIntExtra(fr.assistantvocal.app.phone.ReminderReceiver.EXTRA_ID, -1).let { id ->
+                when {
+                    id == DailyJobs.WELLBEING_ID || id == DailyJobs.WELLBEING_FOLLOW_UP_ID -> runSession { wellbeing() }
+                    id >= 0 -> runSession { fireReminder(id) }
+                }
+            }
+            ACTION_SOS -> runSession { sos() }
+            ACTION_CALL_STATE -> onCallState(intent.getStringExtra(EXTRA_STATE), intent.getStringExtra(EXTRA_NUMBER))
+            ACTION_SMS_RECEIVED -> onSms(intent.getStringExtra(EXTRA_NUMBER).orEmpty(), intent.getStringExtra(EXTRA_TEXT).orEmpty(),
+                intent.getLongExtra(EXTRA_TIME, System.currentTimeMillis()))
+            ACTION_ANNOUNCE -> intent.getStringExtra(EXTRA_TEXT)?.let { announceIfIdle(it) }
+            ACTION_REMOTE_LOCATE -> intent.getStringExtra(EXTRA_NUMBER)?.let { n -> runSession { remoteLocate(n) } }
             ACTION_ENSURE_RUNNING, null -> Unit
         }
         return START_STICKY
@@ -151,8 +174,14 @@ class AssistantService : Service() {
         onTrigger()
     }
 
-    /** Déclencheur (nom, casque, volume, notification) : interrompt si besoin puis écoute. */
-    private fun onTrigger() = startConversation()
+    /** Déclencheur (nom, casque, volume, notification) : interrompt si besoin puis écoute. Pendant une sonnerie : décroche. */
+    private fun onTrigger() {
+        when (graph.phone.actions.state()) {
+            CallState.RINGING -> { ringing = false; interrupt(); graph.phone.actions.answer() }
+            CallState.OFFHOOK -> Unit // en communication : le micro appartient à l'appel
+            CallState.IDLE -> startConversation()
+        }
+    }
 
     // ------------------------------------------------------------------ conversation
 
@@ -202,6 +231,7 @@ class AssistantService : Service() {
             when (reply.followUp) {
                 FollowUp.CALIBRATE_NAME -> { calibrateName(); return }
                 FollowUp.WAKE_WORD_CHANGED -> { refreshNotification(); return }
+                FollowUp.SOS -> { sos(); return }
                 FollowUp.NONE -> Unit
             }
             // Relance l'écoute pour une confirmation, au maximum 4 fois d'affilée.
@@ -250,6 +280,186 @@ class AssistantService : Service() {
         refreshNotification()
     }
 
+    // ------------------------------------------------------------------ rappels qui sonnent
+
+    /** Annonce un rappel ; après chaque annonce, écoute une réponse (« c'est fait », « stop », « rappelle-moi dans 10 minutes »). */
+    private suspend fun fireReminder(id: Int) {
+        val ann = graph.reminders.onFire(id) ?: return
+        applyVoiceSettings()
+        repeat(ann.repeats) { i ->
+            wake.stop()
+            if (ann.ring) sounds.alarm(if (i == 0) 6_000 else 4_000) else sounds.play(Earcon.CONFIRM)
+            speak(ann.speech)
+            sounds.play(Earcon.LISTENING)
+            when (val heard = input.listen(preferOffline = !graph.device.isOnline())) {
+                is Heard.Text -> {
+                    val reply = graph.assistant.handle(heard.text)
+                    if (!reply.stopAll) { sounds.play(reply.earcon); speak(reply.speech) }
+                    return
+                }
+                else -> if (!ann.ring && i < ann.repeats - 1) delay(20_000)
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ appels entrants
+
+    private var ringing = false
+    private var announcedNumber: String? = null
+
+    private fun onCallState(state: String?, number: String?) {
+        when (state) {
+            android.telephony.TelephonyManager.EXTRA_STATE_RINGING -> {
+                ringing = true
+                // Android envoie l'événement deux fois (sans puis avec numéro) : une seule annonce, avec le numéro.
+                if (number == null || number == announcedNumber) return
+                announcedNumber = number
+                runSession {
+                    applyVoiceSettings()
+                    startWake() // « [nom], décroche »
+                    val announce = graph.comms.announceIncomingCall(number)
+                    val how = "Pour décrocher, dites « ${graph.settings.name}, décroche », ou appuyez sur le bouton du casque."
+                    for (i in 0 until 3) {
+                        if (!ringing) return@runSession
+                        speak(if (i == 0) "$announce $how" else announce)
+                        delay(6_000)
+                    }
+                }
+            }
+            android.telephony.TelephonyManager.EXTRA_STATE_OFFHOOK -> {
+                ringing = false
+                interrupt()
+                wake.stop() // le micro appartient à l'appel
+            }
+            android.telephony.TelephonyManager.EXTRA_STATE_IDLE -> {
+                ringing = false
+                announcedNumber = null
+                restartWakeSoon()
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ messages et notifications entrants
+
+    private fun busy() = session?.isActive == true || graph.phone.actions.state() != CallState.IDLE
+
+    private fun onSms(number: String, body: String, time: Long) {
+        val mode = graph.settings.smsAnnounce
+        if (mode == "off" || busy()) return
+        val msg = fr.assistantvocal.core.phone.SmsMessage(0, number, null, body,
+            java.time.Instant.ofEpochMilli(time).atZone(java.time.ZoneId.systemDefault()))
+        runSession {
+            applyVoiceSettings()
+            sounds.play(Earcon.CONFIRM)
+            speak(graph.comms.announceIncomingSms(msg, readFull = mode == "read"))
+        }
+    }
+
+    private fun announceIfIdle(text: String) {
+        if (busy()) return
+        runSession { applyVoiceSettings(); sounds.play(Earcon.CONFIRM); speak(fr.assistantvocal.core.assistant.FrenchSpeech.clean(text)) }
+    }
+
+    // ------------------------------------------------------------------ sécurité
+
+    private suspend fun sos() {
+        wake.stop()
+        applyVoiceSettings()
+        val ui = object : SosUi {
+            override suspend fun say(text: String) { speak(text) }
+            override suspend fun alertSound() = sounds.alarm(1_500, loud = true)
+            override suspend fun cancelledWithin(ms: Long): Boolean {
+                val end = System.currentTimeMillis() + ms
+                while (System.currentTimeMillis() < end) {
+                    val heard = withTimeoutOrNull(end - System.currentTimeMillis()) { input.listen(preferOffline = true) } ?: return false
+                    if (heard is Heard.Text && isCancel(heard.text)) return true
+                    delay(200) // la reconnaissance peut rendre la main tout de suite : pas de boucle à vide
+                }
+                return false
+            }
+        }
+        val outcome = SosFlow(graph.people, graph.phone.location, graph.phone.smsSender, graph.phone.actions, ui,
+            { graph.settings.ownerName }, countdownMs = graph.sosCountdownMs).run()
+        Log.i(TAG, "SOS : $outcome")
+    }
+
+    private fun isCancel(text: String): Boolean {
+        val k = fr.assistantvocal.core.text.FrenchText.key(text)
+        return fr.assistantvocal.core.dialog.YesNoParser.parse(text) == fr.assistantvocal.core.dialog.YesNo.NO ||
+            Regex("\\b(stop|annule|arrete|fausse alerte|ca va|tout va bien|non)\\b").containsMatchIn(k)
+    }
+
+    /** Un proche de confiance cherche le téléphone : sonnerie forte 30 s et réponse avec la position. */
+    private suspend fun remoteLocate(number: String) {
+        wake.stop()
+        val ring = scope.launch { sounds.alarm(30_000, loud = true) }
+        val point = graph.phone.location.current(20_000)
+        val text = if (point == null) "Le téléphone de ${graph.settings.ownerName} sonne. Position indisponible."
+        else "Le téléphone de ${graph.settings.ownerName} sonne. Position : https://maps.google.com/?q=${"%.5f".format(java.util.Locale.US, point.lat)},${"%.5f".format(java.util.Locale.US, point.lon)}"
+        graph.phone.smsSender.send(number, text)
+        ring.join()
+    }
+
+    /** « Tout va bien ? » quotidien : sans réponse après 3 essais espacés de 10 minutes, un proche est prévenu. */
+    private suspend fun wellbeing() {
+        DailyJobs.scheduleWellbeing(graph)
+        val s = graph.settings
+        val startOfDay = java.time.LocalDate.now().atTime(5, 0).atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+        val attempts = graph.store.getInt(DailyJobs.K_ATTEMPTS, 0)
+        if (attempts == 0 && s.lastInteractionMs >= startOfDay) return
+        wake.stop()
+        applyVoiceSettings()
+        sounds.play(Earcon.CONFIRM)
+        speak("Bonjour ${s.ownerName.takeIf { it != "Votre proche" } ?: ""} ! Tout va bien ? Répondez oui ou non.".replace("  ", " "))
+        sounds.play(Earcon.LISTENING)
+        val heard = input.listen(preferOffline = true)
+        if (heard is Heard.Text) {
+            graph.store.putInt(DailyJobs.K_ATTEMPTS, 0)
+            s.lastInteractionMs = System.currentTimeMillis()
+            if (fr.assistantvocal.core.dialog.YesNoParser.parse(heard.text) == fr.assistantvocal.core.dialog.YesNo.NO) {
+                speak("Je vais prévenir vos proches.")
+                sos()
+            } else speak("Très bien. Bonne journée !")
+            return
+        }
+        if (attempts + 1 >= 3) {
+            graph.store.putInt(DailyJobs.K_ATTEMPTS, 0)
+            val text = "Bonjour, ${s.ownerName} n'a pas répondu ce matin à son assistant vocal qui lui demandait si tout allait bien. " +
+                "Pouvez-vous l'appeler ? (message automatique)"
+            graph.people.emergencyContacts.forEach { graph.phone.smsSender.send(it.number, text) }
+        } else {
+            graph.store.putInt(DailyJobs.K_ATTEMPTS, attempts + 1)
+            graph.phone.scheduler.schedule(DailyJobs.WELLBEING_FOLLOW_UP_ID, System.currentTimeMillis() + 10 * 60_000)
+        }
+    }
+
+    // ------------------------------------------------------------------ batterie et réseau
+
+    private val alerts = DeviceAlerts { System.currentTimeMillis() }
+    private var batteryReceiver: android.content.BroadcastReceiver? = null
+    private var networkCallback: android.net.ConnectivityManager.NetworkCallback? = null
+
+    private fun startDeviceWatch() {
+        batteryReceiver = object : android.content.BroadcastReceiver() {
+            override fun onReceive(c: Context, i: Intent) {
+                val level = i.getIntExtra(android.os.BatteryManager.EXTRA_LEVEL, -1)
+                val scale = i.getIntExtra(android.os.BatteryManager.EXTRA_SCALE, 100)
+                if (level < 0 || scale <= 0) return
+                val st = i.getIntExtra(android.os.BatteryManager.EXTRA_STATUS, -1)
+                val charging = st == android.os.BatteryManager.BATTERY_STATUS_CHARGING || st == android.os.BatteryManager.BATTERY_STATUS_FULL
+                alerts.onBattery(level * 100 / scale, charging)?.let { announceIfIdle(it) }
+            }
+        }
+        registerReceiver(batteryReceiver, android.content.IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        val cm = getSystemService(android.net.ConnectivityManager::class.java)
+        networkCallback = object : android.net.ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: android.net.Network) { scope.launch { alerts.onNetwork(true)?.let { announceIfIdle(it) } } }
+            override fun onLost(network: android.net.Network) { scope.launch { alerts.onNetwork(false) } }
+        }
+        runCatching { cm?.registerDefaultNetworkCallback(networkCallback!!) }
+        scope.launch { while (isActive) { delay(10_000); alerts.tick()?.let { announceIfIdle(it) } } }
+    }
+
     /** Lance le traitement ; si ça dure plus de 0,8 s, joue un tic toutes les 1,5 s. */
     private suspend fun think(block: suspend () -> AssistantReply): AssistantReply {
         val ticker = scope.launch {
@@ -286,6 +496,8 @@ class AssistantService : Service() {
     }
 
     override fun onDestroy() {
+        runCatching { batteryReceiver?.let { unregisterReceiver(it) } }
+        runCatching { networkCallback?.let { getSystemService(android.net.ConnectivityManager::class.java)?.unregisterNetworkCallback(it) } }
         scope.cancel()
         wake.stop()
         headset?.release()
@@ -304,7 +516,16 @@ class AssistantService : Service() {
         const val ACTION_CALIBRATE = "fr.assistantvocal.CALIBRATE"
         const val ACTION_SETTINGS_CHANGED = "fr.assistantvocal.SETTINGS_CHANGED"
         const val ACTION_ENSURE_RUNNING = "fr.assistantvocal.ENSURE_RUNNING"
+        const val ACTION_REMINDER_FIRE = "fr.assistantvocal.REMINDER_FIRE"
+        const val ACTION_SOS = "fr.assistantvocal.SOS"
+        const val ACTION_CALL_STATE = "fr.assistantvocal.CALL_STATE"
+        const val ACTION_SMS_RECEIVED = "fr.assistantvocal.SMS_RECEIVED"
+        const val ACTION_ANNOUNCE = "fr.assistantvocal.ANNOUNCE"
+        const val ACTION_REMOTE_LOCATE = "fr.assistantvocal.REMOTE_LOCATE"
         const val EXTRA_TEXT = "text"
+        const val EXTRA_NUMBER = "number"
+        const val EXTRA_STATE = "state"
+        const val EXTRA_TIME = "time"
 
         /** Vrai pendant que l'assistant parle (lu par le service d'accessibilité pour les boutons volume). */
         @Volatile var speakingNow: Boolean = false
