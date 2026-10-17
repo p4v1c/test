@@ -4,6 +4,7 @@
 
 - Phase 0 (recherche) : faite.
 - Phase 1 (socle) : faite. Modules `core`, `llm`, `app`.
+- Phase 3 (appels, SMS, notifications, rappels, médicaments, SOS) : faite, 121 tests automatiques.
 - Phase 2 (mot d'activation, déclencheurs) : faite. 80 tests automatiques + test d'intégration Vosk réel
   sur voix de synthèse (mesures dans `tools/wake/README.md`).
 - Téléphone cible : Google Pixel (voir FEATURES.md, « Décisions validées »).
@@ -158,6 +159,26 @@ Chaque fonction est un `Tool` : nom, description, schéma JSON des paramètres, 
 | Boutons volume / casque | `AccessibilityService` (filtre des touches, sans gêner TalkBack) + `MediaSession` |
 | Caméra / lampe | CameraX, `CameraManager.setTorchMode` |
 | Position | `FusedLocationProvider` (Play Services) avec repli `LocationManager` |
+
+## 9 bis. Choix de la phase 3
+
+- **Compétences dans `core/skills`** (`CommunicationSkill`, `ReminderSkill`) : toute la logique (recherche de contact,
+  relectures, confirmations, rappels, journal des médicaments) est testable sans Android. Android ne fournit que des
+  accès (`ContactsSource`, `SmsSender`, `PhoneActions`, `AlarmScheduler`…).
+- **L'IA ne fait jamais l'action** : ses fonctions `call_contact`, `send_sms`, `create_reminder`, `emergency_sos`… sont
+  traduites en intentions locales (`IntentTool`) qui passent par les mêmes questions et confirmations.
+- **Dialogue** (`Dialog`) : questions ouvertes (« Que voulez-vous dire à Paul ? ») et confirmations oui/non, avec expiration.
+- **Appels** : `TelecomManager.placeCall` (pas d'activité à ouvrir, donc pas bloqué en arrière-plan), décrocher/raccrocher
+  via `acceptRingingCall`/`endCall` (permission `ANSWER_PHONE_CALLS`) : l'app n'a pas besoin d'être l'application Téléphone.
+- **SMS** : lecture du fournisseur SMS et envoi par `SmsManager` avec attente de l'accusé d'envoi ; l'app n'est pas
+  l'application SMS par défaut (elle ne marque donc pas les SMS comme lus ; elle retient elle-même ce qui a été lu).
+- **Rappels, réveils et minuteurs gérés par l'app** (`AlarmManager.setAlarmClock`, fiable en veille profonde) plutôt que
+  par l'horloge système : l'annonce est parlée (« le minuteur des pâtes est terminé »), on peut répondre « c'est fait », et
+  ouvrir l'horloge système depuis l'arrière-plan serait bloqué par Android. Reprogrammés au redémarrage.
+- **SOS** : déroulé dans `core/safety/SosFlow` ; passé le délai d'annulation, l'envoi ne peut plus être interrompu
+  (`NonCancellable`) ; sans contact d'urgence, appel du 112.
+- **Compréhension des heures** (`core/time/FrenchTime`) : « dans un quart d'heure », « demain à 8 h », « tous les jours à 8 h
+  et à 20 h », « en semaine », « lundi à 14 h 30 ». Une heure ambiguë (« à 3 heures » dit à 14 h) est relue avant d'être enregistrée.
 
 ## 10. Données locales
 

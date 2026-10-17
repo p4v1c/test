@@ -4,8 +4,8 @@ Assistant vocal en français, utilisable entièrement à la voix, pensé pour un
 Le nom de l'assistant est personnalisable. Il répond aux commandes simples sans internet et utilise
 une intelligence artificielle (Gemini, Claude en secours) pour les questions libres.
 
-> État : **phases 1 et 2 terminées** (socle, mot d'activation et déclencheurs). Les appels, SMS, la vision, etc.
-> arrivent dans les phases suivantes. Ce README sera complété à la fin (guide à lire à voix haute, liste complète des commandes).
+> État : **phases 1 à 3 terminées** (socle ; mot d'activation et déclencheurs ; appels, SMS, rappels, SOS).
+> La vision, l'orientation, la météo, la musique, etc. arrivent dans les phases suivantes. Ce README sera complété à la fin (guide à lire à voix haute, liste complète des commandes).
 
 ## Comment appeler l'assistant (phase 2)
 
@@ -20,6 +20,30 @@ une intelligence artificielle (Gemini, Claude en secours) pour les questions lib
 
 Commandes liées : « apprends mon nom », « change ton nom en … » (suivi automatiquement de l'apprentissage),
 « n'écoute plus ton nom » / « réactive ton nom », « aide pour les façons de m'appeler ».
+
+## Commandes de la vie quotidienne (phase 3)
+
+Toutes les actions qui sortent du téléphone (appel, SMS, réponse) sont **relues puis confirmées par « oui »**.
+En cas de doute (deux « Paul »), l'assistant demande lequel ; il ne choisit jamais au hasard.
+
+| Domaine | Exemples |
+|---|---|
+| Appeler | « appelle mon fils », « appelle Paul Martin », « appelle Pierre à la maison », « appelle le numéro 1 », « appelle le 06 12 34 56 78 » |
+| Appels reçus | Il annonce « Appel de Paul Martin » (ou « numéro inconnu… méfiez-vous ») ; pour décrocher : dire le nom ou appuyer sur le bouton du casque ; « décroche », « raccroche », « mets le haut-parleur » ; pendant l'appel : volume bas gardé 1 s = raccrocher |
+| Journal | « qui m'a appelé ? », « rappelle-le » |
+| SMS | « lis mes messages », « lis mon dernier message », « envoie un message à Marie pour lui dire que j'arrive », « écris à Paul » (il demande quoi), « réponds » |
+| Notifications | « lis mes notifications » (Gmail, Meet…), « réponds » quand l'application le permet ; annonce automatique des nouveaux messages (réglable) |
+| Surnoms | « Pierre Dupont, c'est mon fils », puis « appelle mon fils » |
+| Réveil | « réveille-moi demain à 7 heures », « réveille-moi en semaine à 7 h 30 » |
+| Minuteurs | « minuteur de 10 minutes pour les pâtes », « combien de temps reste-t-il ? », « annule le minuteur » |
+| Rappels | « rappelle-moi d'appeler le médecin demain à 10 heures », « rappelle-moi dans 20 minutes de sortir le gâteau », « quels sont mes rappels ? », « supprime le rappel du médecin » |
+| Médicaments | « rappelle-moi de prendre mon Doliprane tous les jours à 8 heures et à 20 heures » ; au rappel : « c'est fait » ; « ai-je pris mon Doliprane ? » ; sans réponse, il redemande 20 minutes plus tard (2 fois) |
+| SOS | « au secours », « à l'aide », « je suis tombé », ou **volume haut gardé 3 s** : 10 secondes pour dire « stop », puis SMS avec la position à tous les contacts d'urgence et appel du premier (haut-parleur) |
+
+Automatique : alerte arnaque à la lecture d'un SMS ou d'une notification suspects (lien, faux colis, CPF, Ameli,
+« j'ai changé de numéro », demande d'argent ou de code) ; batterie faible (20, 10, 5 %), chargeur branché/débranché ;
+perte et retour d'internet ; « Tout va bien ? » chaque matin (option) avec SMS à un proche s'il ne répond pas ;
+un proche peut retrouver le téléphone en envoyant « où es-tu » + le mot secret (le téléphone sonne fort et répond avec sa position).
 
 ## Ce qui marche aujourd'hui (phase 1)
 
@@ -53,7 +77,10 @@ Commandes liées : « apprends mon nom », « change ton nom en … » (suivi au
 5. Toucher « Apprendre la prononciation du nom » et laisser **votre père** dire le nom 3 fois après les bips
    (c'est sa voix qui compte), puis parler normalement 15 secondes.
 6. Vérifier les ✔ : assistant par défaut (nécessaire pour l'écoute au démarrage et écran éteint),
-   boutons volume, nom appris.
+   boutons volume, nom appris, contacts d'urgence, lecture des notifications.
+7. Remplir la partie « proches » des réglages : prénom de votre père, **contacts d'urgence** (indispensable
+   pour le SOS), favoris, surnoms (« mon fils: Pierre Dupont »), heure du « tout va bien ? » (option),
+   mot secret pour retrouver le téléphone (option), façon d'annoncer les SMS.
 
 ### Choisir le nom
 
@@ -101,10 +128,29 @@ Mesures détaillées : [tools/wake/README.md](tools/wake/README.md).
 - [ ] Batterie : noter le pourcentage le matin et le soir sur une journée normale (comparer avec écoute désactivée)
 - [ ] « Change ton nom en … » → confirmation → apprentissage → le nouveau nom fonctionne, l'ancien non
 
+## Checklist de tests sur le vrai téléphone (phase 3)
+
+- [ ] « appelle mon fils » → relecture → « oui » → l'appel part ; « non » → rien ne se passe
+- [ ] Appel entrant d'un proche : nom annoncé ; dire le nom → décroché (haut-parleur si réglé) ; volume bas 1 s → raccroché
+- [ ] Appel d'un numéro inconnu : « numéro inconnu… méfiez-vous »
+- [ ] « qui m'a appelé ? » puis « rappelle-le »
+- [ ] SMS reçu : annonce selon le réglage ; « lis mes messages » ; « réponds » → dictée → relecture → envoi réel (vérifier côté destinataire)
+- [ ] SMS d'arnaque (se l'envoyer soi-même avec un lien et « colis ») → avertissement lu
+- [ ] Notification Gmail / Meet annoncée ; « lis mes notifications »
+- [ ] Réveil demain à une heure proche : sonne écran éteint, téléphone verrouillé ; « stop » l'arrête
+- [ ] Minuteur 1 minute « pour les pâtes » : annonce du nom du minuteur
+- [ ] Rappel de médicament : annonce, « c'est fait », puis « ai-je pris mon médicament ? » ; sans réponse : relance 20 min plus tard
+- [ ] Redémarrer le téléphone : les rappels sont toujours là (« quels sont mes rappels ? »)
+- [ ] SOS (prévenir les proches avant !) : « au secours » puis « stop » → rien n'est envoyé ; sans « stop » → SMS avec lien de carte reçu par tous, appel du premier
+- [ ] Volume haut gardé 3 s → SOS ; appui court → le volume monte normalement
+- [ ] « Tout va bien ? » à l'heure réglée ; sans réponse 3 fois → SMS au proche
+- [ ] Un proche envoie « où es-tu <mot secret> » → le téléphone sonne fort et répond avec la position
+- [ ] Batterie à 20 % : annonce ; brancher le chargeur : annonce
+
 ## Développement
 
 ```bash
-./gradlew :core:test :llm:test :app:testDebugUnitTest   # 80 tests (+ test d'intégration Vosk si le modèle est fourni)
+./gradlew :core:test :llm:test :app:testDebugUnitTest   # 121 tests (+ test d'intégration Vosk si le modèle est fourni)
 ./gradlew :app:assembleDebug
 ```
 

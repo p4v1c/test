@@ -6,6 +6,16 @@ Légende :
 - **Coût** : « 0 » = aucun appel IA ; sinon nombre approximatif de requêtes IA. Avec Gemini Flash-Lite gratuit (~500 req/jour) tout reste gratuit ; avec Claude Haiku 5.5 en secours, ~0,0003 $ par requête texte, ~0,001 $ avec image.
 - 💡 = idée ajoutée suite aux recherches (pas dans la demande initiale).
 
+## État d'avancement
+
+- Phase 1 (socle) ✅ · Phase 2 (mot d'activation, déclencheurs) ✅ · Phase 3 (communication, organisation, sécurité) ✅
+- Réalisé en phase 3 : appels (nom, surnom, favori, numéro, rappel du dernier), annonce des appels entrants et décrocher
+  à la voix ou au casque, journal d'appels, SMS (lecture, dictée, relecture, envoi vérifié, réponse), notifications
+  (lecture, annonce, réponse rapide), alerte arnaque, réveils, minuteurs nommés, rappels ponctuels et récurrents,
+  médicaments avec journal et relances, SOS (voix ou volume haut 3 s), alertes batterie et réseau, « tout va bien ? »
+  quotidien, téléphone retrouvé par SMS.
+- Pas encore fait : emails Gmail (IMAP, phase 6), agenda (phase 6), Google Meet (P2).
+
 ## Décisions validées (17 octobre 2026)
 
 - **Téléphone cible : un Google Pixel neuf** (Android récent, reconnaissance vocale française hors ligne de Google, pas de root). Le SmartVision actuel (clavier physique) n'est pas la cible. Les fonctions « bonus root » passent en option lointaine.
