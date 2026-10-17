@@ -189,7 +189,7 @@ class MediaServicesTest {
             dispatcher = object : okhttp3.mockwebserver.Dispatcher() {
                 override fun dispatch(request: okhttp3.mockwebserver.RecordedRequest) = when {
                     request.path!!.startsWith("/search.json") -> MockResponse().setBody(
-                        """[{"title":"Affaires sensibles","author":"France Inter","url":"https://radiofrance-podcast.net/podcast09/rss_13940.xml"}]""")
+                        """[{"title":"Affaires sensibles","author":"France Inter (podcast@radiofrance.com)","url":"https://radiofrance-podcast.net/podcast09/rss_13940.xml"}]""")
                     request.path!!.startsWith("/search") -> MockResponse().setBody(
                         """{"resultCount":1,"results":[{"collectionName":"Affaires sensibles","artistName":"France Inter"}]}""")
                     else -> MockResponse().setResponseCode(404)
@@ -201,6 +201,7 @@ class MediaServicesTest {
         val shows = Podcasts(searchBase = base, fallbackBase = base).search("affaires sensibles")
         assertEquals("https://radiofrance-podcast.net/podcast09/rss_13940.xml", shows.single().feedUrl)
         assertEquals("Affaires sensibles", shows.single().title)
+        assertEquals("France Inter", shows.single().author) // pas d'adresse mail lue à voix haute
         server.shutdown()
     }
 }

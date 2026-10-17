@@ -361,7 +361,8 @@ class Podcasts(
             ((parseJson(body) as? JsonArray).orEmpty()).mapNotNull { e ->
                 val o = e as? JsonObject ?: return@mapNotNull null
                 val feed = o.str("url")?.replaceFirst("http://", "https://") ?: return@mapNotNull null
-                fr.assistantvocal.core.media.PodcastShow(o.str("title") ?: return@mapNotNull null, o.str("author"), feed)
+                val author = o.str("author")?.replace(Regex("""\s*\(?[\w.+-]+@[\w.-]+\)?"""), "")?.trim()?.ifEmpty { null }
+                fr.assistantvocal.core.media.PodcastShow(o.str("title") ?: return@mapNotNull null, author, feed)
             }.distinctBy { it.feedUrl }.take(5)
 
         /** « 01:02:03 », « 45:10 » ou « 3600 » (secondes). */
