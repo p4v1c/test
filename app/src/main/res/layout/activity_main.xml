@@ -19,6 +19,16 @@
         android:textSize="56sp" />
 
     <Button
+        android:id="@+id/tutorial"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:minHeight="72dp"
+        android:text="@string/tutorial"
+        android:textAllCaps="false"
+        android:textSize="24sp" />
+
+    <Button
         android:id="@+id/settings"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

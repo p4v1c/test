@@ -49,6 +49,7 @@ class TaskRouter {
     private fun r(p: String) = Regex(p)
     private val info = InfoRouter()
     private val media = MediaRouter()
+    private val support = SupportRouter()
 
     private val sos = r("\\b(au secours|a l aide|aidez moi|aide moi vite|sos|je suis tombe|je suis tombee|je me suis fait mal|appelle les secours|j ai besoin d aide)\\b")
     private val reminder = r("^(?:rappelle moi|rappelles moi|fais moi penser a|n oublie pas de me rappeler|tu peux me rappeler) (.+)$")
@@ -103,6 +104,7 @@ class TaskRouter {
         if (k.isEmpty()) return null
 
         if (sos.containsMatchIn(k)) return Sos
+        support.route(utterance)?.let { return it }
         media.routeEarly(utterance)?.let { return it }
 
         reminder.find(k)?.let { m -> return CreateReminder(t.group(m, 1)!!) }

@@ -516,3 +516,62 @@ class MailAndLibraryTest {
         assertTrue(fr.assistantvocal.app.media.SafLibrary.decode(declared).contains("café"))
     }
 }
+
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34])
+class Phase7AppTest {
+    private lateinit var app: App
+
+    @Before fun setUp() {
+        app = ApplicationProvider.getApplicationContext()
+        shadowOf(app).grantPermissions(Manifest.permission.RECORD_AUDIO)
+    }
+
+    private fun start(action: String) = Robolectric.buildService(AssistantService::class.java, AssistantService.intent(app, action)).create().startCommand(0, 1)
+
+    @Test fun `le bouton Tutoriel lance la premiere lecon et ecoute la reponse`() {
+        val out = FakeOutput()
+        testGraph(app, FakeInput(Heard.Text("quelle heure est-il ?")), out)
+        start(AssistantService.ACTION_TUTORIAL)
+        awaitMain { out.spoken.size >= 2 }
+        assertTrue(out.spoken[0], out.spoken[0].startsWith("Bienvenue ! Je suis Orphée, votre assistant."))
+        assertTrue(out.spoken[1], out.spoken[1].startsWith("Bravo ! Il est 14 heures 30."))
+    }
+
+    @Test fun `est-ce que tout marche, avec les vrais controles du telephone`() {
+        val out = FakeOutput()
+        testGraph(app, FakeInput(Heard.Text("est-ce que tout marche ?")), out)
+        start(AssistantService.ACTION_LISTEN)
+        awaitMain { out.spoken.isNotEmpty() }
+        val r = out.spoken.last()
+        assertTrue(r, r.startsWith("Il y a ") && r.contains("l'intelligence artificielle : aucune clé") && r.contains("Le reste va bien : le micro"))
+    }
+
+    @Test fun `sauvegarde a la voix puis restauration depuis les reglages`() {
+        val out = FakeOutput()
+        val graph = testGraph(app, FakeInput(Heard.Text("sauvegarde mes réglages")), out)
+        graph.people.aliases = mapOf("mon fils" to "Pierre Dupont")
+        start(AssistantService.ACTION_LISTEN)
+        awaitMain { out.spoken.isNotEmpty() }
+        assertTrue(out.spoken.last(), out.spoken.last().startsWith("C'est sauvegardé."))
+        val file = fr.assistantvocal.app.support.Backups.dir(app).listFiles()!!.single { it.name.startsWith("sauvegarde-") }
+        assertTrue(file.readText().contains("\"people.aliases\""))
+
+        // On change tout, puis on restaure le fichier depuis l'écran des réglages.
+        graph.people.aliases = emptyMap()
+        graph.settings.name = "Autre"
+        val activity = Robolectric.buildActivity(SettingsActivity::class.java).setup().get()
+        val parsed = activity.readBackup(android.net.Uri.fromFile(file))!!
+        activity.restore(parsed)
+        assertEquals("Orphée", graph.settings.name)
+        assertEquals(mapOf("mon fils" to "Pierre Dupont"), graph.people.aliases)
+    }
+
+    @Test fun `l'ecran principal a un bouton Tutoriel`() {
+        testGraph(app)
+        val activity = Robolectric.buildActivity(MainActivity::class.java).setup().get()
+        activity.findViewById<Button>(R.id.tutorial).performClick()
+        val started = generateSequence { shadowOf(app).nextStartedService }.toList()
+        assertTrue(started.any { it.action == AssistantService.ACTION_TUTORIAL })
+    }
+}

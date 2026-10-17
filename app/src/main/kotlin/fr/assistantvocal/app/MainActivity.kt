@@ -22,6 +22,9 @@ class MainActivity : Activity() {
             contentDescription = getString(R.string.talk_description, name)
             setOnClickListener { talk() }
         }
+        findViewById<Button>(R.id.tutorial).setOnClickListener {
+            if (hasMic()) startForegroundService(AssistantService.intent(this, AssistantService.ACTION_TUTORIAL)) else requestNeededPermissions()
+        }
         findViewById<Button>(R.id.settings).setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
@@ -72,7 +75,8 @@ class MainActivity : Activity() {
     private fun welcome(): String {
         val s = App.graph(this).settings
         return "Bonjour, je suis ${s.name}. Pour me parler, dites « ${s.name} » et attendez le bip, " +
-            "ou appuyez sur le grand bouton au milieu de l'écran."
+            "ou appuyez sur le grand bouton au milieu de l'écran. Pour apprendre à m'utiliser, dites « tutoriel », " +
+            "ou appuyez sur le bouton Tutoriel, en bas de l'écran."
     }
 
     companion object {

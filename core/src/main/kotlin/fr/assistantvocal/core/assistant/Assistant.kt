@@ -91,7 +91,7 @@ class Assistant(
     private val device: DeviceStatus,
     private val llm: LlmProvider?,
     private val tools: ToolRegistry,
-    private val help: HelpCatalog = HelpCatalog.PHASE6,
+    private val help: HelpCatalog = HelpCatalog.PHASE7,
     private val router: LocalRouter = LocalRouter(),
     private val nowMillis: () -> Long = { System.currentTimeMillis() },
     /** Appels, SMS, rappels… (absents dans certains tests). */
@@ -117,6 +117,11 @@ class Assistant(
             else -> process(text, image, quality)
         }
         if (reply.speech.isNotBlank() && !isRepeat(reply)) lastSpeech = reply.speech
+        // Journal local des échanges (jamais envoyé), pour « signale un problème ».
+        val support = skills?.support
+        if (support != null && text.isNotEmpty() && reply.speech.isNotEmpty() && !text.contains("signale un probl", ignoreCase = true)) {
+            runCatching { support.journal.add(fr.assistantvocal.core.support.JournalEntry(nowMillis(), text.take(300), reply.speech.take(500))) }
+        }
         return reply
     }
 
@@ -280,6 +285,8 @@ class Assistant(
             ?: AssistantReply("Cette fonction n'est pas encore disponible.", Earcon.ERROR)
         is fr.assistantvocal.core.router.MailIntent -> skills?.mail?.handle(intent)
             ?: AssistantReply("Les mails ne sont pas disponibles.", Earcon.ERROR)
+        is fr.assistantvocal.core.router.SupportIntent -> skills?.support?.handle(intent)
+            ?: AssistantReply("Cette fonction n'est pas encore disponible.", Earcon.ERROR)
         is fr.assistantvocal.core.router.InfoIntent -> skills?.info?.handle(intent)
             ?: AssistantReply("Cette fonction n'est pas encore disponible.", Earcon.ERROR)
         is CallContact, is CallNumber, is CallFavorite, CallBack, AnswerCall, HangUp, is Speaker, MissedCalls,

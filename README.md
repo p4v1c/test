@@ -2,142 +2,20 @@
 
 Assistant vocal en français, utilisable entièrement à la voix, pensé pour une personne aveugle.
 Le nom de l'assistant est personnalisable. Il répond aux commandes simples sans internet et utilise
-une intelligence artificielle (Gemini, Claude en secours) pour les questions libres.
+une intelligence artificielle (Gemini, Claude en secours) pour les questions libres. Toute action qui
+sort du téléphone (appel, SMS, mail, rendez-vous, alerte) est **relue puis confirmée par « oui »**.
 
-> État : **phases 1 à 3 terminées** (socle ; mot d'activation et déclencheurs ; appels, SMS, rappels, SOS).
-> La vision, l'orientation, la météo, la musique, etc. arrivent dans les phases suivantes. Ce README sera complété à la fin (guide à lire à voix haute, liste complète des commandes).
+> État : **phases 1 à 7 terminées** — socle ; mot d'activation ; appels, SMS, rappels, SOS ; caméra ;
+> orientation, météo, infos ; lecteur façon Victor, mémos, agenda, mails ; tutoriel, sauvegarde, diagnostic.
+> Tout est testé automatiquement (simulations) ; les essais sur le vrai Pixel restent à faire (checklists en fin de page).
 
-## Comment appeler l'assistant (phase 2)
-
-| Déclencheur | Comment | Remarque |
-|---|---|---|
-| **Son nom** | Dire « Orphée » (le nom choisi), attendre le bip, puis parler | Hors ligne, rien n'est envoyé sur internet. À apprendre une fois : « apprends mon nom » |
-| Bouton du casque ou de l'enceinte | Un appui sur lecture/pause | Pendant qu'il parle : l'interrompt |
-| Bouton « assistant » d'un casque Bluetooth | Appui long (selon le casque) | Passe par Android |
-| Bouton volume bas | Garder appuyé 1 seconde | Un appui court baisse le volume comme d'habitude ; pendant qu'il parle, n'importe quel bouton volume l'interrompt |
-| Geste assistant / appui long sur le bouton d'accueil | Selon le téléphone | Une fois l'app « assistant par défaut » |
-| Écran | Grand bouton « Parler », ou « Parler » dans la notification | Compatible TalkBack |
-
-Commandes liées : « apprends mon nom », « change ton nom en … » (suivi automatiquement de l'apprentissage),
-« n'écoute plus ton nom » / « réactive ton nom », « aide pour les façons de m'appeler ».
-
-## Commandes de la vie quotidienne (phase 3)
-
-Toutes les actions qui sortent du téléphone (appel, SMS, réponse) sont **relues puis confirmées par « oui »**.
-En cas de doute (deux « Paul »), l'assistant demande lequel ; il ne choisit jamais au hasard.
-
-| Domaine | Exemples |
-|---|---|
-| Appeler | « appelle mon fils », « appelle Paul Martin », « appelle Pierre à la maison », « appelle le numéro 1 », « appelle le 06 12 34 56 78 » |
-| Appels reçus | Il annonce « Appel de Paul Martin » (ou « numéro inconnu… méfiez-vous ») ; pour décrocher : dire le nom ou appuyer sur le bouton du casque ; « décroche », « raccroche », « mets le haut-parleur » ; pendant l'appel : volume bas gardé 1 s = raccrocher |
-| Journal | « qui m'a appelé ? », « rappelle-le » |
-| SMS | « lis mes messages », « lis mon dernier message », « envoie un message à Marie pour lui dire que j'arrive », « écris à Paul » (il demande quoi), « réponds » |
-| Notifications | « lis mes notifications » (Gmail, Meet…), « réponds » quand l'application le permet ; annonce automatique des nouveaux messages (réglable) |
-| Surnoms | « Pierre Dupont, c'est mon fils », puis « appelle mon fils » |
-| Réveil | « réveille-moi demain à 7 heures », « réveille-moi en semaine à 7 h 30 » |
-| Minuteurs | « minuteur de 10 minutes pour les pâtes », « combien de temps reste-t-il ? », « annule le minuteur » |
-| Rappels | « rappelle-moi d'appeler le médecin demain à 10 heures », « rappelle-moi dans 20 minutes de sortir le gâteau », « quels sont mes rappels ? », « supprime le rappel du médecin » |
-| Médicaments | « rappelle-moi de prendre mon Doliprane tous les jours à 8 heures et à 20 heures » ; au rappel : « c'est fait » ; « ai-je pris mon Doliprane ? » ; sans réponse, il redemande 20 minutes plus tard (2 fois) |
-| SOS | « au secours », « à l'aide », « je suis tombé », ou **volume haut gardé 3 s** : 10 secondes pour dire « stop », puis SMS avec la position à tous les contacts d'urgence et appel du premier (haut-parleur) |
-
-Automatique : alerte arnaque à la lecture d'un SMS ou d'une notification suspects (lien, faux colis, CPF, Ameli,
-« j'ai changé de numéro », demande d'argent ou de code) ; batterie faible (20, 10, 5 %), chargeur branché/débranché ;
-perte et retour d'internet ; « Tout va bien ? » chaque matin (option) avec SMS à un proche s'il ne répond pas ;
-un proche peut retrouver le téléphone en envoyant « où es-tu » + le mot secret (le téléphone sonne fort et répond avec sa position).
-
-## Caméra : lire, reconnaître, décrire (phase 4)
-
-Tenir le téléphone **à plat ou droit, caméra arrière vers l'objet, à 20-30 cm**. L'assistant guide à la voix
-(« le texte est coupé à droite… », « rapprochez… », « c'est bon, ne bougez plus ») avec un petit bip ;
-il allume la lampe tout seul s'il fait sombre et l'éteint toujours à la fin. Dire « stop » pour arrêter.
-
-| Domaine | Exemples | Internet ? |
-|---|---|---|
-| Lire un texte | « lis ce courrier », « qu'est-ce qui est écrit ? », « lis cette étiquette » | Non |
-| Document de plusieurs pages | « page suivante », puis « relis », « relis le montant », « quelle est la date limite ? » | Non |
-| Comprendre un courrier | « c'est quoi cette lettre ? », « que dois-je faire ? » (seul le texte lu est envoyé à l'IA, pas la photo) | Oui |
-| Décrire | « qu'est-ce qu'il y a devant moi ? », « qu'est-ce que je tiens ? » | Oui |
-| Billets | « quel billet ? » (chiffre + couleur, sur le téléphone) | Non |
-| Couleurs | « quelle couleur ? », « est-ce que ça va ensemble ? » (2 photos) | Non / Oui |
-| Lumière | « détecteur de lumière » : son aigu = lumière, grave = noir ; « la lampe est allumée ? » | Non |
-| Produits | « c'est quoi ce produit ? » (code-barres → nom, allergènes, Nutri-Score), « c'est périmé ? » | Oui (Open Food Facts) / Non |
-| Médicaments | « c'est quoi ce médicament ? » : code DataMatrix → nom, dosage, boîte, date de péremption, lot (base publique incluse dans l'app) ; sinon lecture de la boîte. Toujours : « en cas de doute, demandez au pharmacien » | Non |
-| Objets | « où sont mes clés ? » (indique gauche/droite/devant) | Oui |
-| Lookout | « ouvre Lookout » (application Google gratuite, très bonne pour les billets et le mode texte continu) | — |
-
-
-
-## Orientation, météo, infos, recherche (phase 5)
-
-| Domaine | Exemples | Internet ? |
-|---|---|---|
-| Où suis-je | « où suis-je ? », « quelle est mon adresse ? » → « Vous êtes près du 12 rue des Lilas, à Saint-Marcel » | Oui (sans internet : seulement « vous êtes à la maison ») |
-| Lieux proches | « où est la pharmacie la plus proche ? », « y a-t-il une boulangerie près d'ici ? », « un distributeur ? » : nom, distance, direction, téléphone ; puis « oui » pour être guidé | Oui |
-| Lieux à soi | « enregistre ici comme maison » (confirmé), « à quelle distance est la maison ? », « où est la maison ? », « quels sont mes lieux ? », « oublie le lieu … » | Non |
-| Guidage à pied | « emmène-moi à la maison », « guide-moi jusqu'à la pharmacie », « emmène-moi au 8 rue de la Paix à Valence » → Google Maps en mode piéton | Oui |
-| Partager sa position | « envoie ma position à mon fils », « dis à Paul où je suis » → SMS avec l'adresse et un lien de carte, après « oui » | Non (adresse si internet) |
-| Météo | « quel temps fait-il ? », « va-t-il pleuvoir demain ? », « la météo du week-end », « la météo de la semaine », « météo à Lyon », « il fait froid dehors ? » (conseils : parapluie, verglas, chaleur) | Oui |
-| Actualités | « les infos », « les infos sport / santé / monde / économie / régionales », « la suite », « lis le deuxième », « lis l'article » (résumé) | Oui |
-| Recherche | « cherche sur internet les horaires de la déchetterie », « que dit Wikipédia sur … » | Oui |
-| Calculs | « combien font 12 fois 7 ? », « 15 pour cent de 80 », « racine carrée de 81 », « 100 euros en francs » | Non |
-
-La direction est donnée **en heures d'horloge** (« à 3 heures, sur votre droite ») si la boussole du téléphone répond,
-téléphone tenu devant soi ; sinon en points cardinaux (« au nord-est »). Les distances sont à vol d'oiseau.
-
-## Livres, radio, musique, mémos, agenda, mails (phase 6)
-
-Le lecteur reprend les habitudes du **Victor Reader Stream** : mêmes étagères, livres DAISY et MP3, reprise
-automatique de chaque livre, chapitres, pages, sauts dans le temps, signets numérotés, « où j'en suis »,
-vitesse, minuterie de sommeil, notes vocales. Quand on appelle l'assistant, la lecture se met en pause, puis reprend
-après la réponse (sauf « pause » ou « stop »). Débrancher le casque met aussi en pause.
-
-| Domaine | Exemples |
-|---|---|
-| Bibliothèque | « quels livres ai-je ? », « lis le livre Le Petit Prince », « reprends mon livre », « continue » |
-| Navigation | « chapitre suivant / précédent », « section suivante », « va au chapitre 5 », « va à la page 42 », « avance de 5 minutes », « recule de 30 secondes », « recule un peu », « au début du chapitre », « au début du livre » |
-| Où j'en suis | « où j'en suis ? » → titre, chapitre, page, pourcentage écouté, temps restant |
-| Signets | « pose un signet » (numérotés 1, 2, 3…), « va au signet 2 », « mes signets », « supprime le signet 2 », « supprime tous les signets » (confirmé) |
-| Vitesse et sommeil | « lis plus vite / moins vite », « vitesse normale », « arrête la lecture dans 30 minutes », « annule la minuterie de sommeil » |
-| Radio | « mets France Inter », « mets la radio » (dernière écoutée), « mets RTL », « mets France Bleu Drôme Ardèche », « radio suivante », « ajoute cette radio à mes favoris », « mes radios » |
-| Podcasts | « abonne-moi au podcast Affaires sensibles » (confirmé), « mes podcasts », « écoute le podcast Affaires sensibles » (reprend l'épisode commencé), « écoute le dernier épisode de … », « épisode suivant » |
-| Musique | « mets de la musique » (au hasard), « mets de la musique de Brassens » (fichiers du téléphone, sinon YouTube Music), « suivant », « pause » ; commande aussi la musique d'une autre application |
-| Mémos vocaux | « enregistre un mémo » → bip, parler, il s'arrête au silence ; « écoute mes mémos » (le plus récent d'abord), « mémo suivant », « supprime ce mémo » (confirmé) |
-| Notes écrites | « note que le code du portail est 1 2 3 4 », « lis mes notes », « supprime la note 2 » |
-| Liste de courses | « ajoute du pain et du lait à la liste », « il faut acheter des œufs », « lis ma liste », « enlève le pain de la liste », « vide la liste » (confirmé) |
-| Agenda | « qu'est-ce que j'ai demain ? », « mes rendez-vous de la semaine », « ajoute un rendez-vous chez le dentiste mardi à 14 heures » (confirmé) — les rappels du jour sont dits aussi |
-| Point du jour | « fais-moi le point » : date, heure, météo, rendez-vous et rappels du jour, SMS et mails non lus, liste de courses |
-| Mails (Gmail) | « lis mes mails », « lis le premier », « résume le mail », « réponds » (relu et confirmé), « écris un mail à Paul pour lui dire que … » ; alerte si le mail ressemble à une arnaque |
-
-### Mettre les livres du Victor sur le téléphone
-
-1. Retirer la carte SD du Victor et la brancher sur un ordinateur (ou un lecteur de carte USB-C branché au Pixel).
-2. Brancher le Pixel à l'ordinateur en USB, choisir « Transfert de fichiers » sur le téléphone.
-3. Créer un dossier `Victor` sur le téléphone et y copier les dossiers de la carte : `$VRDTB` (livres DAISY),
-   `$VROtherBooks` (livres audio), `$VRMusic`, `$VRPodcasts`, `$VRNotes`. Un simple dossier de livres
-   (un sous-dossier par livre) marche aussi.
-4. Dans l'app : **Réglages → Choisir le dossier des livres** → ouvrir `Victor` → « Utiliser ce dossier » → « Autoriser ».
-5. Dire « quels livres ai-je ? ».
-
-Les livres d'Éole (AVH) téléchargés au format DAISY se copient de la même façon. Pas encore pris en charge : livres en texte
-seul (étagère Texte du Victor), Audible, et les signets déjà posés sur le Victor (ils restent sur le Victor).
-
-### Brancher Gmail (lecture et envoi de mails)
-
-1. Sur le compte Google de votre père (sur un ordinateur) : **Gérer le compte → Sécurité → Validation en deux étapes** (à activer si besoin).
-2. Toujours dans Sécurité : **Mots de passe des applications** → nom « Assistant » → Créer → noter les 16 lettres.
-3. Dans l'app : **Réglages** → adresse Gmail + ce mot de passe → Enregistrer. Il est stocké chiffré sur le téléphone.
-
-## Ce qui marche aujourd'hui (phase 1)
-
-- Un seul gros bouton « Parler » (compatible TalkBack), et un bouton « Parler » dans la notification.
-- Commandes sans IA ni internet : heure, date, batterie, internet, « répète », « stop », « aide »,
-  « parle plus vite / moins vite », « parle plus fort / moins fort », « sois plus bref / donne plus de détails »,
-  « change ton nom en … » (avec confirmation), « active / quitte le mode privé », « qui es-tu ? ».
-- Questions libres envoyées à Gemini (`gemini-3.5-flash-lite` par défaut), avec bascule automatique
-  et annoncée vers Claude (`claude-haiku-5-5`) en cas de quota épuisé ou de panne.
-- Toute action sensible demandée par l'IA est relue et doit être confirmée par « oui ».
-- Sons distincts (écoute, réflexion, succès, erreur, question, annulé) et vibrations.
-- Compteur de requêtes par jour, avec annonce à 80 % de la limite.
+Sommaire : [Installation](#installation-sur-le-téléphone-google-pixel) ·
+[Premiers pas](#premiers-pas) · [Appeler l'assistant](#comment-appeler-lassistant) ·
+[Commandes de base](#commandes-de-base-sans-internet) · [Appels, SMS, rappels](#appels-sms-rappels-médicaments-secours) ·
+[Caméra](#caméra--lire-reconnaître-décrire) · [Orientation, météo](#orientation-météo-infos-recherche) ·
+[Livres, radio, agenda, mails](#livres-comme-sur-le-victor-radio-musique-mémos-agenda-mails) ·
+[Sauvegarde](#sauvegarde-et-changement-de-téléphone) · [Dépannage](#dépannage) · [Vie privée](#vie-privée) ·
+[Tests sur le téléphone](#tests-sur-le-vrai-téléphone) · [Développement](#développement)
 
 ## Installation sur le téléphone (Google Pixel)
 
@@ -181,16 +59,191 @@ Mesures détaillées : [tools/wake/README.md](tools/wake/README.md).
 
 <https://console.anthropic.com> → API Keys. Environ 0,0003 $ par question avec Claude Haiku.
 
+## Premiers pas
+
+1. Au premier lancement, l'assistant se présente et propose le **tutoriel** : huit petites leçons à la voix
+   (poser une question, « stop » et « répète », appeler, messages, livres, rappels, secours, aide).
+   Pendant le tutoriel, on essaie les vraies phrases mais **rien n'est déclenché** (aucun appel, aucun SMS).
+2. Pour le lancer ou le refaire : dire « tutoriel », ou appuyer sur le bouton **Tutoriel** de l'écran.
+   « Arrête le tutoriel » l'interrompt, « reprends le tutoriel » repart à la même leçon.
+3. Ensuite : « qu'est-ce que tu sais faire ? » donne la liste des domaines, « aide pour les livres » (ou les appels,
+   la caméra, l'orientation…) donne des exemples.
+4. « Est-ce que tout marche ? » : l'assistant vérifie lui-même le micro, l'écoute du nom, l'IA, internet,
+   la position, les contacts d'urgence, la veille, le rôle d'assistant, puis les options (livres, mails, agenda…),
+   et dit ce qu'il faut régler.
+
+## Comment appeler l'assistant
+
+| Déclencheur | Comment | Remarque |
+|---|---|---|
+| **Son nom** | Dire « Orphée » (le nom choisi), attendre le bip, puis parler | Hors ligne, rien n'est envoyé sur internet. À apprendre une fois : « apprends mon nom » |
+| Bouton du casque ou de l'enceinte | Un appui sur lecture/pause | Pendant qu'il parle : l'interrompt |
+| Bouton « assistant » d'un casque Bluetooth | Appui long (selon le casque) | Passe par Android |
+| Bouton volume bas | Garder appuyé 1 seconde | Un appui court baisse le volume comme d'habitude ; pendant qu'il parle, n'importe quel bouton volume l'interrompt |
+| Geste assistant / appui long sur le bouton d'accueil | Selon le téléphone | Une fois l'app « assistant par défaut » |
+| Écran | Grand bouton « Parler », ou « Parler » dans la notification | Compatible TalkBack |
+
+Commandes liées : « apprends mon nom », « change ton nom en … » (suivi automatiquement de l'apprentissage),
+« n'écoute plus ton nom » / « réactive ton nom », « aide pour les façons de m'appeler ».
+
+## Commandes de base (sans internet)
+
+- Un seul gros bouton « Parler » (compatible TalkBack), et un bouton « Parler » dans la notification.
+- Commandes sans IA ni internet : heure, date, batterie, internet, « répète », « stop », « aide »,
+  « parle plus vite / moins vite », « parle plus fort / moins fort », « sois plus bref / donne plus de détails »,
+  « change ton nom en … » (avec confirmation), « active / quitte le mode privé », « qui es-tu ? ».
+- Questions libres envoyées à Gemini (`gemini-3.5-flash-lite` par défaut), avec bascule automatique
+  et annoncée vers Claude (`claude-haiku-5-5`) en cas de quota épuisé ou de panne.
+- Toute action sensible demandée par l'IA est relue et doit être confirmée par « oui ».
+- Sons distincts (écoute, réflexion, succès, erreur, question, annulé) et vibrations.
+- Compteur de requêtes par jour, avec annonce à 80 % de la limite.
+
+## Appels, SMS, rappels, médicaments, secours
+
+Toutes les actions qui sortent du téléphone (appel, SMS, réponse) sont **relues puis confirmées par « oui »**.
+En cas de doute (deux « Paul »), l'assistant demande lequel ; il ne choisit jamais au hasard.
+
+| Domaine | Exemples |
+|---|---|
+| Appeler | « appelle mon fils », « appelle Paul Martin », « appelle Pierre à la maison », « appelle le numéro 1 », « appelle le 06 12 34 56 78 » |
+| Appels reçus | Il annonce « Appel de Paul Martin » (ou « numéro inconnu… méfiez-vous ») ; pour décrocher : dire le nom ou appuyer sur le bouton du casque ; « décroche », « raccroche », « mets le haut-parleur » ; pendant l'appel : volume bas gardé 1 s = raccrocher |
+| Journal | « qui m'a appelé ? », « rappelle-le » |
+| SMS | « lis mes messages », « lis mon dernier message », « envoie un message à Marie pour lui dire que j'arrive », « écris à Paul » (il demande quoi), « réponds » |
+| Notifications | « lis mes notifications » (Gmail, Meet…), « réponds » quand l'application le permet ; annonce automatique des nouveaux messages (réglable) |
+| Surnoms | « Pierre Dupont, c'est mon fils », puis « appelle mon fils » |
+| Réveil | « réveille-moi demain à 7 heures », « réveille-moi en semaine à 7 h 30 » |
+| Minuteurs | « minuteur de 10 minutes pour les pâtes », « combien de temps reste-t-il ? », « annule le minuteur » |
+| Rappels | « rappelle-moi d'appeler le médecin demain à 10 heures », « rappelle-moi dans 20 minutes de sortir le gâteau », « quels sont mes rappels ? », « supprime le rappel du médecin » |
+| Médicaments | « rappelle-moi de prendre mon Doliprane tous les jours à 8 heures et à 20 heures » ; au rappel : « c'est fait » ; « ai-je pris mon Doliprane ? » ; sans réponse, il redemande 20 minutes plus tard (2 fois) |
+| SOS | « au secours », « à l'aide », « je suis tombé », ou **volume haut gardé 3 s** : 10 secondes pour dire « stop », puis SMS avec la position à tous les contacts d'urgence et appel du premier (haut-parleur) |
+
+Automatique : alerte arnaque à la lecture d'un SMS ou d'une notification suspects (lien, faux colis, CPF, Ameli,
+« j'ai changé de numéro », demande d'argent ou de code) ; batterie faible (20, 10, 5 %), chargeur branché/débranché ;
+perte et retour d'internet ; « Tout va bien ? » chaque matin (option) avec SMS à un proche s'il ne répond pas ;
+un proche peut retrouver le téléphone en envoyant « où es-tu » + le mot secret (le téléphone sonne fort et répond avec sa position).
+
+## Caméra : lire, reconnaître, décrire
+
+Tenir le téléphone **à plat ou droit, caméra arrière vers l'objet, à 20-30 cm**. L'assistant guide à la voix
+(« le texte est coupé à droite… », « rapprochez… », « c'est bon, ne bougez plus ») avec un petit bip ;
+il allume la lampe tout seul s'il fait sombre et l'éteint toujours à la fin. Dire « stop » pour arrêter.
+
+| Domaine | Exemples | Internet ? |
+|---|---|---|
+| Lire un texte | « lis ce courrier », « qu'est-ce qui est écrit ? », « lis cette étiquette » | Non |
+| Document de plusieurs pages | « page suivante », puis « relis », « relis le montant », « quelle est la date limite ? » | Non |
+| Comprendre un courrier | « c'est quoi cette lettre ? », « que dois-je faire ? » (seul le texte lu est envoyé à l'IA, pas la photo) | Oui |
+| Décrire | « qu'est-ce qu'il y a devant moi ? », « qu'est-ce que je tiens ? » | Oui |
+| Billets | « quel billet ? » (chiffre + couleur, sur le téléphone) | Non |
+| Couleurs | « quelle couleur ? », « est-ce que ça va ensemble ? » (2 photos) | Non / Oui |
+| Lumière | « détecteur de lumière » : son aigu = lumière, grave = noir ; « la lampe est allumée ? » | Non |
+| Produits | « c'est quoi ce produit ? » (code-barres → nom, allergènes, Nutri-Score), « c'est périmé ? » | Oui (Open Food Facts) / Non |
+| Médicaments | « c'est quoi ce médicament ? » : code DataMatrix → nom, dosage, boîte, date de péremption, lot (base publique incluse dans l'app) ; sinon lecture de la boîte. Toujours : « en cas de doute, demandez au pharmacien » | Non |
+| Objets | « où sont mes clés ? » (indique gauche/droite/devant) | Oui |
+| Lookout | « ouvre Lookout » (application Google gratuite, très bonne pour les billets et le mode texte continu) | — |
+
+
+
+## Orientation, météo, infos, recherche
+
+| Domaine | Exemples | Internet ? |
+|---|---|---|
+| Où suis-je | « où suis-je ? », « quelle est mon adresse ? » → « Vous êtes près du 12 rue des Lilas, à Saint-Marcel » | Oui (sans internet : seulement « vous êtes à la maison ») |
+| Lieux proches | « où est la pharmacie la plus proche ? », « y a-t-il une boulangerie près d'ici ? », « un distributeur ? » : nom, distance, direction, téléphone ; puis « oui » pour être guidé | Oui |
+| Lieux à soi | « enregistre ici comme maison » (confirmé), « à quelle distance est la maison ? », « où est la maison ? », « quels sont mes lieux ? », « oublie le lieu … » | Non |
+| Guidage à pied | « emmène-moi à la maison », « guide-moi jusqu'à la pharmacie », « emmène-moi au 8 rue de la Paix à Valence » → Google Maps en mode piéton | Oui |
+| Partager sa position | « envoie ma position à mon fils », « dis à Paul où je suis » → SMS avec l'adresse et un lien de carte, après « oui » | Non (adresse si internet) |
+| Météo | « quel temps fait-il ? », « va-t-il pleuvoir demain ? », « la météo du week-end », « la météo de la semaine », « météo à Lyon », « il fait froid dehors ? » (conseils : parapluie, verglas, chaleur) | Oui |
+| Actualités | « les infos », « les infos sport / santé / monde / économie / régionales », « la suite », « lis le deuxième », « lis l'article » (résumé) | Oui |
+| Recherche | « cherche sur internet les horaires de la déchetterie », « que dit Wikipédia sur … » | Oui |
+| Calculs | « combien font 12 fois 7 ? », « 15 pour cent de 80 », « racine carrée de 81 », « 100 euros en francs » | Non |
+
+La direction est donnée **en heures d'horloge** (« à 3 heures, sur votre droite ») si la boussole du téléphone répond,
+téléphone tenu devant soi ; sinon en points cardinaux (« au nord-est »). Les distances sont à vol d'oiseau.
+
+## Livres (comme sur le Victor), radio, musique, mémos, agenda, mails
+
+Le lecteur reprend les habitudes du **Victor Reader Stream** : mêmes étagères, livres DAISY et MP3, reprise
+automatique de chaque livre, chapitres, pages, sauts dans le temps, signets numérotés, « où j'en suis »,
+vitesse, minuterie de sommeil, notes vocales. Quand on appelle l'assistant, la lecture se met en pause, puis reprend
+après la réponse (sauf « pause » ou « stop »). Débrancher le casque met aussi en pause.
+
+| Domaine | Exemples |
+|---|---|
+| Bibliothèque | « quels livres ai-je ? », « lis le livre Le Petit Prince », « reprends mon livre », « continue » |
+| Navigation | « chapitre suivant / précédent », « section suivante », « va au chapitre 5 », « va à la page 42 », « avance de 5 minutes », « recule de 30 secondes », « recule un peu », « au début du chapitre », « au début du livre » |
+| Où j'en suis | « où j'en suis ? » → titre, chapitre, page, pourcentage écouté, temps restant |
+| Signets | « pose un signet » (numérotés 1, 2, 3…), « va au signet 2 », « mes signets », « supprime le signet 2 », « supprime tous les signets » (confirmé) |
+| Vitesse et sommeil | « lis plus vite / moins vite », « vitesse normale », « arrête la lecture dans 30 minutes », « annule la minuterie de sommeil » |
+| Radio | « mets France Inter », « mets la radio » (dernière écoutée), « mets RTL », « mets France Bleu Drôme Ardèche », « radio suivante », « ajoute cette radio à mes favoris », « mes radios » |
+| Podcasts | « abonne-moi au podcast Affaires sensibles » (confirmé), « mes podcasts », « écoute le podcast Affaires sensibles » (reprend l'épisode commencé), « écoute le dernier épisode de … », « épisode suivant » |
+| Musique | « mets de la musique » (au hasard), « mets de la musique de Brassens » (fichiers du téléphone, sinon YouTube Music), « suivant », « pause » ; commande aussi la musique d'une autre application |
+| Mémos vocaux | « enregistre un mémo » → bip, parler, il s'arrête au silence ; « écoute mes mémos » (le plus récent d'abord), « mémo suivant », « supprime ce mémo » (confirmé) |
+| Notes écrites | « note que le code du portail est 1 2 3 4 », « lis mes notes », « supprime la note 2 » |
+| Liste de courses | « ajoute du pain et du lait à la liste », « il faut acheter des œufs », « lis ma liste », « enlève le pain de la liste », « vide la liste » (confirmé) |
+| Agenda | « qu'est-ce que j'ai demain ? », « mes rendez-vous de la semaine », « ajoute un rendez-vous chez le dentiste mardi à 14 heures » (confirmé) — les rappels du jour sont dits aussi |
+| Point du jour | « fais-moi le point » : date, heure, météo, rendez-vous et rappels du jour, SMS et mails non lus, liste de courses |
+| Mails (Gmail) | « lis mes mails », « lis le premier », « résume le mail », « réponds » (relu et confirmé), « écris un mail à Paul pour lui dire que … » ; alerte si le mail ressemble à une arnaque |
+
+### Mettre les livres du Victor sur le téléphone
+
+1. Retirer la carte SD du Victor et la brancher sur un ordinateur (ou un lecteur de carte USB-C branché au Pixel).
+2. Brancher le Pixel à l'ordinateur en USB, choisir « Transfert de fichiers » sur le téléphone.
+3. Créer un dossier `Victor` sur le téléphone et y copier les dossiers de la carte : `$VRDTB` (livres DAISY),
+   `$VROtherBooks` (livres audio), `$VRMusic`, `$VRPodcasts`, `$VRNotes`. Un simple dossier de livres
+   (un sous-dossier par livre) marche aussi.
+4. Dans l'app : **Réglages → Choisir le dossier des livres** → ouvrir `Victor` → « Utiliser ce dossier » → « Autoriser ».
+5. Dire « quels livres ai-je ? ».
+
+Les livres d'Éole (AVH) téléchargés au format DAISY se copient de la même façon. Pas encore pris en charge : livres en texte
+seul (étagère Texte du Victor), Audible, et les signets déjà posés sur le Victor (ils restent sur le Victor).
+
+### Brancher Gmail (lecture et envoi de mails)
+
+1. Sur le compte Google de votre père (sur un ordinateur) : **Gérer le compte → Sécurité → Validation en deux étapes** (à activer si besoin).
+2. Toujours dans Sécurité : **Mots de passe des applications** → nom « Assistant » → Créer → noter les 16 lettres.
+3. Dans l'app : **Réglages** → adresse Gmail + ce mot de passe → Enregistrer. Il est stocké chiffré sur le téléphone.
+
+## Sauvegarde et changement de téléphone
+
+- **Automatique** : une fois par semaine, l'app enregistre une sauvegarde dans
+  `Android/data/fr.assistantvocal.app/files/Sauvegardes/` (les 8 dernières sont gardées), visible en branchant le téléphone à un ordinateur.
+- **À la voix** : « sauvegarde mes réglages ».
+- **Réglages → Enregistrer une sauvegarde…** : choisir où mettre le fichier (Drive, Téléchargements…).
+- **Réglages → Restaurer une sauvegarde…** : l'app résume ce que contient le fichier (rappels, lieux, surnoms,
+  signets, podcasts, notes…) et demande confirmation avant de remplacer quoi que ce soit.
+- Contenu : tous les réglages et données (nom, voix, proches, rappels, médicaments, lieux, positions et signets des livres,
+  radios, podcasts, notes, liste de courses). **Jamais** : clés IA, clé Tavily, mot de passe Gmail (à ressaisir), ni le
+  dossier des livres (à rechoisir), ni les mémos vocaux (fichiers audio à copier à part si besoin).
+- Le fichier contient des informations personnelles (surnoms, notes, lieux) : le garder en lieu sûr.
+
+## Dépannage
+
+| Problème | À essayer |
+|---|---|
+| Il ne réagit plus à son nom | « est-ce que tout marche ? » ; « réactive ton nom » ; « apprends mon nom » ; vérifier que l'app est retirée de l'optimisation de batterie |
+| Il se déclenche tout seul | « apprends mon nom » (l'écoute devient plus stricte si besoin), ou changer pour un nom plus rare |
+| « Je n'ai pas compris » trop souvent | Parler après le bip, plus près du téléphone ; « sois plus bref » pour des réponses plus courtes |
+| Plus de réponses aux questions | Quota gratuit du jour atteint (il le dit) : les commandes simples marchent toujours ; ajouter une clé Claude en secours |
+| Un livre ne s'ouvre pas | « quels livres ai-je ? » ; rechoisir le dossier des livres dans les réglages ; les livres en texte seul ne sont pas encore lus |
+| Les mails ne marchent pas | Recréer le mot de passe d'application Google et le ressaisir |
+| Quelque chose s'est mal passé | Dire « **signale un problème** » juste après : l'échange est noté ; un proche ouvre Réglages → **Partager le journal** et l'envoie par mail |
+
 ## Vie privée
 
 - L'écoute du nom se fait entièrement sur le téléphone (Vosk) : aucun son n'est envoyé sur internet.
   Rien ne part tant que le nom n'a pas été dit (ou qu'un bouton n'a pas été appuyé).
-- Seule la phrase reconnue (et plus tard la photo, pour les fonctions de vision) part vers Google ou Anthropic.
+- Seuls partent vers Google ou Anthropic : la phrase reconnue quand l'IA est nécessaire, le texte lu d'un courrier à expliquer,
+  ou une photo pour décrire une scène. Adresse, météo, actualités et radios passent par des services publics, sans IA.
 - **Le palier gratuit de Gemini autorise Google à utiliser les données pour améliorer ses produits.**
 - « Active le mode privé » : plus rien n'est envoyé à l'IA, seules les commandes simples fonctionnent.
 - Les clés API sont chiffrées sur le téléphone (Android Keystore).
+- Le journal des derniers échanges (pour « signale un problème ») reste sur le téléphone ; il ne part que si un proche le partage.
+- Les sauvegardes ne contiennent ni clés ni mots de passe.
 
-## Checklist de tests sur le vrai téléphone (phase 2)
+## Tests sur le vrai téléphone
+
+### Phase 2
 
 À faire avec votre père, téléphone posé à sa place habituelle :
 
@@ -210,7 +263,7 @@ Mesures détaillées : [tools/wake/README.md](tools/wake/README.md).
 - [ ] Batterie : noter le pourcentage le matin et le soir sur une journée normale (comparer avec écoute désactivée)
 - [ ] « Change ton nom en … » → confirmation → apprentissage → le nouveau nom fonctionne, l'ancien non
 
-## Checklist de tests sur le vrai téléphone (phase 3)
+### Phase 3
 
 - [ ] « appelle mon fils » → relecture → « oui » → l'appel part ; « non » → rien ne se passe
 - [ ] Appel entrant d'un proche : nom annoncé ; dire le nom → décroché (haut-parleur si réglé) ; volume bas 1 s → raccroché
@@ -229,7 +282,7 @@ Mesures détaillées : [tools/wake/README.md](tools/wake/README.md).
 - [ ] Un proche envoie « où es-tu <mot secret> » → le téléphone sonne fort et répond avec la position
 - [ ] Batterie à 20 % : annonce ; brancher le chargeur : annonce
 
-## Checklist de tests sur le vrai téléphone (phase 4)
+### Phase 4
 
 - [ ] À la première utilisation : autorisation caméra accordée (sinon l'assistant le dit)
 - [ ] « lis ce courrier » sur une vraie facture : guidage, puis lecture complète ; « relis le montant » ; « quelle est la date limite ? »
@@ -246,7 +299,7 @@ Mesures détaillées : [tools/wake/README.md](tools/wake/README.md).
 - [ ] « ouvre Lookout » (si installé ; sinon il propose de l'installer)
 - [ ] « stop » pendant le guidage arrête tout et éteint la lampe
 
-## Checklist de tests sur le vrai téléphone (phase 5)
+### Phase 5
 
 - [ ] Dehors, localisation activée : « où suis-je ? » → bonne rue et bonne commune
 - [ ] À la maison : « enregistre ici comme maison » → « oui » ; couper internet → « où suis-je ? » → « Vous êtes à la maison »
@@ -259,7 +312,7 @@ Mesures détaillées : [tools/wake/README.md](tools/wake/README.md).
 - [ ] « cherche sur internet … » avec et sans clé Tavily
 - [ ] « combien font 12 fois 7 ? » en mode privé (aucune IA) → « Ça fait 84 »
 
-## Checklist de tests sur le vrai téléphone (phase 6)
+### Phase 6
 
 - [ ] Copier 2 livres DAISY du Victor + 1 dossier MP3, choisir le dossier dans les réglages → « quels livres ai-je ? » donne les bons titres
 - [ ] « lis le livre … » : la lecture démarre après l'annonce ; écran verrouillé, elle continue ; casque débranché → pause
@@ -277,16 +330,25 @@ Mesures détaillées : [tools/wake/README.md](tools/wake/README.md).
 - [ ] Agenda : « qu'est-ce que j'ai demain ? » ; ajouter un rendez-vous → il apparaît dans Google Agenda sur un autre appareil
 - [ ] Gmail : « lis mes mails », « lis le premier », « réponds » → « oui » → le correspondant reçoit la réponse ; « écris un mail à … »
 
+### Phase 7
+
+- [ ] Premier lancement : le message d'accueil propose le tutoriel ; bouton « Tutoriel » → les 8 leçons se suivent, rien n'est appelé ni envoyé
+- [ ] « arrête le tutoriel » au milieu, puis « reprends le tutoriel » → même leçon
+- [ ] « est-ce que tout marche ? » avant et après avoir coupé le wifi : internet est signalé
+- [ ] « sauvegarde mes réglages » → fichier visible dans `Android/data/fr.assistantvocal.app/files/Sauvegardes/` depuis un ordinateur
+- [ ] Réglages → Enregistrer une sauvegarde sur Drive ; modifier un surnom ; Restaurer → le surnom revient, les rappels sonnent toujours
+- [ ] « signale un problème » → Réglages → Partager le journal → mail reçu avec l'échange marqué
+
 ## Développement
 
 ```bash
-./gradlew :core:test :llm:test :app:testDebugUnitTest   # 121 tests (+ test d'intégration Vosk si le modèle est fourni)
+./gradlew :core:test :llm:test :app:testDebugUnitTest   # 255 tests (+ tests d'intégration Vosk et réseau réels, optionnels)
 ./gradlew :app:assembleDebug
 ```
 
 - `core/` : logique pure (routeur, confirmations, nom, IA abstraite, scénarios) — testée sans Android.
-- `llm/` : fournisseurs Gemini (REST) et Claude (SDK officiel).
-- `app/` : application Android (service, voix, sons, écrans).
+- `llm/` : fournisseurs Gemini (REST) et Claude (SDK officiel), services web gratuits (IGN, Open-Meteo, OpenStreetMap, RSS, Wikipédia, radios, podcasts).
+- `app/` : application Android (service, voix, sons, écrans, caméra, lecteur, agenda, mails, sauvegardes).
 
 Pas d'émulateur dans l'environnement de développement (pas de KVM) : les tests Android tournent avec Robolectric.
 

@@ -81,11 +81,14 @@ class AssistantService : Service() {
         DailyJobs.scheduleWellbeing(graph)
         // Lecteur : position mémorisée et minuterie de sommeil, toutes les 10 secondes.
         scope.launch { while (true) { delay(10_000); runCatching { graph.media.tick() } } }
+        // Sauvegarde hebdomadaire des réglages (hors clés et mots de passe).
+        scope.launch(Dispatchers.IO) { fr.assistantvocal.app.support.Backups.autoIfDue(this@AssistantService, graph) }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_LISTEN -> startConversation()
+            ACTION_TUTORIAL -> startConversation(firstText = "tutoriel")
             ACTION_STOP_SPEAKING -> { interrupt(); restartWakeSoon() }
             ACTION_SHUTDOWN -> { interrupt(); wake.stop(); stopSelf() }
             ACTION_SAY -> intent.getStringExtra(EXTRA_TEXT)?.let { say(it) }
@@ -211,22 +214,25 @@ class AssistantService : Service() {
     private fun say(text: String) = runSession { applyVoiceSettings(); speak(text) }
 
     /** La lecture en cours (livre, radio…) se met en pause pendant l'échange, et reprend après si rien ne l'a changée. */
-    private fun startConversation() = runSession {
+    private fun startConversation(firstText: String? = null) = runSession {
         stoppedByUser = false
         graph.media.beforeConversation()
-        try { conversation() } finally { graph.media.afterConversation(stoppedByUser) }
+        try { conversation(firstText) } finally { graph.media.afterConversation(stoppedByUser) }
     }
 
     private var stoppedByUser = false
 
-    private suspend fun conversation() {
+    /** [firstText] : première phrase déjà connue (ex. « tutoriel » depuis le bouton), sans écouter. */
+    private suspend fun conversation(firstText: String? = null) {
+        var pendingText = firstText
         applyVoiceSettings()
         var turns = 0
         while (true) {
             wake.stop() // le micro est réservé à la reconnaissance de la demande
             requestFocus(exclusive = true)
             sounds.play(Earcon.LISTENING)
-            val heard = input.listen(preferOffline = !graph.device.isOnline())
+            val heard = pendingText?.let { Heard.Text(it) } ?: input.listen(preferOffline = !graph.device.isOnline())
+            pendingText = null
             val reply: AssistantReply = when (heard) {
                 is Heard.Nothing -> AssistantReply("Je n'ai rien entendu.", Earcon.CANCELLED)
                 is Heard.Failed -> AssistantReply(heard.speech, Earcon.ERROR)
@@ -566,6 +572,7 @@ class AssistantService : Service() {
         private const val CHANNEL = "assistant"
         private const val NOTIFICATION_ID = 1
         const val ACTION_LISTEN = "fr.assistantvocal.LISTEN"
+        const val ACTION_TUTORIAL = "fr.assistantvocal.TUTORIAL"
         const val ACTION_STOP_SPEAKING = "fr.assistantvocal.STOP_SPEAKING"
         const val ACTION_SHUTDOWN = "fr.assistantvocal.SHUTDOWN"
         const val ACTION_SAY = "fr.assistantvocal.SAY"

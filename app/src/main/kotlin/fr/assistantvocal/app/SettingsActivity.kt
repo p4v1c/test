@@ -137,6 +137,19 @@ class SettingsActivity : Activity() {
         rateField = field(root, R.string.label_rate, s.speechRate.toString(), InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL)
 
         button(root, R.string.save) { save() }
+        // Phase 7 : sauvegarde, restauration, journal
+        button(root, R.string.backup_export) {
+            runCatching {
+                startActivityForResult(Intent(Intent.ACTION_CREATE_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("application/json")
+                    .putExtra(Intent.EXTRA_TITLE, "assistant-sauvegarde.json"), REQUEST_EXPORT)
+            }
+        }
+        button(root, R.string.backup_import) {
+            runCatching {
+                startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*"), REQUEST_IMPORT)
+            }
+        }
+        button(root, R.string.share_journal) { shareJournal() }
         button(root, R.string.test_ai) { testAi() }
         button(root, R.string.battery_optimization) { askBatteryExemption() }
         status = TextView(this).apply {
@@ -229,7 +242,13 @@ class SettingsActivity : Activity() {
     @Deprecated("API Activity simple, suffisante ici")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == REQUEST_LIBRARY && resultCode == RESULT_OK) data?.data?.let { onLibraryChosen(it) }
+        if (resultCode != RESULT_OK) return
+        val uri = data?.data ?: return
+        when (requestCode) {
+            REQUEST_LIBRARY -> onLibraryChosen(uri)
+            REQUEST_EXPORT -> exportTo(uri)
+            REQUEST_IMPORT -> readBackup(uri)?.let { askRestore(it) } ?: toast(R.string.backup_invalid)
+        }
     }
 
     /** Dossier des livres choisi : on garde l'accès après redémarrage. */
@@ -237,6 +256,48 @@ class SettingsActivity : Activity() {
         runCatching { contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
         graph.settings.libraryUri = uri.toString()
         updateLibraryLabel()
+    }
+
+    private fun toast(res: Int) {
+        android.widget.Toast.makeText(this, res, android.widget.Toast.LENGTH_LONG).show()
+        window.decorView.announceForAccessibility(getString(res))
+    }
+
+    /** Écrit la sauvegarde (sans clés ni mots de passe) dans le fichier choisi. */
+    fun exportTo(uri: Uri): Boolean = runCatching {
+        val json = fr.assistantvocal.core.support.Backup.export(graph.store,
+            java.time.LocalDateTime.now(java.time.ZoneId.of("Europe/Paris")).toString().take(16), graph.settings.name)
+        contentResolver.openOutputStream(uri, "wt")!!.use { it.write(json.toByteArray()) }
+        toast(R.string.backup_done); true
+    }.getOrDefault(false)
+
+    fun readBackup(uri: Uri): fr.assistantvocal.core.support.Backup.Parsed? = runCatching {
+        contentResolver.openInputStream(uri)!!.use { fr.assistantvocal.core.support.Backup.parse(it.readBytes().decodeToString()) }
+    }.getOrNull()
+
+    private fun askRestore(parsed: fr.assistantvocal.core.support.Backup.Parsed) {
+        android.app.AlertDialog.Builder(this)
+            .setTitle(R.string.backup_confirm_title)
+            .setMessage(getString(R.string.backup_confirm, fr.assistantvocal.core.support.Backup.summary(parsed)))
+            .setPositiveButton(R.string.yes_restore) { _, _ -> restore(parsed) }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    /** Remplace les réglages, reprogramme les rappels et recharge l'écran. */
+    fun restore(parsed: fr.assistantvocal.core.support.Backup.Parsed) {
+        fr.assistantvocal.core.support.Backup.restore(graph.store, parsed)
+        fr.assistantvocal.app.support.Backups.afterRestore(graph)
+        runCatching { startService(AssistantService.intent(this, AssistantService.ACTION_SETTINGS_CHANGED)) }
+        toast(R.string.backup_restored)
+        recreate()
+    }
+
+    private fun shareJournal() {
+        val text = graph.support.journal.text { fr.assistantvocal.app.support.HealthChecks.journalTime(it) }.ifBlank { "Journal vide." }
+        val send = Intent(Intent.ACTION_SEND).setType("text/plain")
+            .putExtra(Intent.EXTRA_SUBJECT, "Journal de l'assistant ${graph.settings.name}").putExtra(Intent.EXTRA_TEXT, text)
+        runCatching { startActivity(Intent.createChooser(send, getString(R.string.share_journal))) }
     }
 
     fun save() {
@@ -306,5 +367,7 @@ class SettingsActivity : Activity() {
 
     companion object {
         const val REQUEST_LIBRARY = 41
+        const val REQUEST_EXPORT = 42
+        const val REQUEST_IMPORT = 43
     }
 }

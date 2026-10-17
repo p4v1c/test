@@ -10,6 +10,7 @@
 - Phase 4 (vision) : faite, 141 tests automatiques au total (caméra simulée ; non testée sur un vrai appareil photo).
 - Phase 5 (orientation, météo, infos, recherche) : faite, 209 tests automatiques au total.
 - Phase 6 (lecteur façon Victor, mémos, agenda, mails) : faite, 241 tests automatiques au total.
+- Phase 7 (tutoriel, diagnostic, sauvegarde, journal) : faite, 255 tests automatiques au total.
 - Téléphone cible : Google Pixel (voir FEATURES.md, « Décisions validées »).
 
 ## 1. Vue d'ensemble
@@ -253,6 +254,20 @@ Chaque fonction est un `Tool` : nom, description, schéma JSON des paramètres, 
 - **IA** : non nécessaire au lecteur ni à l'agenda ; sert au résumé d'un long mail. Fonctions ajoutées pour l'IA :
   `open_book`, `play_radio`, `play_podcast`, `play_music`, `sleep_timer`, `record_memo`, `add_note`, `add_to_shopping_list`,
   `add_event` (confirmé), `get_agenda`, `read_mail`, `send_mail` (confirmé).
+
+## 9 sexies. Choix de la phase 7 (prise en main et entretien)
+
+- **Tutoriel** (`SupportSkill`) : une suite de questions ouvertes (`Dialog.ask`). La réponse est **classée** par le routeur
+  local mais jamais exécutée (sauf l'heure) : on s'entraîne à « appelle Paul » sans appeler. Deux essais par leçon, puis
+  on passe ; la leçon en cours est mémorisée pour « reprends le tutoriel ». Le secours est expliqué, jamais essayé.
+- **Diagnostic** : les vérifications viennent de l'app (`HealthChecks` : permissions, rôle d'assistant, optimisation de
+  batterie, clés, accès aux notifications, dossier des livres, Gmail) ; le cœur les dit, les importantes d'abord, avec la solution.
+- **Sauvegarde** (`core/support/Backup`) : JSON lisible, format versionné, liste blanche de clés (motif strict) ;
+  exclut les données volatiles (compteurs, « déjà lu jusqu'à », dossier des livres dont l'autorisation ne se transfère pas,
+  journal) ; les secrets sont dans un autre stockage et n'y sont jamais. La restauration remplace les données
+  sauvegardables, garde les volatiles, puis reprogramme les rappels. Un fichier étranger ou d'une version future est refusé.
+- **Journal** : 60 derniers échanges sur le téléphone ; « signale un problème » marque le dernier ; un proche le partage
+  (texte) depuis les réglages. Rien n'est envoyé automatiquement.
 
 ## 10. Données locales
 

@@ -58,6 +58,9 @@ import fr.assistantvocal.core.tools.ToolRegistry
 import fr.assistantvocal.llm.ClaudeProvider
 import fr.assistantvocal.llm.GeminiProvider
 import java.time.Instant
+import fr.assistantvocal.app.support.Backups
+import fr.assistantvocal.app.support.HealthChecks
+import fr.assistantvocal.core.skills.SupportSkill
 import fr.assistantvocal.app.media.AndroidMemos
 import fr.assistantvocal.app.media.AndroidMusic
 import fr.assistantvocal.app.media.AndroidPlayer
@@ -176,6 +179,11 @@ class AppGraph(
         unreadSms = { runCatching { comms.unreadSmsCount() }.getOrDefault(0) },
         unreadMail = { mail.unreadCount() })
     val skills = Skills(dialog, comms, reminders, vision, info, media, organizer, mail)
+    private val localRouter = fr.assistantvocal.core.router.LocalRouter()
+    val support = SupportSkill(store, dialog, device, { settings.name }, { localRouter.route(it)?.intent },
+        checks = { HealthChecks.run(context, this) },
+        backupNow = { Backups.write(context, this)?.let { Backups.SPOKEN_PLACE } },
+    ).also { skills.support = it }
 
     val tools = ToolRegistry(CoreTools.all(settings, device) + CoreTools.phase3() + CoreTools.phase5(info) + CoreTools.phase6(organizer))
     val assistant = Assistant(settings, device, llm, tools, skills = skills)

@@ -49,6 +49,17 @@
     <string name="library_none">aucun</string>
     <string name="label_mail">Adresse Gmail (pour « lis mes mails »)</string>
     <string name="label_mail_password">Mot de passe d\'application Gmail (16 lettres, créé dans le compte Google, sécurité)</string>
+    <string name="tutorial">Tutoriel : apprendre à utiliser l\'assistant</string>
+    <string name="backup_export">Enregistrer une sauvegarde…</string>
+    <string name="backup_import">Restaurer une sauvegarde…</string>
+    <string name="backup_done">Sauvegarde enregistrée.</string>
+    <string name="backup_invalid">Ce fichier n\'est pas une sauvegarde de l\'assistant.</string>
+    <string name="backup_restored">Sauvegarde restaurée. Les clés et le dossier des livres sont à ressaisir.</string>
+    <string name="backup_confirm_title">Restaurer cette sauvegarde ?</string>
+    <string name="backup_confirm">Remplacer les réglages actuels par : %1$s</string>
+    <string name="yes_restore">Restaurer</string>
+    <string name="cancel">Annuler</string>
+    <string name="share_journal">Partager le journal (problèmes signalés)</string>
     <string name="label_remote">Mot secret pour retrouver le téléphone par SMS (« où es-tu » + mot), vide = désactivé</string>
     <string name="label_sms_mode">SMS reçus</string>
     <string name="sms_read">Les lire directement</string>

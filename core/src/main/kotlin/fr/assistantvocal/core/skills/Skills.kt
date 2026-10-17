@@ -37,6 +37,7 @@ class Skills(
     val media: MediaSkill? = null,
     val organizer: OrganizerSkill? = null,
     val mail: MailSkill? = null,
+    var support: SupportSkill? = null,
 ) {
     fun handle(intent: Intent): AssistantReply? = when (intent) {
         is CallContact -> comms.call(intent.target)

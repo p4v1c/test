@@ -16,7 +16,8 @@ class HelpCatalog(private val topics: List<HelpTopic>) {
             else -> titles.dropLast(1).joinToString(", ") + " et " + titles.last()
         }
         return "Je peux vous aider pour : $list. Dites par exemple « $name, aide pour ${topics.firstOrNull()?.keywords?.firstOrNull() ?: "les réglages"} » " +
-            "pour avoir des exemples. Vous pouvez toujours dire « stop » pour m'interrompre, et « répète » si vous n'avez pas entendu."
+            "pour avoir des exemples. Vous pouvez toujours dire « stop » pour m'interrompre, et « répète » si vous n'avez pas entendu." +
+            (if (topics.any { it.title == "la prise en main" }) " Pour un entraînement guidé, dites « tutoriel »." else "")
     }
 
     fun topic(query: String): String? {
@@ -95,6 +96,11 @@ class HelpCatalog(private val topics: List<HelpTopic>) {
                 "ajoute un rendez-vous chez le dentiste mardi à 14 heures", "fais-moi le point", "lis mes mails", "lis le premier",
                 "réponds", "écris un mail à Paul"),
         )
+        val MAINTENANCE = HelpTopic(
+            "la prise en main", listOf("tutoriel", "prise en main", "probleme", "sauvegarde", "diagnostic", "apprendre"),
+            listOf("tutoriel", "reprends le tutoriel", "est-ce que tout marche ?", "signale un problème", "sauvegarde mes réglages"),
+        )
+        val PHASE7 = HelpCatalog(listOf(CALLS, MESSAGES, READING, NOTES, REMINDERS, VISION, ORIENTATION, NEWS, INFOS, QUESTIONS, SAFETY, TRIGGERS, SETTINGS, MAINTENANCE))
         val PHASE6 = HelpCatalog(listOf(CALLS, MESSAGES, READING, NOTES, REMINDERS, VISION, ORIENTATION, NEWS, INFOS, QUESTIONS, SAFETY, TRIGGERS, SETTINGS))
         val PHASE5 = HelpCatalog(listOf(CALLS, MESSAGES, REMINDERS, VISION, ORIENTATION, NEWS, INFOS, QUESTIONS, SAFETY, TRIGGERS, SETTINGS))
         val PHASE1 = HelpCatalog(listOf(INFOS, QUESTIONS, SETTINGS))

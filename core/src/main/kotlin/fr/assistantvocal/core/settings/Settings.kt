@@ -10,6 +10,8 @@ interface KeyValueStore {
     fun putFloat(key: String, value: Float) = putString(key, value.toString())
     fun getBoolean(key: String, default: Boolean): Boolean = getString(key)?.toBooleanStrictOrNull() ?: default
     fun putBoolean(key: String, value: Boolean) = putString(key, value.toString())
+    /** Toutes les clés (pour la sauvegarde). */
+    fun keys(): Set<String> = emptySet()
 }
 
 class InMemoryStore(initial: Map<String, String> = emptyMap()) : KeyValueStore {
@@ -19,6 +21,7 @@ class InMemoryStore(initial: Map<String, String> = emptyMap()) : KeyValueStore {
         synchronized(map) { if (value == null) map.remove(key) else map[key] = value }
     }
     fun snapshot(): Map<String, String> = synchronized(map) { map.toMap() }
+    override fun keys(): Set<String> = synchronized(map) { map.keys.toSet() }
 }
 
 enum class Verbosity { BRIEF, NORMAL, DETAILED }

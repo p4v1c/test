@@ -8,7 +8,7 @@ Légende :
 
 ## État d'avancement
 
-- Phase 1 (socle) ✅ · Phase 2 (mot d'activation, déclencheurs) ✅ · Phase 3 (communication, organisation, sécurité) ✅ · Phase 4 (vision) ✅ · Phase 5 (orientation, météo, infos, recherche) ✅ · Phase 6 (lecteur façon Victor, mémos, agenda, mails) ✅
+- Phase 1 (socle) ✅ · Phase 2 (mot d'activation, déclencheurs) ✅ · Phase 3 (communication, organisation, sécurité) ✅ · Phase 4 (vision) ✅ · Phase 5 (orientation, météo, infos, recherche) ✅ · Phase 6 (lecteur façon Victor, mémos, agenda, mails) ✅ · Phase 7 (finitions) ✅
 - Réalisé en phase 3 : appels (nom, surnom, favori, numéro, rappel du dernier), annonce des appels entrants et décrocher
   à la voix ou au casque, journal d'appels, SMS (lecture, dictée, relecture, envoi vérifié, réponse), notifications
   (lecture, annonce, réponse rapide), alerte arnaque, réveils, minuteurs nommés, rappels ponctuels et récurrents,
@@ -33,6 +33,11 @@ Légende :
   favoris) ; podcasts (abonnements, reprise par épisode) ; musique locale ou application de musique ; mémos vocaux ;
   notes écrites ; liste de courses ; agenda (lecture, ajout confirmé) ; point du jour ; Gmail (lire, résumer, répondre,
   écrire, alerte arnaque).
+- Réalisé en phase 7 : tutoriel vocal en 8 leçons (exercices sans rien déclencher, reprise où on s'était arrêté, bouton
+  à l'écran, proposé au premier lancement), « est-ce que tout marche ? » (14 vérifications dites à voix haute avec la
+  solution), sauvegarde automatique hebdomadaire + à la voix + export/import depuis les réglages (sans clés ni mots de
+  passe, avec résumé et confirmation), « signale un problème » + journal local partageable, README réorganisé
+  (premiers pas, dépannage, sauvegarde).
 - Reporté : livres en texte seul et PDF lus par la synthèse (étagère Texte du Victor), téléchargement des podcasts pour
   écoute hors ligne, import des signets du Victor, Google Meet (P2).
 

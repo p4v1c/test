@@ -17,6 +17,7 @@ class PrefsStore(private val prefs: SharedPreferences) : KeyValueStore {
     constructor(context: Context) : this(context.getSharedPreferences("assistant", Context.MODE_PRIVATE))
 
     override fun getString(key: String): String? = prefs.getString(key, null)
+    override fun keys(): Set<String> = prefs.all.keys.toSet()
     override fun putString(key: String, value: String?) {
         prefs.edit().apply { if (value == null) remove(key) else putString(key, value) }.apply()
     }
