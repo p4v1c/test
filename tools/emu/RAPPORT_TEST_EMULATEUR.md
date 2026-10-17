@@ -1,8 +1,8 @@
-# Rapport de test sur émulateur — 17 octobre 2026
+# Rapport de test sur émulateur — 17 et 18 octobre 2026
 
 Émulateur : Genymotion « Google Pixel 9 », **Android 11 (API 30)**, ABI x86_64, root oui, services Google **non**
 (pas de Play Store, ni reconnaissance vocale Google, ni Google Maps, ni synthèse Google).
-Tests automatiques au départ : 273 / 273 OK (2 tests d'intégration ignorés : Vosk réel et réseau réel, optionnels), ~6 min.
+Tests automatiques : au départ 273 / 273 OK ; à la fin **318 / 318 OK** (2 tests d'intégration ignorés : Vosk réel et réseau réel, optionnels).
 
 > Attention, différences avec le vrai Pixel :
 > - l'émulateur est en Android 11, alors que le Pixel est en Android 15 ou plus. Les autorisations « notifications » et
@@ -69,6 +69,37 @@ Tests automatiques au départ : 273 / 273 OK (2 tests d'intégration ignorés : 
 | 3 | Batterie faible | genyshell 19 % puis 9 % | 19 % pendant une écoute : **annonce perdue** ; 9 % au repos : « Batterie faible : 9 pour cent… » | KO → corrigé | Bug 12 |
 | — | Marche / arrêt | interrupteur de l'écran | Confirmation, « Assistant arrêté… », plus aucun service ; volume haut 3,5 s → pas de SOS ; reste éteint après mise à jour ; rallumé : « Assistant activé… », rappels reprogrammés | OK | Nouvelle fonction demandée |
 | 2 | Micro du PC | « Hector » prononcé près du micro du PC | Vosk : « candidat hector confiance 1.00 » → bip | OK | Le micro de Genymotion marche ; après le bip, pas de reconnaissance (pas de Google) |
+| 4 | Lumière | détecteur de lumière | Avant : **plantage de l'app** quand le nom est dit pendant la séance ; après : annonce, puis « stop » | KO → corrigé | Bug 15 |
+| 4 | Couleur | quelle couleur ? | Avant : « Je n'arrive pas à utiliser la caméra » (photo en erreur matérielle sur l'émulateur) ; après : « C'est rose foncé. » | KO → corrigé | Bug 16 (repli sur l'aperçu). Justesse de la couleur non vérifiable |
+| 4 | Caméra refusée | autorisation retirée | « Je n'ai pas l'autorisation d'utiliser la caméra. Demandez à un proche de l'activer. » | OK | |
+| 4 | Courrier, billet, code-barres, médicament, « devant moi » | — | — | Non testable | Il faut de vrais objets devant la caméra ; « devant moi » enverrait l'image de la webcam du PC à Gemini (pas fait sans accord) ; pas de lampe sur l'émulateur |
+| 5 | Où suis-je | GPS 44.9698, 4.9500 | « Vous êtes près du 28 rue de la Liberté, à Saint-Marcel-lès-Valence. » | OK | |
+| 5 | Lieu à soi | enregistre ici comme maison → oui ; GPS + 500 m au nord → à quelle distance est la maison ? | « La maison est à 500 mètres, au sud, à vol d'oiseau. » | OK | Formulations corrigées (bug 20) |
+| 5 | Lieux proches | où est la pharmacie la plus proche ? | Avant : « **pas de pharmacie à moins de 15 km** » (faux : serveurs OpenStreetMap en panne) ; après : « Le service de recherche des lieux ne répond pas… » | KO → corrigé | Bug 14 ; guidage Google Maps non testable (pas de Maps) |
+| 5 | Partager sa position | envoie ma position à Paul Martin → oui | SMS « Je suis ici : 8 Rue des Cevennes, Saint-Marcel-lès-Valence. https://maps.google.com/?q=… » | OK | |
+| 5 | Météo | quel temps fait-il ? / va-t-il pleuvoir demain ? / météo à Lyon | Réponses complètes et cohérentes (température, risque de pluie, conseil parapluie) | OK | |
+| 5 | Infos | les infos → la suite → lis le deuxième | Titres de France Info, suite, résumé | OK | |
+| 5 | Recherche | cherche sur internet les horaires de la mairie de Valence | « Ces résultats ne contiennent pas les horaires… » | OK (limité) | Sans clé Tavily : Wikipédia seulement |
+| 6 | Radio | mets France Inter / mets RTL / radio suivante / pause | Lecture (MP3 et HLS), changement, pause | OK | |
+| 6 | Podcasts | abonne-moi au podcast Affaires sensibles → oui → écoute | Avant : « Je ne trouve pas » ; après : abonnement, lecture du dernier épisode | KO → corrigé | Bug 17 (Apple ne donne plus le flux Radio France) |
+| 6 | Musique | mets de la musique | Musique du téléphone, au hasard | OK | |
+| 6 | Mémo | enregistre un mémo (silence) | « Je n'ai rien entendu, le mémo n'est pas gardé. » | OK | Enregistrement avec voix : à faire avec le micro du PC ou sur le Pixel |
+| 6 | Notes et courses | note que… / lis mes notes / ajoute… / il faut acheter… / enlève… / lis ma liste | Correct | OK | « J'enlève le pain » (bug 20) |
+| 6 | Agenda | (agenda local créé) ajoute un rendez-vous chez le dentiste demain à 10 heures → oui → qu'est-ce que j'ai demain ? | Rendez-vous créé et relu avec les rappels | OK | Sans agenda : « aucun agenda modifiable » |
+| 6 | Point du jour | fais-moi le point | Date, heure, météo, rappels, messages, courses | OK | |
+| 6 | Livres DAISY / MP3 | — | — | **Bloqué** | Le sélecteur de dossier d'Android ignore les appuis simulés ; à choisir à la main (voir « Reste à faire ») |
+| 6 | Mails | — | — | Non testable | Pas de compte Gmail de test |
+| 7 | Tutoriel | 8 leçons, une erreur, arrête / reprends | Indice en cas d'erreur, reprise à la même leçon ; **aucun SMS, appel ni rappel créé** | OK | « au secours » pendant le tutoriel : voir « non corrigés » n° 3 |
+| 7 | Diagnostic | est-ce que tout marche ? | Exact (livres et Gmail signalés) | OK | Majuscule corrigée |
+| 7 | Sauvegarde | sauvegarde mes réglages | Fichier dans Sauvegardes/, **aucune clé** (grep vide), sans l'interrupteur | OK | Contient le mot secret : voir « non corrigés » n° 4. Restauration : même sélecteur bloqué |
+| 7 | Signaler | signale un problème | « J'ai noté le problème… » | OK | |
+| 8 | Podcasts hors ligne | abonnement en wifi ; mode avion → écoute le podcast | 3 épisodes téléchargés seuls (134 Mo) ; hors ligne : épisode téléchargé, reprise à 15,8 s | OK | |
+| 8 | Données mobiles | télécharge les podcasts (sans wifi) | « Vous n'êtes pas en wifi… je téléchargerai dès que le téléphone sera en wifi. » | OK | |
+| 8 | Documents (PDF, docx, txt, EPUB) | — | — | **Bloqué** | Même sélecteur de dossier ; fichiers prêts dans /sdcard/Victor |
+| — | Robustesse | rafale de 40 phrases variées | Aucun plantage, aucune réponse vide (hors « stop ») | OK | Un « non » mal compris corrigé (bug 19) |
+| — | Ressources | repos, écoute du nom active | Processeur 0 à 1 % ; mémoire 213 Mo (Vosk + ML Kit) | OK | Objectif < 5 % |
+| — | TalkBack | — | — | Non testable | TalkBack absent (services Google) ; descriptions vérifiées avec uiautomator |
+| — | Mémoire | souviens-toi que… / retiens que… / qu'est-ce que tu sais sur moi ? / tu sais qui je suis ? | « Vous êtes Jean. Vous aimez le jazz, particulièrement Miles Davis… » | OK | Nouvelle fonction ; tutoiement corrigé |
 | 3 | Domicile | appelle Pierre à la maison → non | « Appeler Pierre Dupont sur son numéro domicile ? » → annulé | OK | |
 
 ## Bugs trouvés et corrigés (un commit chacun)
@@ -94,7 +125,17 @@ Tests automatiques au départ : 273 / 273 OK (2 tests d'intégration ignorés : 
 8. *(outil de test)* `awaitMain` ne signalait pas un délai dépassé : un test pouvait passer à tort. Il échoue maintenant.
 9. **« Nouveau message de le 06… »** : « du 06… », « au 06… », « d'Anne ». Test dans `TextAndNameTest`.
 10. **Plantage du minuteur sur Android 10 et 11** (`Duration.toMinutesPart`, absente avant Android 12). Test qui interdit ces méthodes dans `core` et `llm`.
-11. **« Combien de temps reste-t-il ? »** sans le mot « minuteur » partait à l'IA.
+11. **« Combien de temps reste-t-il ? »** sans le mot « minuteur » partait à l'IA (`372f5c9`).
+12. *(numéros)* Bugs 6 à 11 : `4968860`, `8593a60`, `560b07e`, `d06176f`, `340b1ac`, `372f5c9`.
+13. **« Oui » ou « non » isolé envoyé à l'IA**, qui inventait une action (« Je lance le téléchargement des épisodes ») (`8b1fc84`) ;
+    affiné pour un « non » qui répond à une question de l'assistant (`51a0229`).
+14. **« Pas de pharmacie à moins de 15 km »** quand OpenStreetMap ne répond pas : le service en panne est annoncé comme tel (`b0d49b9`).
+15. **Plantage de l'app** quand une séance caméra est annulée pendant l'ouverture (nom dit pendant le détecteur de lumière) (`0509fea`).
+16. **Photo ratée = caméra inutilisable** : repli sur l'image de l'aperçu (`d2cc003`).
+17. **Podcasts de Radio France introuvables** (Apple ne donne plus leur flux) : repli sur gpodder.net (`b2293b1`) ; adresse mail de l'auteur plus lue (`12baa42`).
+18. **Rôle d'assistant perdu** : cause trouvée (« Forcer l'arrêt »), voir remarques d'installation (pas de code à changer).
+
+20. **Fautes de français** : « votre position », « la maison », « le pain », majuscule du diagnostic (`942daf5`).
 
 ## Nouvelles fonctions (demandées)
 
@@ -102,6 +143,9 @@ Tests automatiques au départ : 273 / 273 OK (2 tests d'intégration ignorés : 
   rendus à Android), le service s'arrête et ne redémarre ni au démarrage ni après une mise à jour. Éteindre demande une confirmation
   et l'assistant le dit ; rallumer reprogramme les rappels. Non inclus dans les sauvegardes. Tests : `PowerSwitchTest`.
 - **Nouveau design** : thème sombre contrasté, grand bouton rond « Parler », état visible (pastille verte / rouge), réglages en sections.
+- **Mémoire de l'assistant** (façon « gemini.md », `4593de0`, `1cd4070`) : « souviens-toi que … », « qu'est-ce que tu sais sur moi ? »,
+  « oublie que … », « oublie tout … » (confirmé) ; l'IA reçoit le prénom et la mémoire avec chaque question, peut retenir elle-même
+  (fonction `remember`) et vouvoie toujours ; un proche lit et corrige la mémoire dans Réglages. Tests : `MemoryTest`.
 
 ## Bugs trouvés non corrigés (avec proposition)
 
@@ -117,10 +161,39 @@ Tests automatiques au départ : 273 / 273 OK (2 tests d'intégration ignorés : 
    utiles et contacts d'urgence copiés dans le stockage protégé par l'appareil). En attendant : **pas de code de verrouillage**
    sur le Pixel, ou le savoir.
 
-## Reste à faire (campagne en pause)
+3. **« Au secours » pendant le tutoriel ne déclenche jamais l'alerte** (à la leçon 7, il répond « Merci » et continue).
+   Rien n'est envoyé, ce qui est voulu pour l'exercice, mais un vrai appel au secours pendant ces 5 minutes serait avalé.
+   Proposition : hors de la leçon 7, « au secours » arrête le tutoriel et lance le vrai SOS ; pendant la leçon 7, demander
+   « C'est un exercice. Voulez-vous vraiment prévenir vos proches ? ». *(Touche au SOS : à valider avant de coder.)*
+4. **La sauvegarde contient le mot secret** (« où es-tu » + mot secret fait sonner le téléphone et renvoie sa position) :
+   quiconque récupère le fichier peut localiser la personne. Proposition : l'exclure de la sauvegarde comme les clés.
+   *(Sécurité : à valider.)*
+5. **Lieux proches : un seul fournisseur réel** (overpass-api.de, l'autre est souvent en panne). Des serveurs de secours
+   répondent (maps.mail.ru, overpass.osm.jp) mais enverraient la position de la personne en Russie ou au Japon : à décider.
+6. Détails : « 0 heures 18 » (dire « minuit 18 »), « demain » dit après minuit = le jour d'après (comportement courant, à garder en tête).
 
-- Phases 4 à 8, étape 4 (robustesse, TalkBack). Fichiers de test prêts : `tools/emu/generer_fichiers.py`.
-- Pas encore de verdict.
+## Reste à faire
+
+- **Choisir le dossier des livres à la main** (le sélecteur d'Android de cet émulateur ignore les appuis simulés) : dans la fenêtre
+  Genymotion, Réglages → « Choisir le dossier des livres » → Victor → « Utiliser ce dossier » → « Autoriser ». Les fichiers de test
+  (2 livres DAISY dont un en windows-1252, 3 MP3, facture PDF, courrier scanné, docx, txt, EPUB libre et protégé) sont déjà dans
+  /sdcard/Victor. Ensuite : phases 6 (livres) et 8 (documents) à jouer, puis la restauration d'une sauvegarde.
+- Mémo avec voix, mot d'activation et dictée : avec le micro du PC (Vosk marche ; la dictée a besoin de l'appli Google).
+
+## Non testable sur émulateur → à vérifier sur le vrai Pixel
+
+- La reconnaissance vocale réelle (dictée après le bip), la voix Google, TalkBack : services Google absents.
+- Le démarrage avant déverrouillage (voir non corrigés n° 2), les autorisations d'Android 14/15 (notifications, musique, micro au démarrage).
+- La réception radio réelle des appels et SMS (simulés ici au niveau de l'app), décrocher à la voix, le haut-parleur.
+- Caméra : courrier, billets, codes-barres, DataMatrix des médicaments, description de scène, lampe.
+- Google Maps (guidage à pied), YouTube Music, Gmail.
+
+## Verdict : prêt pour l'essai sur le Pixel de ton père ?
+
+**Oui, sauf** : (1) jouer d'abord les livres et documents une fois le dossier choisi ; (2) décider pour le code de verrouillage
+(sans code, ou accepter que rien ne marche avant le premier déverrouillage) ; (3) valider les propositions 3 et 4 (tutoriel et
+mot secret). Les fonctions de sécurité (SOS, confirmations « oui », appels et SMS relus) se sont montrées solides après correction,
+et la rafale de phrases n'a provoqué aucun plantage.
 
 ## Remarques sur l'installation (`tools/install.sh`)
 
