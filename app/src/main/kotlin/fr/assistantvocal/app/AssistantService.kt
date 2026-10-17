@@ -62,6 +62,8 @@ class AssistantService : Service() {
     private var focusRequest: AudioFocusRequest? = null
     /** Texte en cours de lecture (pour ignorer l'assistant qui prononce son propre nom). */
     private var currentSpeech: String = ""
+    /** Jusqu'à quand ignorer le nom : le micro peut entendre l'assistant dire son propre nom (détection confirmée jusqu'à ~1,5 s après la fin de la phrase). */
+    @Volatile private var ignoreOwnNameUntil = 0L
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -214,6 +216,7 @@ class AssistantService : Service() {
     private fun onWakeWord() {
         // L'assistant a prononcé lui-même son nom : on ignore.
         if (output.isSpeaking() && FrenchPhonetic.containsName(currentSpeech.split(' '), graph.settings.name)) return
+        if (android.os.SystemClock.elapsedRealtime() < ignoreOwnNameUntil) return
         onTrigger()
     }
 
@@ -592,7 +595,12 @@ class AssistantService : Service() {
         if (text.isNotBlank()) Log.i(TAG, "Dit : $text")
         currentSpeech = text
         speakingNow = true
-        return try { output.speak(text) } finally { speakingNow = false; currentSpeech = "" }
+        return try { output.speak(text) } finally {
+            if (FrenchPhonetic.containsName(text.split(' '), graph.settings.name)) {
+                ignoreOwnNameUntil = android.os.SystemClock.elapsedRealtime() + OWN_NAME_ECHO_MS
+            }
+            speakingNow = false; currentSpeech = ""
+        }
     }
 
     private fun applyVoiceSettings() = output.applySettings(graph.settings.speechRate, graph.settings.speechPitch)
@@ -642,6 +650,7 @@ class AssistantService : Service() {
         const val ACTION_ENSURE_RUNNING = "fr.assistantvocal.ENSURE_RUNNING"
         const val ACTION_REMINDER_FIRE = "fr.assistantvocal.REMINDER_FIRE"
         const val ACTION_SOS = "fr.assistantvocal.SOS"
+        private const val OWN_NAME_ECHO_MS = 1_500L
         const val ACTION_POWER_OFF = "fr.assistantvocal.POWER_OFF"
         const val ACTION_POWER_ON = "fr.assistantvocal.POWER_ON"
         const val ACTION_CALL_STATE = "fr.assistantvocal.CALL_STATE"

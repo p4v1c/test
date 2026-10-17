@@ -134,6 +134,22 @@ class ServiceScenarioTest {
         assertTrue(graph.settings.wakeStrict)
     }
 
+    @Test fun `il ne se reveille pas en entendant son propre nom juste apres l'avoir dit`() {
+        val out = FakeOutput(); val wake = FakeWake(); val input = FakeInput(Heard.Text("quelle heure est-il ?"))
+        testGraph(app, input, out, wake = wake)
+        val service = Robolectric.buildService(AssistantService::class.java).create()
+        service.withIntent(AssistantService.intent(app, AssistantService.ACTION_SAY).putExtra(AssistantService.EXTRA_TEXT, "Je suis Orphée.")).startCommand(0, 1)
+        awaitMain { out.spoken.isNotEmpty() && wake.isListening }
+        wake.fire() // le micro entend « Orphée » sorti du haut-parleur, confirmé une seconde après la fin de la phrase
+        shadowOf(android.os.Looper.getMainLooper()).idleFor(java.time.Duration.ofMillis(500))
+        assertEquals("ne doit pas se réveiller sur sa propre voix", 0, input.listens)
+        // Plus tard, c'est bien la personne qui l'appelle.
+        shadowOf(android.os.Looper.getMainLooper()).idleFor(java.time.Duration.ofSeconds(4))
+        awaitMain { wake.isListening }
+        wake.fire()
+        awaitMain { input.listens == 1 }
+    }
+
     @Test fun `parle plus vite change la vitesse de la voix`() {
         val out = FakeOutput()
         testGraph(app, FakeInput(Heard.Text("parle plus vite")), out)
@@ -169,6 +185,8 @@ class Phase3ServiceTest {
         awaitMain { out.spoken.isNotEmpty() }
         assertEquals("Appel de Paul Martin. Pour décrocher, dites « Orphée, décroche », ou appuyez sur le bouton du casque.", out.spoken.first())
         awaitMain { wake.isListening }
+        // Il répond 2 secondes après l'annonce (le nom entendu juste après la phrase est ignoré : c'est l'écho du haut-parleur).
+        shadowOf(android.os.Looper.getMainLooper()).idleFor(java.time.Duration.ofSeconds(2))
         wake.fire()
         awaitMain { phone.answered }
         assertTrue(phone.answered)
