@@ -16,6 +16,7 @@ import android.os.Looper
 import android.os.ParcelFileDescriptor
 import android.os.StatFs
 import android.speech.tts.TextToSpeech
+import fr.assistantvocal.app.audio.FrenchVoice
 import android.speech.tts.UtteranceProgressListener
 import android.util.Log
 import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
@@ -57,10 +58,10 @@ class TtsTextPlayer(private val context: Context, private val pitch: () -> Float
 
     private fun onMain(block: () -> Unit) { if (Looper.myLooper() == Looper.getMainLooper()) block() else main.post(block) }
 
-    private fun engine(): TextToSpeech = tts ?: TextToSpeech(context) { status ->
+    private fun engine(): TextToSpeech = tts ?: FrenchVoice.create(context) { status ->
         ready = status == TextToSpeech.SUCCESS
         if (ready) {
-            tts?.language = Locale.FRANCE
+            tts?.let { FrenchVoice.apply(it) }
             tts?.setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build())
             tts?.setOnUtteranceProgressListener(listener)
             startWhenReady?.invoke(); startWhenReady = null

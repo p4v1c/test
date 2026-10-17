@@ -7,7 +7,6 @@ import android.speech.tts.UtteranceProgressListener
 import android.util.Log
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.suspendCancellableCoroutine
-import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.resume
@@ -19,7 +18,9 @@ class AndroidSpeechOutput(context: Context) : SpeechOutput {
     private val counter = AtomicInteger()
     @Volatile private var speaking = false
 
-    private val tts: TextToSpeech = TextToSpeech(context.applicationContext) { status ->
+    @Volatile private var languageSet = false
+
+    private val tts: TextToSpeech = FrenchVoice.create(context) { status ->
         ready.complete(status == TextToSpeech.SUCCESS)
     }
 
@@ -44,9 +45,12 @@ class AndroidSpeechOutput(context: Context) : SpeechOutput {
 
     private suspend fun ensureReady(): Boolean {
         if (!ready.await()) return false
-        val r = tts.setLanguage(Locale.FRANCE)
-        if (r == TextToSpeech.LANG_MISSING_DATA || r == TextToSpeech.LANG_NOT_SUPPORTED) {
-            Log.w(TAG, "Voix française absente ($r)")
+        if (!languageSet) {
+            val r = FrenchVoice.apply(tts)
+            if (r == TextToSpeech.LANG_MISSING_DATA || r == TextToSpeech.LANG_NOT_SUPPORTED) {
+                Log.w(TAG, "Voix française absente ($r)")
+            } else languageSet = true
+            Log.i(TAG, "Voix : ${tts.defaultEngine} / ${runCatching { tts.voice?.name }.getOrNull()}")
         }
         return true
     }
