@@ -4,6 +4,23 @@ import java.text.Normalizer
 
 /** Outils de texte pour le français parlé (sortie de la reconnaissance vocale). */
 object FrenchText {
+    private val ELISION = Regex("^[aeiouyhàâäéèêëîïôöûüAEIOUYHÀÂÄÉÈÊËÎÏÔÖÛÜ]")
+
+    /** « de » devant un nom ou un numéro dit : « du 06… », « d'un numéro masqué », « d'Anne », « de Paul ». */
+    fun de(who: String): String = when {
+        who.startsWith("le ") -> "du " + who.removePrefix("le ")
+        who.startsWith("les ") -> "des " + who.removePrefix("les ")
+        ELISION.containsMatchIn(who) -> "d'$who"
+        else -> "de $who"
+    }
+
+    /** « à » devant un nom ou un numéro dit : « au 06… », « à Paul ». */
+    fun a(who: String): String = when {
+        who.startsWith("le ") -> "au " + who.removePrefix("le ")
+        who.startsWith("les ") -> "aux " + who.removePrefix("les ")
+        else -> "à $who"
+    }
+
 
     /** Minuscules, apostrophes unifiées, ponctuation retirée, espaces simplifiés. Garde les accents. */
     fun normalize(input: String): String =

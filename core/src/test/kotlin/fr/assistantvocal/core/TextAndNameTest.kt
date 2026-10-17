@@ -67,4 +67,15 @@ class AssistantNameTest {
         assertEquals("la météo", AssistantNameRules.stripWakeName("Orfée la météo", "Orphée"))
         assertNull(AssistantNameRules.stripWakeName("quelle heure est-il", "Orphée"))
     }
+
+    @Test fun `contractions de et a devant un nom ou un numero`() {
+        assertEquals("du 06 98 00 01 11", FrenchText.de("le 06 98 00 01 11"))
+        assertEquals("d'un numéro masqué", FrenchText.de("un numéro masqué"))
+        assertEquals("d'Anne Martin", FrenchText.de("Anne Martin"))
+        assertEquals("d'Hélène", FrenchText.de("Hélène"))
+        assertEquals("de Paul Martin", FrenchText.de("Paul Martin"))
+        assertEquals("au 06 98 00 01 11", FrenchText.a("le 06 98 00 01 11"))
+        assertEquals("à un numéro masqué", FrenchText.a("un numéro masqué"))
+        assertEquals("à Anne", FrenchText.a("Anne"))
+    }
 }

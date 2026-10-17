@@ -149,7 +149,7 @@ class CommunicationSkill(
         val who = directory.describe(m.address, m.name)
         lastConversation = Conversation(m.address, who, null)
         val verdict = ScamDetector.check(m.body, senderKnown = directory.isKnown(m.address))
-        return "$label, de $who, ${relative(m.time, now)} : ${m.body.trim().trimEnd('.')}. ${verdict.warning}".trim()
+        return "$label, ${FrenchText.de(who)}, ${relative(m.time, now)} : ${m.body.trim().trimEnd('.')}. ${verdict.warning}".trim()
     }
 
     fun sendSms(target: String, body: String?): AssistantReply = resolve(target, "écrire à") { c, n ->
@@ -173,7 +173,7 @@ class CommunicationSkill(
         if (conv.notificationKey != null) {
             val key = conv.notificationKey
             return withBody(body, "Que voulez-vous répondre ?") { text ->
-                dialog.confirm("Je vais répondre à ${conv.name} : « $text ». J'envoie ? Répondez oui ou non.") {
+                dialog.confirm("Je vais répondre ${FrenchText.a(conv.name)} : « $text ». J'envoie ? Répondez oui ou non.") {
                     if (notifications.reply(key, text)) "Réponse envoyée." else "Je n'ai pas réussi à répondre à cette notification."
                 }
             }
@@ -182,10 +182,10 @@ class CommunicationSkill(
     }
 
     private fun askBodyThenConfirm(name: String, number: String, body: String?): AssistantReply =
-        withBody(body, "Que voulez-vous dire à $name ?") { text ->
+        withBody(body, "Que voulez-vous dire ${FrenchText.a(name)} ?") { text ->
             val clean = text.trim().replaceFirstChar { it.uppercase() }.let { if (it.last() in ".!?") it else "$it." }
-            dialog.confirm("Je vais envoyer à $name : « $clean » J'envoie ? Répondez oui ou non.", "D'accord, je n'envoie rien.") {
-                if (smsSender.send(number, clean)) "Message envoyé à $name."
+            dialog.confirm("Je vais envoyer ${FrenchText.a(name)} : « $clean » J'envoie ? Répondez oui ou non.", "D'accord, je n'envoie rien.") {
+                if (smsSender.send(number, clean)) "Message envoyé ${FrenchText.a(name)}."
                 else "Le message n'est pas parti. Vérifiez le réseau, puis redemandez-moi."
             }
         }
@@ -224,7 +224,7 @@ class CommunicationSkill(
     }
 
     fun contactNumber(target: String): AssistantReply = resolve(target, "trouver") { c, n ->
-        AssistantReply("Le numéro de ${c.name} est le ${PhoneFormat.speakable(n.number)}.")
+        AssistantReply("Le numéro ${FrenchText.de(c.name)} est le ${PhoneFormat.speakable(n.number)}.")
     }
 
     /** Résout un nom dit à voix haute ; en cas de doute, demande lequel (jamais de choix au hasard). */
@@ -259,17 +259,17 @@ class CommunicationSkill(
     fun announceIncomingCall(number: String?): String {
         if (number.isNullOrBlank()) return "Appel d'un numéro masqué."
         val name = directory.nameFor(number)
-        return if (name != null) "Appel de $name." else "Appel d'un numéro inconnu, le ${PhoneFormat.speakable(number)}. Méfiez-vous s'il s'agit de démarchage."
+        return if (name != null) "Appel ${FrenchText.de(name)}." else "Appel d'un numéro inconnu, le ${PhoneFormat.speakable(number)}. Méfiez-vous s'il s'agit de démarchage."
     }
 
     fun announceIncomingSms(m: SmsMessage, readFull: Boolean): String {
         val who = directory.describe(m.address, m.name)
         lastConversation = Conversation(m.address, who, null)
         dialog.lastTopic = "sms"
-        if (!readFull) return "Nouveau message de $who. Pour l'entendre, dites : lis mes messages."
+        if (!readFull) return "Nouveau message ${FrenchText.de(who)}. Pour l'entendre, dites : lis mes messages."
         store.putString(K_SMS_READ, m.time.toInstant().toEpochMilli().toString())
         val verdict = ScamDetector.check(m.body, senderKnown = directory.isKnown(m.address))
-        return "Nouveau message de $who : ${m.body.trim()} ${verdict.warning}".trim()
+        return "Nouveau message ${FrenchText.de(who)} : ${m.body.trim()} ${verdict.warning}".trim()
     }
 
     companion object {
