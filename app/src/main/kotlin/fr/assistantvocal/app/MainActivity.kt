@@ -32,7 +32,7 @@ class MainActivity : Activity() {
         super.onResume()
         findViewById<Button>(R.id.talk).contentDescription = getString(R.string.talk_description, App.graph(this).settings.name)
         // L'activité est visible : Android autorise ici le démarrage du service micro.
-        if (hasMic()) startService(AssistantService.intent(this, ACTION_NOOP))
+        if (hasMic()) startForegroundService(AssistantService.intent(this, AssistantService.ACTION_ENSURE_RUNNING))
     }
 
     private fun hasMic() = checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
@@ -66,11 +66,11 @@ class MainActivity : Activity() {
 
     private fun welcome(): String {
         val s = App.graph(this).settings
-        return "Bonjour, je suis ${s.name}. Appuyez sur le grand bouton au milieu de l'écran pour me parler."
+        return "Bonjour, je suis ${s.name}. Pour me parler, dites « ${s.name} » et attendez le bip, " +
+            "ou appuyez sur le grand bouton au milieu de l'écran."
     }
 
     companion object {
         private const val REQUEST_PERMISSIONS = 10
-        const val ACTION_NOOP = "fr.assistantvocal.NOOP"
     }
 }

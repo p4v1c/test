@@ -9,7 +9,11 @@ import android.os.PowerManager
 import android.provider.Settings
 import android.text.InputType
 import android.view.View
+import android.accessibilityservice.AccessibilityServiceInfo
+import android.app.role.RoleManager
+import android.view.accessibility.AccessibilityManager
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.RadioButton
@@ -45,6 +49,10 @@ class SettingsActivity : Activity() {
     private lateinit var claudeLimitField: EditText
     private lateinit var rateField: EditText
     private lateinit var orderGeminiFirst: RadioButton
+    lateinit var wakeBox: CheckBox; private set
+    private lateinit var headsetBox: CheckBox
+    private lateinit var volumeBox: CheckBox
+    lateinit var triggersStatus: TextView; private set
     lateinit var status: TextView; private set
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -55,6 +63,16 @@ class SettingsActivity : Activity() {
 
         nameField = field(root, R.string.label_name, s.name, InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_WORDS)
         button(root, R.string.test_name) { testName() }
+
+        // Déclencheurs
+        wakeBox = check(root, R.string.wake_enabled, s.wakeWordEnabled)
+        headsetBox = check(root, R.string.headset_enabled, s.headsetButtonEnabled)
+        volumeBox = check(root, R.string.volume_enabled, s.volumeKeyEnabled)
+        button(root, R.string.calibrate) { save(); startForegroundService(AssistantService.intent(this, AssistantService.ACTION_CALIBRATE)) }
+        button(root, R.string.default_assistant) { openDefaultAssistantSettings() }
+        button(root, R.string.accessibility_settings) { startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
+        triggersStatus = TextView(this).apply { textSize = 16f; setPadding(0, 8, 0, 8) }
+        root.addView(triggersStatus)
         geminiKeyField = secretField(root, R.string.label_gemini_key, AppGraph.SECRET_GEMINI)
         geminiModelField = field(root, R.string.label_gemini_model, s.geminiModel)
         geminiHighModelField = field(root, R.string.label_gemini_high_model, s.geminiHighModel)
@@ -84,6 +102,33 @@ class SettingsActivity : Activity() {
 
         setContentView(ScrollView(this).apply { addView(root) })
     }
+
+    override fun onResume() {
+        super.onResume()
+        triggersStatus.text = triggersReport()
+    }
+
+    /** État des déclencheurs, lisible par le proche (et par TalkBack). */
+    fun triggersReport(): String {
+        val s = graph.settings
+        val assistant = runCatching { getSystemService(RoleManager::class.java).isRoleHeld(RoleManager.ROLE_ASSISTANT) }.getOrDefault(false)
+        val am = getSystemService(AccessibilityManager::class.java)
+        val keys = am?.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
+            ?.any { it.resolveInfo.serviceInfo.packageName == packageName } == true
+        return listOf(
+            (if (assistant) "✔ " else "✘ ") + "Assistant par défaut" + (if (assistant) "" else " : à activer pour l'écoute au démarrage et écran éteint"),
+            (if (keys) "✔ " else "✘ ") + "Boutons volume" + (if (keys) "" else " : service d'accessibilité à activer"),
+            (if (s.isWakeCalibrated) "✔ " else "• ") + "Nom " + (if (s.isWakeCalibrated) "appris" else "pas encore appris : touchez « Apprendre la prononciation du nom »"),
+        ).joinToString("\n")
+    }
+
+    private fun openDefaultAssistantSettings() {
+        val candidates = listOf(Intent(Settings.ACTION_VOICE_INPUT_SETTINGS), Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS), Intent(Settings.ACTION_SETTINGS))
+        candidates.firstOrNull { runCatching { startActivity(it) }.isSuccess }
+    }
+
+    private fun check(root: LinearLayout, textRes: Int, checked: Boolean): CheckBox =
+        CheckBox(this).apply { setText(textRes); isChecked = checked; textSize = 18f; minHeight = 96 }.also { root.addView(it) }
 
     private fun label(res: Int) = TextView(this).apply { setText(res); textSize = 18f; setPadding(0, 24, 0, 4) }
 
@@ -136,6 +181,11 @@ class SettingsActivity : Activity() {
         geminiLimitField.text.toString().toIntOrNull()?.let { s.setDailyLimit("gemini", it) }
         claudeLimitField.text.toString().toIntOrNull()?.let { s.setDailyLimit("claude", it) }
         rateField.text.toString().replace(',', '.').toFloatOrNull()?.let { s.speechRate = it }
+        s.wakeWordEnabled = wakeBox.isChecked
+        s.headsetButtonEnabled = headsetBox.isChecked
+        s.volumeKeyEnabled = volumeBox.isChecked
+        runCatching { startForegroundService(AssistantService.intent(this, AssistantService.ACTION_SETTINGS_CHANGED)) }
+        triggersStatus.text = triggersReport()
         val warn = if (!advice.acceptable) " Nom refusé : " + advice.warnings.joinToString(" ") else ""
         report(getString(R.string.saved) + warn)
     }

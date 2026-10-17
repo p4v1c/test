@@ -22,6 +22,9 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import java.time.ZonedDateTime
 
+/** Action à lancer par l'application après avoir prononcé la réponse. */
+enum class FollowUp { NONE, CALIBRATE_NAME, WAKE_WORD_CHANGED }
+
 /** Sons courts joués avec la réponse. */
 enum class Earcon { NONE, LISTENING, THINKING, SUCCESS, ERROR, CONFIRM, CANCELLED }
 
@@ -35,6 +38,7 @@ data class AssistantReply(
     val earcon: Earcon = Earcon.NONE,
     val listenAgain: Boolean = false,
     val stopAll: Boolean = false,
+    val followUp: FollowUp = FollowUp.NONE,
 )
 
 data class BatteryInfo(val percent: Int, val charging: Boolean)
@@ -58,7 +62,7 @@ class Assistant(
     private val device: DeviceStatus,
     private val llm: LlmProvider?,
     private val tools: ToolRegistry,
-    private val help: HelpCatalog = HelpCatalog.PHASE1,
+    private val help: HelpCatalog = HelpCatalog.PHASE2,
     private val router: LocalRouter = LocalRouter(),
     nowMillis: () -> Long = { System.currentTimeMillis() },
 ) {
@@ -70,6 +74,9 @@ class Assistant(
         private set
 
     private val name get() = settings.name
+
+    /** Positionné par une action confirmée (ex. renommage) pour déclencher une suite (calibration). */
+    private var pendingFollowUp = FollowUp.NONE
 
     suspend fun handle(utterance: String, image: ByteArray? = null, quality: Quality = Quality.STANDARD): AssistantReply {
         val text = utterance.trim()
@@ -87,7 +94,10 @@ class Assistant(
         // 1. Une confirmation est en attente : la phrase est une réponse oui/non.
         if (confirmations.hasPending()) {
             when (val outcome = confirmations.answer(text)) {
-                is ConfirmationOutcome.Executed -> return remember(text, AssistantReply(outcome.speech, Earcon.SUCCESS))
+                is ConfirmationOutcome.Executed -> {
+                    val follow = pendingFollowUp.also { pendingFollowUp = FollowUp.NONE }
+                    return remember(text, AssistantReply(outcome.speech, Earcon.SUCCESS, followUp = follow))
+                }
                 is ConfirmationOutcome.Cancelled -> return remember(text, AssistantReply(outcome.speech, Earcon.CANCELLED))
                 is ConfirmationOutcome.AskAgain -> return AssistantReply(outcome.speech, Earcon.CONFIRM, listenAgain = true)
                 null -> Unit
@@ -202,6 +212,18 @@ class Assistant(
             )
         }
         is Intent.ChangeName -> proposeRename(intent.newName)
+        Intent.CalibrateName -> AssistantReply(
+            "D'accord. Après chaque bip, dites simplement mon nom, $name. Je vais vous le demander trois fois.",
+            followUp = FollowUp.CALIBRATE_NAME,
+        )
+        is Intent.WakeWord -> {
+            settings.wakeWordEnabled = intent.enable
+            AssistantReply(
+                if (intent.enable) "D'accord, je réagis de nouveau quand vous dites $name."
+                else "D'accord, je ne réagis plus à mon nom. Pour me parler, appuyez sur le grand bouton, sur le bouton du casque, ou gardez le bouton volume bas appuyé.",
+                Earcon.SUCCESS, followUp = FollowUp.WAKE_WORD_CHANGED,
+            )
+        }
     }
 
     /** Changement de nom : vérifie, prévient des risques, puis demande confirmation. */
@@ -212,7 +234,9 @@ class Assistant(
         val question = "${warning}Voulez-vous que je m'appelle ${advice.name} ? Répondez oui ou non."
         confirmations.propose(question, cancelledMessage = "D'accord, je garde le nom $name.") {
             settings.name = advice.name
-            "C'est fait, je m'appelle maintenant ${advice.name}. Pour me parler, dites « ${advice.name} »."
+            pendingFollowUp = FollowUp.CALIBRATE_NAME
+            "C'est fait, je m'appelle maintenant ${advice.name}. Pour que je reconnaisse bien ce nom, " +
+                "dites-le après chacun des trois bips qui suivent."
         }
         return AssistantReply(question, Earcon.CONFIRM, listenAgain = true)
     }

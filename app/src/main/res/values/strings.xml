@@ -29,4 +29,12 @@
     <string name="test_ai">Tester l\'intelligence artificielle</string>
     <string name="battery_optimization">Autoriser à fonctionner en arrière-plan</string>
     <string name="saved">Réglages enregistrés.</string>
+    <string name="accessibility_label">Assistant vocal : boutons volume</string>
+    <string name="accessibility_description">Gardez le bouton volume bas appuyé une seconde pour parler à l\'assistant. Appuyez sur un bouton volume pendant qu\'il parle pour l\'interrompre. Ce service ne lit pas le contenu de l\'écran.</string>
+    <string name="wake_enabled">Écouter le nom en permanence (mot d\'activation, hors ligne)</string>
+    <string name="headset_enabled">Le bouton du casque ou de l\'enceinte lance l\'écoute</string>
+    <string name="volume_enabled">Appui long sur volume bas pour parler</string>
+    <string name="calibrate">Apprendre la prononciation du nom (3 essais)</string>
+    <string name="default_assistant">Choisir comme assistant par défaut</string>
+    <string name="accessibility_settings">Activer les boutons volume (accessibilité)</string>
 </resources>

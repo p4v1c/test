@@ -8,6 +8,8 @@ import fr.assistantvocal.app.audio.Earcons
 import fr.assistantvocal.app.audio.SpeechInput
 import fr.assistantvocal.app.audio.SpeechOutput
 import fr.assistantvocal.app.audio.Sounds
+import fr.assistantvocal.app.wake.VoskWakeEngine
+import fr.assistantvocal.app.wake.WakeEngine
 import fr.assistantvocal.core.assistant.Assistant
 import fr.assistantvocal.core.assistant.DeviceStatus
 import fr.assistantvocal.core.llm.FallbackLlmProvider
@@ -33,6 +35,7 @@ class AppGraph(
     val speechInputFactory: (Context) -> SpeechInput = { AndroidSpeechInput(it) },
     val speechOutputFactory: (Context) -> SpeechOutput = { AndroidSpeechOutput(it) },
     val soundsFactory: (Context) -> Sounds = { Earcons(it) },
+    val wakeEngineFactory: (Context) -> WakeEngine = { VoskWakeEngine(it) },
     geminiBaseUrl: String = "https://generativelanguage.googleapis.com",
     claudeBaseUrl: String? = null,
 ) {

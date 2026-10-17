@@ -25,7 +25,10 @@ import org.robolectric.annotation.Config
 class ServiceScenarioTest {
     private lateinit var app: App
 
-    @Before fun setUp() { app = ApplicationProvider.getApplicationContext() }
+    @Before fun setUp() {
+        app = ApplicationProvider.getApplicationContext()
+        shadowOf(app).grantPermissions(Manifest.permission.RECORD_AUDIO)
+    }
 
     private fun runConversation() {
         Robolectric.buildService(AssistantService::class.java, AssistantService.intent(app, AssistantService.ACTION_LISTEN))
@@ -84,12 +87,79 @@ class ServiceScenarioTest {
         server.shutdown()
     }
 
+    @Test fun `il dit le nom, l'assistant ecoute sa demande et repond`() {
+        val out = FakeOutput(); val sounds = FakeSounds(); val wake = FakeWake()
+        val input = FakeInput(Heard.Text("quelle heure est-il"))
+        testGraph(app, input, out, sounds, wake = wake)
+        Robolectric.buildService(AssistantService::class.java).create()
+        awaitMain { wake.isListening }
+        assertEquals("Orphée", wake.lastConfig!!.name)
+        wake.fire()
+        awaitMain { out.spoken.isNotEmpty() }
+        assertEquals(listOf("Il est 14 heures 30."), out.spoken)
+        assertEquals(1, input.listens)
+        awaitMain { wake.isListening }
+        assertTrue("l'écoute du nom reprend après la réponse", wake.isListening)
+    }
+
+    @Test fun `ecoute du nom desactivee a la voix`() {
+        val out = FakeOutput(); val wake = FakeWake()
+        val graph = testGraph(app, FakeInput(Heard.Text("n'écoute plus ton nom")), out, wake = wake)
+        runConversation()
+        awaitMain { out.spoken.isNotEmpty() }
+        assertTrue(out.spoken.single().startsWith("D'accord, je ne réagis plus à mon nom"))
+        assertEquals(false, graph.settings.wakeWordEnabled)
+        awaitMain { false }
+        assertEquals(false, wake.isListening)
+    }
+
+    @Test fun `apres un changement de nom, la calibration se lance et enregistre les variantes`() {
+        val out = FakeOutput(); val wake = FakeWake()
+        val graph = testGraph(app, FakeInput(Heard.Text("change ton nom en Orphée"), Heard.Text("oui")), out, wake = wake)
+        graph.settings.name = "Hector"
+        runConversation()
+        awaitMain { out.spoken.any { it.startsWith("Parfait") } }
+        assertEquals("Orphée", graph.settings.name)
+        assertEquals(3, wake.recordings)
+        assertEquals(listOf("or fée"), graph.settings.wakeAliases)
+        assertEquals(0.55f, graph.settings.wakeThreshold, 0.001f)
+        assertTrue(out.spoken.any { it.contains("reconnu mon nom 3 fois sur 3") })
+    }
+
+    @Test fun `calibration avec faux declenchements rend l'ecoute plus stricte`() {
+        val out = FakeOutput(); val wake = FakeWake(falseTriggers = 2)
+        val graph = testGraph(app, FakeInput(Heard.Text("apprends mon nom")), out, wake = wake)
+        runConversation()
+        awaitMain { out.spoken.any { it.contains("par erreur") } }
+        assertTrue(graph.settings.wakeStrict)
+    }
+
     @Test fun `parle plus vite change la vitesse de la voix`() {
         val out = FakeOutput()
         testGraph(app, FakeInput(Heard.Text("parle plus vite")), out)
         runConversation()
         awaitMain { out.spoken.isNotEmpty() }
         assertEquals(1.25f, out.rate)
+    }
+}
+
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34])
+class TriggersTest {
+    @Test fun `le bouton assistant du casque Bluetooth lance l'ecoute`() {
+        val app = ApplicationProvider.getApplicationContext<App>()
+        testGraph(app)
+        val activity = Robolectric.buildActivity(fr.assistantvocal.app.triggers.TriggerActivity::class.java,
+            android.content.Intent("android.intent.action.VOICE_COMMAND")).setup().get()
+        assertTrue(activity.isFinishing)
+        assertEquals(AssistantService.ACTION_LISTEN, shadowOf(app).nextStartedService.action)
+    }
+
+    @Test fun `au demarrage du telephone le service est relance`() {
+        val app = ApplicationProvider.getApplicationContext<App>()
+        testGraph(app)
+        fr.assistantvocal.app.triggers.BootReceiver().onReceive(app, android.content.Intent(android.content.Intent.ACTION_BOOT_COMPLETED))
+        assertEquals(AssistantService.ACTION_ENSURE_RUNNING, shadowOf(app).nextStartedService.action)
     }
 }
 

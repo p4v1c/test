@@ -21,6 +21,9 @@ sealed interface Intent {
     data class SetVerbosity(val brief: Boolean) : Intent
     data class ChangeName(val newName: String) : Intent
     data class PrivateMode(val enable: Boolean) : Intent
+    /** Apprendre la façon dont la personne prononce le nom (mot d'activation). */
+    data object CalibrateName : Intent
+    data class WakeWord(val enable: Boolean) : Intent
 }
 
 /** [confidence] entre 0 et 1. ≥ 0.8 : on agit ; entre 0.5 et 0.8 : on vérifie (IA ou question fermée). */
@@ -56,6 +59,10 @@ class LocalRouter {
 
         Rule({ _, _ -> Intent.PrivateMode(enable = false) }, r("\\b(desactive|quitte|sors du|arrete|enleve|coupe) (le )?mode prive\\b|\\bmode prive (desactive|off)\\b")),
         Rule({ _, _ -> Intent.PrivateMode(enable = true) }, r("\\b(active|passe en|mets? (toi )?en|mode) (le )?(mode )?prive\\b")),
+
+        Rule({ _, _ -> Intent.CalibrateName }, r("\\b(teste|tester|calibre|calibrer|apprends|apprendre|entraine|reapprends) (mon|ton|le) nom\\b|\\b(regle|reglage du) mot d activation\\b")),
+        Rule({ _, _ -> Intent.WakeWord(enable = false) }, r("\\b(n ecoute plus|arrete d ecouter|desactive|coupe) (ton nom|le mot d activation|l ecoute)\\b|\\bne reagis plus a ton nom\\b")),
+        Rule({ _, _ -> Intent.WakeWord(enable = true) }, r("\\b(reactive|active|remets) (ton nom|le mot d activation|l ecoute)\\b|\\becoute (a nouveau|de nouveau) ton nom\\b")),
 
         Rule({ _, _ -> Intent.Help }, r("\\b(qu est ce que tu sais faire|que sais tu faire|que peux tu faire|qu est ce que tu peux faire|tu sais faire quoi|aide moi a t utiliser|^aide$|liste des commandes|comment ca marche)\\b")),
         Rule({ _, _ -> Intent.WhoAreYou }, r("\\b(qui es tu|qui est tu|t es qui|comment tu t appelles|comment t appelles tu|quel est ton nom|c est quoi ton nom)\\b")),

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Déclaration « assistant numérique par défaut ». -->
+<voice-interaction-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:recognitionService="fr.assistantvocal.app.audio.ProxyRecognitionService"
+    android:sessionService="fr.assistantvocal.app.triggers.AssistantSessionService"
+    android:settingsActivity="fr.assistantvocal.app.SettingsActivity"
+    android:supportsAssist="true"
+    android:supportsLaunchVoiceAssistFromKeyguard="true" />

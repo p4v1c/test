@@ -42,6 +42,9 @@ dependencies {
     implementation(project(":llm"))
     implementation("androidx.core:core-ktx:1.16.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
+    // Mot d'activation hors ligne
+    implementation("com.alphacephei:vosk-android:0.3.47@aar")
+    implementation("net.java.dev.jna:jna:5.13.0@aar")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.robolectric:robolectric:4.14.1")
@@ -50,3 +53,32 @@ dependencies {
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
     testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
 }
+
+// ---------------------------------------------------------------------------------------------
+// Modèle Vosk français (41 Mo, Apache 2.0) : téléchargé à la compilation et embarqué dans l'APK,
+// pour que le mot d'activation fonctionne dès le premier lancement, même sans internet.
+val voskModelUrl = "https://alphacephei.com/vosk/models/vosk-model-small-fr-0.22.zip"
+val voskAssetDir = layout.projectDirectory.dir("src/main/assets/model-fr")
+val downloadVoskModel by tasks.registering {
+    description = "Télécharge le modèle Vosk français dans les assets"
+    outputs.dir(voskAssetDir)
+    onlyIf { !voskAssetDir.file("uuid").asFile.exists() }
+    doLast {
+        val zip = layout.buildDirectory.file("vosk/model.zip").get().asFile
+        zip.parentFile.mkdirs()
+        if (!zip.exists()) {
+            logger.lifecycle("Téléchargement du modèle Vosk…")
+            uri(voskModelUrl).toURL().openStream().use { input -> zip.outputStream().use { input.copyTo(it) } }
+        }
+        val target = voskAssetDir.asFile
+        target.deleteRecursively()
+        copy {
+            from(zipTree(zip))
+            eachFile { relativePath = RelativePath(true, *relativePath.segments.drop(1).toTypedArray()) }
+            includeEmptyDirs = false
+            into(target)
+        }
+        target.resolve("uuid").writeText("vosk-model-small-fr-0.22")
+    }
+}
+tasks.named("preBuild") { dependsOn(downloadVoskModel) }

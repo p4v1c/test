@@ -7,3 +7,4 @@ local.properties
 captures/
 *.keystore
 dist/
+app/src/main/assets/model-fr/

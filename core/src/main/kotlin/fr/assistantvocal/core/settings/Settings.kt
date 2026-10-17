@@ -31,7 +31,14 @@ class AssistantSettings(private val store: KeyValueStore) {
 
     var name: String
         get() = store.getString(K_NAME)?.takeIf { it.isNotBlank() } ?: DEFAULT_NAME
-        set(value) = store.putString(K_NAME, value.trim())
+        set(value) {
+            val v = value.trim()
+            if (v != store.getString(K_NAME)) {
+                // La calibration appartenait à l'ancien nom.
+                store.putString(K_WAKE_ALIASES, null); store.putString(K_WAKE_THRESHOLD, null); store.putString(K_WAKE_STRICT, null)
+            }
+            store.putString(K_NAME, v)
+        }
 
     /** Vrai tant qu'aucun nom n'a été choisi : l'assistant le proposera au premier lancement. */
     val isNameChosen: Boolean get() = !store.getString(K_NAME).isNullOrBlank()
@@ -52,6 +59,36 @@ class AssistantSettings(private val store: KeyValueStore) {
     var speechPitch: Float
         get() = store.getFloat(K_PITCH, 1.0f)
         set(value) = store.putFloat(K_PITCH, value.coerceIn(0.5f, 2.0f))
+
+    /** Écoute du nom en permanence (mot d'activation). */
+    var wakeWordEnabled: Boolean
+        get() = store.getBoolean(K_WAKE_ENABLED, true)
+        set(value) = store.putBoolean(K_WAKE_ENABLED, value)
+
+    /** Variantes apprises à la calibration (comment le moteur hors ligne entend le nom). */
+    var wakeAliases: List<String>
+        get() = store.getString(K_WAKE_ALIASES)?.split('|')?.filter { it.isNotBlank() } ?: emptyList()
+        set(value) = store.putString(K_WAKE_ALIASES, value.joinToString("|"))
+
+    var wakeThreshold: Float
+        get() = store.getFloat(K_WAKE_THRESHOLD, 0.6f)
+        set(value) = store.putFloat(K_WAKE_THRESHOLD, value.coerceIn(0.3f, 0.95f))
+
+    var wakeStrict: Boolean
+        get() = store.getBoolean(K_WAKE_STRICT, false)
+        set(value) = store.putBoolean(K_WAKE_STRICT, value)
+
+    val isWakeCalibrated: Boolean get() = store.getString(K_WAKE_THRESHOLD) != null
+
+    /** Un appui sur le bouton du casque ou de l'enceinte déclenche l'écoute. */
+    var headsetButtonEnabled: Boolean
+        get() = store.getBoolean(K_HEADSET, true)
+        set(value) = store.putBoolean(K_HEADSET, value)
+
+    /** Appui long sur « volume bas » pour parler (nécessite le service d'accessibilité). */
+    var volumeKeyEnabled: Boolean
+        get() = store.getBoolean(K_VOLUME_KEY, true)
+        set(value) = store.putBoolean(K_VOLUME_KEY, value)
 
     /** Ordre des fournisseurs IA, ex. "gemini,claude". */
     var providerOrder: List<String>
@@ -93,5 +130,11 @@ class AssistantSettings(private val store: KeyValueStore) {
         private const val K_GEMINI_HIGH_MODEL = "llm.gemini.highModel"
         private const val K_CLAUDE_MODEL = "llm.claude.model"
         private const val K_LIMIT = "llm.limit"
+        private const val K_WAKE_ENABLED = "wake.enabled"
+        private const val K_WAKE_ALIASES = "wake.aliases"
+        private const val K_WAKE_THRESHOLD = "wake.threshold"
+        private const val K_WAKE_STRICT = "wake.strict"
+        private const val K_HEADSET = "trigger.headset"
+        private const val K_VOLUME_KEY = "trigger.volumeKey"
     }
 }

@@ -33,12 +33,18 @@ class HelpCatalog(private val topics: List<HelpTopic>) {
         val SETTINGS = HelpTopic(
             "les réglages de ma voix", listOf("reglages", "voix", "parametres", "vitesse"),
             listOf("parle plus vite", "parle moins vite", "parle plus fort", "sois plus bref", "donne plus de détails",
-                "change ton nom en Orphée", "active le mode privé"),
+                "change ton nom en Orphée", "apprends mon nom", "n'écoute plus ton nom", "active le mode privé"),
         )
         val QUESTIONS = HelpTopic(
             "les questions de tous les jours", listOf("questions", "question", "culture", "recettes"),
             listOf("comment faire une pâte à crêpes ?", "c'est quoi une hernie discale ?", "raconte-moi une histoire courte"),
         )
+        val TRIGGERS = HelpTopic(
+            "les façons de m'appeler", listOf("appeler", "declencher", "activer", "bouton"),
+            listOf("dites mon nom puis attendez le bip", "appuyez sur le bouton du casque",
+                "gardez le bouton volume bas appuyé une seconde", "appuyez sur le grand bouton de l'écran"),
+        )
         val PHASE1 = HelpCatalog(listOf(INFOS, QUESTIONS, SETTINGS))
+        val PHASE2 = HelpCatalog(listOf(INFOS, QUESTIONS, TRIGGERS, SETTINGS))
     }
 }
