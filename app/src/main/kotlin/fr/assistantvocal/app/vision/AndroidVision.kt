@@ -80,8 +80,10 @@ class AndroidCamera(private val context: Context) : Camera, LifecycleOwner {
     private var capture: ImageCapture? = null
     private var provider: ProcessCameraProvider? = null
     private var started = false
+    @Volatile private var closed = false
 
     private suspend fun ensureStarted(): Boolean {
+        if (closed) return false
         if (started) return camera != null
         started = true
         if (context.checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) return false
@@ -101,6 +103,7 @@ class AndroidCamera(private val context: Context) : Camera, LifecycleOwner {
             }
         val cap = ImageCapture.Builder().setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY).build()
         capture = cap
+        if (closed) return false // séance annulée pendant l'ouverture
         registry.currentState = Lifecycle.State.STARTED
         camera = runCatching { p.bindToLifecycle(this, CameraSelector.DEFAULT_BACK_CAMERA, analysis, cap) }
             .onFailure { Log.e(TAG, "Caméra indisponible", it) }.getOrNull()
@@ -133,8 +136,12 @@ class AndroidCamera(private val context: Context) : Camera, LifecycleOwner {
     override fun torch(on: Boolean) { runCatching { camera?.cameraControl?.enableTorch(on) } }
 
     override fun close() {
+        if (closed) return
+        closed = true
         runCatching { camera?.cameraControl?.enableTorch(false) }
-        registry.currentState = Lifecycle.State.DESTROYED
+        // Séance annulée avant l'ouverture (ex. le nom dit pendant le détecteur de lumière) : l'état est encore
+        // INITIALIZED, d'où Android interdit de passer à DESTROYED (plantage de toute l'app).
+        if (registry.currentState.isAtLeast(Lifecycle.State.CREATED)) registry.currentState = Lifecycle.State.DESTROYED
         runCatching { provider?.unbindAll() }
         executor.shutdown()
     }

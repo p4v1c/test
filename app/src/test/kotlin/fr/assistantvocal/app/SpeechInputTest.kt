@@ -42,3 +42,15 @@ class SpeechInputTest {
         )
     }
 }
+
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34])
+class CameraLifecycleTest {
+    @Test fun `fermer la camera avant qu'elle soit ouverte ne plante pas (nom dit pendant le detecteur de lumiere)`() {
+        val app: App = ApplicationProvider.getApplicationContext()
+        val cam = fr.assistantvocal.app.vision.AndroidCamera(app)
+        cam.close() // séance annulée pendant l'ouverture : l'état est encore INITIALIZED
+        cam.close() // deux fois de suite non plus
+        assertTrue(runBlocking { cam.preview() } == null) // fermée : plus d'ouverture tardive
+    }
+}
