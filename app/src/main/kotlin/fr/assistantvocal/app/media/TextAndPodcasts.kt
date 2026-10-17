@@ -70,6 +70,7 @@ class TtsTextPlayer(private val context: Context, private val pitch: () -> Float
     private val listener = object : UtteranceProgressListener() {
         override fun onStart(id: String) {
             val n = id.removePrefix("seg-").toIntOrNull() ?: return
+            Log.i(TAG, "Lecture du segment ${n + 1}")
             main.post {
                 if (!playing) return@post
                 index = n

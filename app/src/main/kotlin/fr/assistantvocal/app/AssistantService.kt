@@ -92,6 +92,8 @@ class AssistantService : Service() {
         when (intent?.action) {
             ACTION_LISTEN -> startConversation()
             ACTION_TUTORIAL -> startConversation(firstText = "tutoriel")
+            // Tests sur émulateur (versions de debug uniquement) : la phrase est traitée comme si elle avait été entendue.
+            ACTION_DEBUG_HEAR -> if (isDebuggable()) intent.getStringExtra(EXTRA_TEXT)?.let { startConversation(firstText = it) }
             ACTION_STOP_SPEAKING -> { interrupt(); restartWakeSoon() }
             ACTION_SHUTDOWN -> { interrupt(); wake.stop(); stopSelf() }
             ACTION_SAY -> intent.getStringExtra(EXTRA_TEXT)?.let { say(it) }
@@ -337,6 +339,8 @@ class AssistantService : Service() {
         }
     }
 
+    private fun isDebuggable() = (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0
+
     /** Mémo vocal : bip, enregistrement jusqu'au silence, puis durée annoncée. */
     private suspend fun recordMemo() {
         wake.stop()
@@ -543,6 +547,7 @@ class AssistantService : Service() {
     }
 
     private suspend fun speak(text: String): Boolean {
+        if (text.isNotBlank()) Log.i(TAG, "Dit : $text")
         currentSpeech = text
         speakingNow = true
         return try { output.speak(text) } finally { speakingNow = false; currentSpeech = "" }
@@ -586,6 +591,7 @@ class AssistantService : Service() {
         private const val NOTIFICATION_ID = 1
         const val ACTION_LISTEN = "fr.assistantvocal.LISTEN"
         const val ACTION_TUTORIAL = "fr.assistantvocal.TUTORIAL"
+        const val ACTION_DEBUG_HEAR = "fr.assistantvocal.DEBUG_HEAR"
         const val ACTION_STOP_SPEAKING = "fr.assistantvocal.STOP_SPEAKING"
         const val ACTION_SHUTDOWN = "fr.assistantvocal.SHUTDOWN"
         const val ACTION_SAY = "fr.assistantvocal.SAY"

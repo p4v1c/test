@@ -356,7 +356,7 @@ Pas pris en charge : livres DAISY en texte seul, EPUB protégés (DRM), Audible,
 ## Développement
 
 ```bash
-./gradlew :core:test :llm:test :app:testDebugUnitTest   # 271 tests (+ tests d'intégration Vosk et réseau réels, optionnels)
+./gradlew :core:test :llm:test :app:testDebugUnitTest   # 273 tests (+ tests d'intégration Vosk et réseau réels, optionnels)
 ./gradlew :app:assembleDebug
 ```
 
@@ -365,5 +365,7 @@ Pas pris en charge : livres DAISY en texte seul, EPUB protégés (DRM), Audible,
 - `app/` : application Android (service, voix, sons, écrans, caméra, lecteur, agenda, mails, sauvegardes).
 
 Pas d'émulateur dans l'environnement de développement (pas de KVM) : les tests Android tournent avec Robolectric.
+
+**Test complet sur émulateur** (Genymotion, Pixel rooté) : donner à Claude Code le prompt [tools/emu/PROMPT_TEST_EMULATEUR.md](tools/emu/PROMPT_TEST_EMULATEUR.md). En version de debug, `tools/emu/dire.sh "phrase"` fait « entendre » une phrase à l'assistant (intention `fr.assistantvocal.DEBUG_HEAR`, root) et affiche ce qu'il répond (journal `Dit : …`).
 
 Documents : [RESEARCH.md](RESEARCH.md), [FEATURES.md](FEATURES.md), [OPEN_SOURCE.md](OPEN_SOURCE.md), [ARCHITECTURE.md](ARCHITECTURE.md).

@@ -620,3 +620,20 @@ class Phase8AppTest {
         assertEquals(2, kotlinx.coroutines.runBlocking { fr.assistantvocal.app.media.PdfText(app).extract(android.net.Uri.fromFile(file), "lettre") }!!.blocks.size)
     }
 }
+
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34])
+class DebugHearTest {
+    @Test fun `en debug, une phrase injectee est traitee comme entendue`() {
+        val app: App = ApplicationProvider.getApplicationContext()
+        shadowOf(app).grantPermissions(Manifest.permission.RECORD_AUDIO)
+        app.applicationInfo.flags = app.applicationInfo.flags or android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE
+        val out = FakeOutput()
+        testGraph(app, FakeInput(), out)
+        Robolectric.buildService(AssistantService::class.java,
+            AssistantService.intent(app, AssistantService.ACTION_DEBUG_HEAR).putExtra(AssistantService.EXTRA_TEXT, "quelle heure est-il ?"))
+            .create().startCommand(0, 1)
+        awaitMain { out.spoken.isNotEmpty() }
+        assertEquals("Il est 14 heures 30.", out.spoken.first())
+    }
+}

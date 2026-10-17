@@ -62,6 +62,7 @@ class AndroidPlayer(private val context: Context) : AudioPlayer {
     private val listener = object : Player.Listener {
         override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) { playing = playWhenReady }
         override fun onPlaybackStateChanged(state: Int) {
+            if (state == Player.STATE_READY) Log.i(TAG, "Lecteur prêt, son en cours")
             if (state == Player.STATE_ENDED) { playing = false; onFinished?.invoke() }
         }
         override fun onPlayerError(error: PlaybackException) { Log.e(TAG, "Lecture impossible", error); playing = false }
@@ -86,6 +87,7 @@ class AndroidPlayer(private val context: Context) : AudioPlayer {
         .build().also { p -> p.addListener(listener); exo = p; main.post(poll) }
 
     override fun play(tracks: List<Track>, start: Pos, speed: Float, live: Boolean) {
+        Log.i(TAG, "Lecture : ${tracks.getOrNull(start.track)?.uri} (piste ${start.track + 1}/${tracks.size}, ${start.ms} ms, vitesse $speed)")
         durations.clear()
         lastPos = start; playing = true
         onMain {
