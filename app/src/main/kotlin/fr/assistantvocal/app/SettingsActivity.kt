@@ -78,7 +78,7 @@ class SettingsActivity : Activity() {
         val s = graph.settings
         val root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(20), dp(28), dp(20), dp(28)) }
         root.addView(TextView(this).apply {
-            setText(R.string.settings_title); textSize = 32f; isAccessibilityHeading = true
+            setText(R.string.settings_title); textSize = 32f; isAccessibilityHeading = true; setTextColor(getColor(R.color.text))
             typeface = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL)
         })
         var c = section(root, R.string.section_name)
