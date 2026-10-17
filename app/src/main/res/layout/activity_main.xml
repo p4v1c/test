@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/screen_background"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- Un seul gros bouton : toute la zone est cliquable. -->
+    <Button
+        android:id="@+id/talk"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:backgroundTint="@color/talk_background"
+        android:text="@string/talk"
+        android:textAllCaps="false"
+        android:textColor="@color/talk_text"
+        android:textSize="56sp" />
+
+    <Button
+        android:id="@+id/settings"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:minHeight="56dp"
+        android:text="@string/open_settings"
+        android:textAllCaps="false"
+        android:textSize="18sp" />
+</LinearLayout>

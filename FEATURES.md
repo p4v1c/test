@@ -6,6 +6,16 @@ Légende :
 - **Coût** : « 0 » = aucun appel IA ; sinon nombre approximatif de requêtes IA. Avec Gemini Flash-Lite gratuit (~500 req/jour) tout reste gratuit ; avec Claude Haiku 5.5 en secours, ~0,0003 $ par requête texte, ~0,001 $ avec image.
 - 💡 = idée ajoutée suite aux recherches (pas dans la demande initiale).
 
+## Décisions validées (17 octobre 2026)
+
+- **Téléphone cible : un Google Pixel neuf** (Android récent, reconnaissance vocale française hors ligne de Google, pas de root). Le SmartVision actuel (clavier physique) n'est pas la cible. Les fonctions « bonus root » passent en option lointaine.
+- **Pas de WhatsApp** : les fonctions WhatsApp sont retirées. **Google Meet** éventuellement plus tard (ouvrir Meet ou appeler un proche via Meet, P2).
+- **Gmail : oui**, via IMAP/SMTP avec mot de passe d'application (P1).
+- **Pas de transports en commun** (petit village) : fonction retirée.
+- **Pas de détection de chute** : fonction retirée.
+- **Casque ou enceinte Bluetooth** : à prendre en charge (bouton du casque comme déclencheur, sortie audio sur l'enceinte).
+- **Palier gratuit Gemini pour commencer** ; la facturation pourra être activée plus tard. L'utilisation des données par Google pour l'entraînement est acceptée.
+
 Principe directeur : **tout ce qui peut être fait sans IA est fait sans IA** (routeur local). L'IA sert à comprendre les demandes libres, résumer, décrire des images et répondre aux questions.
 
 ---
@@ -38,13 +48,13 @@ Principe directeur : **tout ce qui peut être fait sans IA est fait sans IA** (r
 | « Qui m'a appelé ? » (journal d'appels), rappeler | P0 | Appels manqués | ✅ | 0 |
 | SMS : lire, dicter, relire, envoyer (confirmation) | P0 | | ✅ (dictée 🟡) | 0 |
 | Notifications des autres apps lues (WhatsApp, Messenger…), filtre par app | P0 | | ✅ | 0 |
-| Réponse rapide via l'action de réponse de la notification | P1 | Répondre à WhatsApp sans ouvrir l'app | ✅ | 0 |
+| Réponse rapide via l'action de réponse de la notification | P1 | Répondre à un message sans ouvrir l'app | ✅ | 0 |
 | 💡 **Alerte arnaque** à la lecture d'un SMS/notification (lien suspect, « colis », « CPF », « Ameli », urgence d'argent) | P0 | Les personnes âgées et aveugles sont des cibles fréquentes ; elles ne voient pas l'expéditeur | 🟡 (règles locales + avis IA) | 0-1 |
 | 💡 Contacts favoris numérotés (« appelle le numéro 1 ») | P1 | Plus fiable que la reconnaissance d'un nom difficile | ✅ | 0 |
-| 💡 Appel vidéo WhatsApp à un proche à la voix (« montre à ma fille ») | P1 | Aide humaine visuelle immédiate | ❌ | 0 |
+| ~~Appel vidéo WhatsApp~~ → 💡 appel Google Meet à un proche (« montre à ma fille ») | P2 | Aide humaine visuelle | ❌ | 0 |
 | 💡 « Appelle un bénévole » → ouvre Be My Eyes | P1 | Aide humaine quand l'IA ne suffit pas | ❌ | 0 |
 | Emails : lire, résumer, répondre, envoyer (relecture + confirmation), **via IMAP/SMTP + mot de passe d'application** | P1 | | ❌ | 1 par résumé |
-| Messages vocaux WhatsApp : lecture | P2 | Fichiers audio accessibles seulement en partie ; faisable avec root ou via « partager vers » | 🟡 | 0 |
+| ~~Messages vocaux WhatsApp~~ | — | Retiré (pas de WhatsApp) | — | — |
 | Messagerie vocale opérateur | P2 | Dépend de l'opérateur (appel au 888, etc.) | ❌ | 0 |
 
 ## 3. Vision (caméra arrière, lampe auto si sombre)
@@ -62,7 +72,7 @@ Principe directeur : **tout ce qui peut être fait sans IA est fait sans IA** (r
 | Détecteur de lumière (son dont la hauteur suit la luminosité) | P1 | Lampes restées allumées | ✅ | 0 |
 | Boîte de médicament : nom, dosage, posologie écrite + rappel « vérifiez avec le pharmacien » | P1 | | 🟡 | 0-1 |
 | Documents multipages + navigation (« relis le montant », « page suivante ») | P1 | Factures | 🟡 | 1 par document |
-| Description des photos reçues (WhatsApp, galerie via « partager vers ») | P1 | Lien social | ❌ | 1 |
+| Description des photos reçues (MMS, Gmail, galerie via « partager vers ») | P1 | Lien social | ❌ | 1 |
 | Recherche d'objet (« où sont mes clés ? ») : détection ML Kit + guidage sonore gauche/droite | P2 | Fiabilité limitée pour les petits objets | 🟡 | 0-1 |
 | Mode description continue (Live API, activation explicite, durée limitée) | P2 | Coûteux, quotas inconnus | ❌ | élevé |
 | Reconnaissance de proches enregistrés (consentement) | P2 | Complexe, sensible (RGPD) | 🟡 | — |
@@ -77,9 +87,8 @@ Principe directeur : **tout ce qui peut être fait sans IA est fait sans IA** (r
 | Itinéraire piéton guidé (Google Maps en mode marche par intent) | P1 | Maps est fiable et parle | ❌ | 0 |
 | Lieux favoris enregistrés à la voix (« enregistre ici comme maison ») + guidage | P1 | | ✅ | 0 |
 | Partage de position avec un proche (SMS avec lien) | P0 | Sécurité | 🟡 | 0 |
-| Transports : prochains passages (selon ville : PRIM IDF ou GTFS-RT) | P1 | | ❌ | 0 |
+| ~~Transports en commun~~ | — | Retiré (petit village, ne les prend pas) | — | — |
 | 💡 Ouvrir Soundscape (Android, juin 2026) pour l'audio 3D | P2 | Inutile de réimplémenter | ✅ | 0 |
-| 💡 « Préviens-moi quand j'arrive à l'arrêt X » (géofence) | P2 | Ne pas rater son arrêt | ✅ | 0 |
 
 ## 5. Infos et recherche
 
@@ -125,7 +134,7 @@ Principe directeur : **tout ce qui peut être fait sans IA est fait sans IA** (r
 | Fonction | P | Hors ligne | Coût |
 |---|---|---|---|
 | SOS : « [nom], au secours » ou appui long volume → compte à rebours 10 s annulable → SMS avec position aux contacts d'urgence → appel du premier contact | P0 | ✅ (SMS/appel) | 0 |
-| Détection de chute (désactivable) → « tout va bien ? » → SOS si pas de réponse | P1 | ✅ | 0 |
+| ~~Détection de chute~~ | — | Retirée à la demande | — |
 | Retrouver le téléphone (sifflement, ou mot-clé) | P1 | ✅ | 0 |
 | 💡 **Retrouver le téléphone par SMS** : un contact de confiance envoie un code → le téléphone sonne fort et répond avec sa position | P1 | ✅ | 0 |
 | Alertes batterie faible, perte de réseau | P0 | ✅ | 0 |
@@ -138,7 +147,6 @@ Principe directeur : **tout ce qui peut être fait sans IA est fait sans IA** (r
 |---|---|---|
 | Wi-Fi, Bluetooth, mode avion, redémarrage à la voix | P2 | ✅ |
 | Service protégé (priv-app / whitelist), permissions accordées automatiquement | P2 | ✅ |
-| Lecture des messages vocaux WhatsApp (accès aux fichiers) | P2 | ✅ |
 
 ---
 

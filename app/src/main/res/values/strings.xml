@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Assistant vocal</string>
+    <string name="talk">Parler</string>
+    <string name="talk_description">Parler à %1$s</string>
+    <string name="open_settings">Réglages, pour un proche</string>
+    <string name="settings_title">Réglages</string>
+    <string name="notification_channel">Assistant à l\'écoute</string>
+    <string name="notification_text">Touchez « Parler » pour poser une question</string>
+    <string name="notification_stop">Arrêter</string>
+    <string name="mic_permission_needed">J\'ai besoin d\'accéder au micro pour vous entendre. Demandez à un proche d\'autoriser le micro.</string>
+
+    <string name="label_name">Nom de l\'assistant (2 ou 3 syllabes, peu courant)</string>
+    <string name="test_name">Vérifier et prononcer le nom</string>
+    <string name="label_gemini_key">Clé API Gemini (Google AI Studio)</string>
+    <string name="label_gemini_model">Modèle Gemini principal</string>
+    <string name="label_gemini_high_model">Modèle Gemini pour les documents difficiles</string>
+    <string name="label_claude_key">Clé API Claude (Anthropic, optionnelle)</string>
+    <string name="label_claude_model">Modèle Claude</string>
+    <string name="label_order">Fournisseur à utiliser en premier</string>
+    <string name="order_gemini_first">Gemini d\'abord, Claude en secours</string>
+    <string name="order_claude_first">Claude d\'abord, Gemini en secours</string>
+    <string name="label_gemini_limit">Limite de requêtes Gemini par jour</string>
+    <string name="label_claude_limit">Limite de requêtes Claude par jour</string>
+    <string name="label_rate">Vitesse de parole (1 = normal)</string>
+    <string name="key_saved_hint">Clé enregistrée (laisser vide pour la garder)</string>
+    <string name="key_empty_hint">Collez la clé ici</string>
+    <string name="save">Enregistrer</string>
+    <string name="test_ai">Tester l\'intelligence artificielle</string>
+    <string name="battery_optimization">Autoriser à fonctionner en arrière-plan</string>
+    <string name="saved">Réglages enregistrés.</string>
+</resources>

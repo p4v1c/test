@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="talk_background">#0B3D91</color>
+    <color name="talk_text">#FFFFFF</color>
+    <color name="screen_background">#000000</color>
+    <style name="AppTheme" parent="@android:style/Theme.DeviceDefault">
+        <item name="android:windowBackground">@color/screen_background</item>
+    </style>
+</resources>

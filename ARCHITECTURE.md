@@ -1,5 +1,11 @@
 # ARCHITECTURE.md — Choix techniques
 
+## 0. État d'avancement
+
+- Phase 0 (recherche) : faite.
+- Phase 1 (socle) : faite. Modules `core`, `llm`, `app` ; 60 tests automatiques.
+- Téléphone cible : Google Pixel (voir FEATURES.md, « Décisions validées »).
+
 ## 1. Vue d'ensemble
 
 ```
@@ -142,7 +148,6 @@ Chaque fonction est un `Tool` : nom, description, schéma JSON des paramètres, 
 | Boutons volume / casque | `AccessibilityService` (filtre des touches, sans gêner TalkBack) + `MediaSession` |
 | Caméra / lampe | CameraX, `CameraManager.setTorchMode` |
 | Position | `FusedLocationProvider` (Play Services) avec repli `LocationManager` |
-| Chute | Accéléromètre, algorithme en 3 phases (chute libre < 0,5 g → impact > 2,5 g → immobilité 10 s), seuils réglables |
 
 ## 10. Données locales
 
