@@ -159,9 +159,10 @@ class InfoSkill(
 
     // ------------------------------------------------------------------ lieux proches
 
-    private suspend fun findNearest(p: GeoPoint, c: PlaceCategory): List<Place> {
+    /** Lieux les plus proches ; null si le service ne répond pas (ne jamais dire « rien trouvé » dans ce cas). */
+    private suspend fun findNearest(p: GeoPoint, c: PlaceCategory): List<Place>? {
         for (radius in listOf(3_000, 15_000)) {
-            val found = runCatching { s.places.nearby(p.lat, p.lon, c, radius) }.getOrNull() ?: return emptyList()
+            val found = runCatching { s.places.nearby(p.lat, p.lon, c, radius) }.getOrNull() ?: return null
             if (found.isNotEmpty()) return found.sortedBy { Geo.distanceM(p, it.lat, it.lon) }
         }
         return emptyList()
@@ -173,6 +174,7 @@ class InfoSkill(
         if (!device.isOnline()) return error("$noInternet Je ne peux pas chercher les lieux proches.")
         val p = position() ?: return error(noPosition)
         val list = findNearest(p, c)
+            ?: return error("Le service de recherche des lieux ne répond pas pour l'instant. Réessayez dans quelques minutes.")
         if (list.isEmpty()) return error("Je n'ai pas trouvé de ${c.label} à moins de 15 kilomètres.")
         val best = list.first()
         val d = Geo.distanceM(p, best.lat, best.lon)
@@ -247,7 +249,8 @@ class InfoSkill(
         if (!device.isOnline()) return error("$noInternet Le guidage a besoin d'internet.")
         PlaceCategory.find(target)?.let { c ->
             val p = position() ?: return error(noPosition)
-            val best = findNearest(p, c).firstOrNull() ?: return error("Je n'ai pas trouvé de ${c.label} à moins de 15 kilomètres.")
+            val found = findNearest(p, c) ?: return error("Le service de recherche des lieux ne répond pas pour l'instant. Réessayez dans quelques minutes.")
+            val best = found.firstOrNull() ?: return error("Je n'ai pas trouvé de ${c.label} à moins de 15 kilomètres.")
             return dialog.confirm("${c.closest.replaceFirstChar { it.uppercase() }} est ${placeLabel(best)}, à ${Geo.speakDistance(Geo.distanceM(p, best.lat, best.lon))}. J'y lance le guidage à pied ?", "D'accord.") {
                 walk(best.lat, best.lon, placeLabel(best))
             }

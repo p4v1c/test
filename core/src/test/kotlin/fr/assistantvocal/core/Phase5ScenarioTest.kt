@@ -201,6 +201,12 @@ class Phase5ScenarioTest {
         assertTrue(say("où est la poste la plus proche").startsWith("Je n'ai pas internet"))
     }
 
+    @Test fun `service des lieux en panne, il le dit au lieu d'affirmer qu'il n'y a rien`() = runTest {
+        net.places = { throw java.io.IOException("Overpass injoignable") }
+        assertEquals("Le service de recherche des lieux ne répond pas pour l'instant. Réessayez dans quelques minutes.",
+            say("où est la pharmacie la plus proche ?"))
+    }
+
     @Test fun `guidage vers une adresse`() = runTest {
         net.geoResults = listOf(GeoResult("8 Rue de la Paix 26000 Valence", 44.93, 4.89))
         val q = say("emmène-moi au 8 rue de la Paix à Valence")
