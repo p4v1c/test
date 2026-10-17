@@ -30,5 +30,7 @@ interface Sounds {
     suspend fun play(earcon: Earcon)
     /** Sonnerie d'alarme du téléphone pendant [ms] (réveil, minuteur, SOS, téléphone perdu). */
     suspend fun alarm(ms: Long, loud: Boolean = false) {}
+    /** Son pur de [hz] pendant [ms] (guidage de cadrage, détecteur de lumière). */
+    suspend fun tone(hz: Double, ms: Long) {}
     fun release() {}
 }

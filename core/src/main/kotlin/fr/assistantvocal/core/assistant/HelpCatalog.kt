@@ -64,8 +64,15 @@ class HelpCatalog(private val topics: List<HelpTopic>) {
             "la sécurité", listOf("securite", "secours", "urgence", "sos"),
             listOf("au secours : j'alerte vos proches après 10 secondes, dites stop pour annuler", "je suis tombé"),
         )
+        val VISION = HelpTopic(
+            "la caméra", listOf("camera", "vision", "lire", "voir", "billet", "couleur", "courrier"),
+            listOf("qu'est-ce qu'il y a devant moi ?", "lis ce texte", "c'est quoi cette lettre ?", "relis le montant", "page suivante",
+                "c'est quel billet ?", "c'est quelle couleur ?", "est-ce que ça va ensemble ?", "c'est quoi ce produit ?",
+                "c'est quel médicament ?", "détecteur de lumière", "où sont mes clés ?"),
+        )
         val PHASE1 = HelpCatalog(listOf(INFOS, QUESTIONS, SETTINGS))
         val PHASE3 = HelpCatalog(listOf(CALLS, MESSAGES, REMINDERS, INFOS, QUESTIONS, SAFETY, TRIGGERS, SETTINGS))
+        val PHASE4 = HelpCatalog(listOf(CALLS, MESSAGES, REMINDERS, VISION, INFOS, QUESTIONS, SAFETY, TRIGGERS, SETTINGS))
         val PHASE2 = HelpCatalog(listOf(INFOS, QUESTIONS, TRIGGERS, SETTINGS))
     }
 }

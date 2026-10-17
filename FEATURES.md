@@ -8,12 +8,18 @@ Légende :
 
 ## État d'avancement
 
-- Phase 1 (socle) ✅ · Phase 2 (mot d'activation, déclencheurs) ✅ · Phase 3 (communication, organisation, sécurité) ✅
+- Phase 1 (socle) ✅ · Phase 2 (mot d'activation, déclencheurs) ✅ · Phase 3 (communication, organisation, sécurité) ✅ · Phase 4 (vision) ✅
 - Réalisé en phase 3 : appels (nom, surnom, favori, numéro, rappel du dernier), annonce des appels entrants et décrocher
   à la voix ou au casque, journal d'appels, SMS (lecture, dictée, relecture, envoi vérifié, réponse), notifications
   (lecture, annonce, réponse rapide), alerte arnaque, réveils, minuteurs nommés, rappels ponctuels et récurrents,
   médicaments avec journal et relances, SOS (voix ou volume haut 3 s), alertes batterie et réseau, « tout va bien ? »
   quotidien, téléphone retrouvé par SMS.
+- Réalisé en phase 4 : lecture guidée (cadrage à la voix, lampe auto), documents multipages et questions hors ligne
+  (« relis le montant », date limite), explication de courrier (texte seul envoyé à l'IA), description de scène, billets
+  (hors ligne), couleurs et assortiment, détecteur de lumière, codes-barres Open Food Facts (allergènes, Nutri-Score),
+  dates de péremption, boîtes de médicaments (DataMatrix + base publique des médicaments, hors ligne), recherche d'objet,
+  ouverture de Lookout.
+- Vision reportée : description des photos reçues (avec Gmail, phase 6), mode continu Live API et reconnaissance de proches (P2).
 - Pas encore fait : emails Gmail (IMAP, phase 6), agenda (phase 6), Google Meet (P2).
 
 ## Décisions validées (17 octobre 2026)

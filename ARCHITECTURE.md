@@ -7,6 +7,7 @@
 - Phase 3 (appels, SMS, notifications, rappels, médicaments, SOS) : faite, 121 tests automatiques.
 - Phase 2 (mot d'activation, déclencheurs) : faite. 80 tests automatiques + test d'intégration Vosk réel
   sur voix de synthèse (mesures dans `tools/wake/README.md`).
+- Phase 4 (vision) : faite, 141 tests automatiques au total (caméra simulée ; non testée sur un vrai appareil photo).
 - Téléphone cible : Google Pixel (voir FEATURES.md, « Décisions validées »).
 
 ## 1. Vue d'ensemble
@@ -179,6 +180,24 @@ Chaque fonction est un `Tool` : nom, description, schéma JSON des paramètres, 
   (`NonCancellable`) ; sans contact d'urgence, appel du 112.
 - **Compréhension des heures** (`core/time/FrenchTime`) : « dans un quart d'heure », « demain à 8 h », « tous les jours à 8 h
   et à 20 h », « en semaine », « lundi à 14 h 30 ». Une heure ambiguë (« à 3 heures » dit à 14 h) est relue avant d'être enregistrée.
+
+## 9 ter. Choix de la phase 4 (vision)
+
+- **Logique dans `core/vision`** (`VisionSkill`, `VisionLogic`) : guidage de cadrage, couleurs, billets, dates,
+  GS1, mémoire du document, tout testable sans Android. Android fournit `Camera`, `OcrEngine`, `BarcodeScanner`
+  (`app/vision/AndroidVision.kt`).
+- **CameraX sans aperçu** : un `LifecycleOwner` propre à la caméra, flux d'analyse (guidage, ~1 image/s) + photo pleine
+  qualité pour la lecture. Utilisable depuis le service (type de service en avant-plan `microphone|camera`), donc
+  écran verrouillé. La caméra et la lampe sont **toujours** fermées en fin de commande (`finally`).
+- **ML Kit sur le téléphone** (OCR latin, codes-barres/DataMatrix) : gratuit, hors ligne, rapide. L'IA n'est appelée que
+  pour décrire une scène, expliquer un courrier, chercher un objet ou juger un assortiment.
+- **Courrier : on envoie le texte lu, pas la photo** : moins cher, plus fiable sur les montants, et rien d'autre
+  (visages, pièce) ne quitte le téléphone.
+- **Médicaments** : le DataMatrix GS1 donne le CIP13, la date de péremption et le lot ; la table CIP13 → nom/boîte est
+  construite à la compilation depuis la base publique des médicaments (tâche Gradle `buildMedicationDb`, ~21 000 lignes,
+  hors ligne). Jamais de posologie inventée : rappel « demandez au pharmacien ».
+- **Billets** : chiffre lu (5…500) + couleur dominante + mot EURO ; en cas de désaccord, il le dit au lieu de deviner.
+- **Lookout** reste conseillé pour le texte en continu : on l'ouvre à la voix plutôt que de le refaire.
 
 ## 10. Données locales
 

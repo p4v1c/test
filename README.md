@@ -45,7 +45,27 @@ Automatique : alerte arnaque à la lecture d'un SMS ou d'une notification suspec
 perte et retour d'internet ; « Tout va bien ? » chaque matin (option) avec SMS à un proche s'il ne répond pas ;
 un proche peut retrouver le téléphone en envoyant « où es-tu » + le mot secret (le téléphone sonne fort et répond avec sa position).
 
-## Ce qui marche aujourd'hui (phase 1)
+## Caméra : lire, reconnaître, décrire (phase 4)
+
+Tenir le téléphone **à plat ou droit, caméra arrière vers l'objet, à 20-30 cm**. L'assistant guide à la voix
+(« le texte est coupé à droite… », « rapprochez… », « c'est bon, ne bougez plus ») avec un petit bip ;
+il allume la lampe tout seul s'il fait sombre et l'éteint toujours à la fin. Dire « stop » pour arrêter.
+
+| Domaine | Exemples | Internet ? |
+|---|---|---|
+| Lire un texte | « lis ce courrier », « qu'est-ce qui est écrit ? », « lis cette étiquette » | Non |
+| Document de plusieurs pages | « page suivante », puis « relis », « relis le montant », « quelle est la date limite ? » | Non |
+| Comprendre un courrier | « c'est quoi cette lettre ? », « que dois-je faire ? » (seul le texte lu est envoyé à l'IA, pas la photo) | Oui |
+| Décrire | « qu'est-ce qu'il y a devant moi ? », « qu'est-ce que je tiens ? » | Oui |
+| Billets | « quel billet ? » (chiffre + couleur, sur le téléphone) | Non |
+| Couleurs | « quelle couleur ? », « est-ce que ça va ensemble ? » (2 photos) | Non / Oui |
+| Lumière | « détecteur de lumière » : son aigu = lumière, grave = noir ; « la lampe est allumée ? » | Non |
+| Produits | « c'est quoi ce produit ? » (code-barres → nom, allergènes, Nutri-Score), « c'est périmé ? » | Oui (Open Food Facts) / Non |
+| Médicaments | « c'est quoi ce médicament ? » : code DataMatrix → nom, dosage, boîte, date de péremption, lot (base publique incluse dans l'app) ; sinon lecture de la boîte. Toujours : « en cas de doute, demandez au pharmacien » | Non |
+| Objets | « où sont mes clés ? » (indique gauche/droite/devant) | Oui |
+| Lookout | « ouvre Lookout » (application Google gratuite, très bonne pour les billets et le mode texte continu) | — |
+
+
 
 - Un seul gros bouton « Parler » (compatible TalkBack), et un bouton « Parler » dans la notification.
 - Commandes sans IA ni internet : heure, date, batterie, internet, « répète », « stop », « aide »,
@@ -146,6 +166,23 @@ Mesures détaillées : [tools/wake/README.md](tools/wake/README.md).
 - [ ] « Tout va bien ? » à l'heure réglée ; sans réponse 3 fois → SMS au proche
 - [ ] Un proche envoie « où es-tu <mot secret> » → le téléphone sonne fort et répond avec la position
 - [ ] Batterie à 20 % : annonce ; brancher le chargeur : annonce
+
+## Checklist de tests sur le vrai téléphone (phase 4)
+
+- [ ] À la première utilisation : autorisation caméra accordée (sinon l'assistant le dit)
+- [ ] « lis ce courrier » sur une vraie facture : guidage, puis lecture complète ; « relis le montant » ; « quelle est la date limite ? »
+- [ ] Facture de 2 pages : « page suivante », puis « relis » ; « que dois-je faire ? » → explication simple
+- [ ] Pièce sombre : la lampe s'allume pendant la photo et **s'éteint après** (vérifier en touchant/regardant)
+- [ ] Écran verrouillé, téléphone en poche puis sorti : la caméra fonctionne quand même (service en avant-plan)
+- [ ] Billets de 5, 10, 20, 50 € (recto et verso) : bonne valeur ; si doute, il le dit
+- [ ] « quelle couleur ? » sur 5 vêtements de couleurs connues ; « est-ce que ça va ensemble ? »
+- [ ] Détecteur de lumière : lampe allumée/éteinte, le son change
+- [ ] Code-barres d'un produit alimentaire courant : nom et allergènes ; d'un produit inconnu : il le dit
+- [ ] Boîte de Doliprane (code carré DataMatrix sur le côté) : nom, dosage, péremption, lot
+- [ ] « qu'est-ce qu'il y a devant moi ? » avec internet ; sans internet : message clair
+- [ ] « où sont mes clés ? » clés sur une table
+- [ ] « ouvre Lookout » (si installé ; sinon il propose de l'installer)
+- [ ] « stop » pendant le guidage arrête tout et éteint la lampe
 
 ## Développement
 

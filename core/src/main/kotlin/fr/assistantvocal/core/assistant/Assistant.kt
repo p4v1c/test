@@ -50,7 +50,7 @@ import kotlinx.serialization.json.put
 import java.time.ZonedDateTime
 
 /** Action à lancer par l'application après avoir prononcé la réponse. */
-enum class FollowUp { NONE, CALIBRATE_NAME, WAKE_WORD_CHANGED, SOS }
+enum class FollowUp { NONE, CALIBRATE_NAME, WAKE_WORD_CHANGED, SOS, VISION, OPEN_LOOKOUT }
 
 /** Sons courts joués avec la réponse. */
 enum class Earcon { NONE, LISTENING, THINKING, SUCCESS, ERROR, CONFIRM, CANCELLED }
@@ -66,6 +66,8 @@ data class AssistantReply(
     val listenAgain: Boolean = false,
     val stopAll: Boolean = false,
     val followUp: FollowUp = FollowUp.NONE,
+    /** Séance caméra à lancer (avec [FollowUp.VISION]). */
+    val vision: fr.assistantvocal.core.vision.VisionRequest? = null,
 )
 
 data class BatteryInfo(val percent: Int, val charging: Boolean)
@@ -89,7 +91,7 @@ class Assistant(
     private val device: DeviceStatus,
     private val llm: LlmProvider?,
     private val tools: ToolRegistry,
-    private val help: HelpCatalog = HelpCatalog.PHASE3,
+    private val help: HelpCatalog = HelpCatalog.PHASE4,
     private val router: LocalRouter = LocalRouter(),
     private val nowMillis: () -> Long = { System.currentTimeMillis() },
     /** Appels, SMS, rappels… (absents dans certains tests). */
@@ -252,6 +254,19 @@ class Assistant(
         }
         is Intent.ChangeName -> proposeRename(intent.newName)
         Sos -> AssistantReply("", Earcon.NONE, followUp = FollowUp.SOS)
+        is fr.assistantvocal.core.router.Vision -> AssistantReply("", Earcon.NONE, followUp = FollowUp.VISION, vision = intent.request)
+        fr.assistantvocal.core.router.OpenLookout -> AssistantReply("J'ouvre Lookout.", followUp = FollowUp.OPEN_LOOKOUT)
+        is fr.assistantvocal.core.router.DocumentQuestion -> {
+            val v = skills?.vision
+            when {
+                v != null && v.documents.isFresh(nowMillis()) -> AssistantReply(v.documentQuestion(intent.text))
+                // Pas de document récent : « que dois-je faire » concerne sans doute une lettre à lire.
+                Regex("\\b(que dois je faire|qu est ce que je dois faire)\\b").containsMatchIn(FrenchText.key(intent.text)) ->
+                    AssistantReply("", followUp = FollowUp.VISION, vision = fr.assistantvocal.core.vision.VisionRequest(fr.assistantvocal.core.vision.VisionMode.EXPLAIN))
+                llmBlocker() == null -> askLlm(intent.text, null, Quality.STANDARD, null)
+                else -> AssistantReply("Je n'ai pas de document récent en mémoire. Dites : lis ce texte.", Earcon.ERROR)
+            }
+        }
         is CallContact, is CallNumber, is CallFavorite, CallBack, AnswerCall, HangUp, is Speaker, MissedCalls,
         is ReadMessages, is SendSms, is Reply, ReadNotifications, is SetAlias, is ContactNumber,
         is SetAlarm, is SetTimer, TimerStatus, is CancelTimer, is CreateReminder, ListReminders, is DeleteReminder,

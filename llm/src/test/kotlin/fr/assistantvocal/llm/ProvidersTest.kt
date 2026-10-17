@@ -209,3 +209,21 @@ class RealFallbackTest {
         assertEquals(obj, ClaudeProvider.fromJsonValue(ClaudeProvider.toJsonValue(obj)) as JsonObject)
     }
 }
+
+class OpenFoodFactsTest {
+    @Test fun parsesProduct() = runTest {
+        val server = MockWebServer().apply { start() }
+        server.enqueue(MockResponse().setBody("""{"status":1,"product":{"product_name_fr":"Pâte à tartiner","brands":"Ferrero, Nutella","quantity":"400 g",
+            "allergens_tags":["en:milk","en:nuts","en:soybeans"],"nutriscore_grade":"e"}}"""))
+        server.enqueue(MockResponse().setBody("""{"status":0,"status_verbose":"product not found"}"""))
+        val off = OpenFoodFacts(server.url("/").toString())
+        val p = off.lookup("3017620422003")!!
+        assertEquals("Pâte à tartiner", p.name)
+        assertEquals("Ferrero", p.brand)
+        assertEquals(listOf("lait", "fruits à coque", "soja"), p.allergens)
+        assertEquals("e", p.nutriscore)
+        assertTrue(server.takeRequest().path!!.startsWith("/api/v2/product/3017620422003.json"))
+        assertEquals(null, off.lookup("123"))
+        server.shutdown()
+    }
+}

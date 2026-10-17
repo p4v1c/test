@@ -36,6 +36,19 @@ object CoreTools {
             string("when", "Quand, en français, ex. « demain à 10 heures » ou « tous les jours à 8 heures »")
         }) { a -> fr.assistantvocal.core.router.CreateReminder("de ${a.str("what") ?: ""} ${a.str("when") ?: ""}") },
         IntentTool(toolSpec("list_reminders", "Liste les rappels, réveils et minuteurs prévus.")) { fr.assistantvocal.core.router.ListReminders },
+        IntentTool(toolSpec("use_camera", "Utilise la caméra : décrire la scène, lire un texte, expliquer un courrier, billet, couleur, produit, médicament, chercher un objet.") {
+            string("mode", "Ce qu'il faut faire", enum = listOf("scene", "read", "explain", "banknote", "color", "match_colors", "light", "product", "medication", "find"))
+            string("question", "Question précise ou objet à chercher", required = false)
+        }) { a ->
+            val mode = when (a.str("mode")) {
+                "read" -> fr.assistantvocal.core.vision.VisionMode.READ; "explain" -> fr.assistantvocal.core.vision.VisionMode.EXPLAIN
+                "banknote" -> fr.assistantvocal.core.vision.VisionMode.BANKNOTE; "color" -> fr.assistantvocal.core.vision.VisionMode.COLOR
+                "match_colors" -> fr.assistantvocal.core.vision.VisionMode.MATCH_COLORS; "light" -> fr.assistantvocal.core.vision.VisionMode.LIGHT
+                "product" -> fr.assistantvocal.core.vision.VisionMode.PRODUCT; "medication" -> fr.assistantvocal.core.vision.VisionMode.MEDICATION
+                "find" -> fr.assistantvocal.core.vision.VisionMode.FIND; else -> fr.assistantvocal.core.vision.VisionMode.SCENE
+            }
+            fr.assistantvocal.core.router.Vision(fr.assistantvocal.core.vision.VisionRequest(mode, a.str("question") ?: ""))
+        },
         IntentTool(toolSpec("emergency_sos", "Déclenche l'alerte de secours aux proches. Seulement si la personne est en danger, blessée ou demande de l'aide.")) {
             fr.assistantvocal.core.router.Sos
         },

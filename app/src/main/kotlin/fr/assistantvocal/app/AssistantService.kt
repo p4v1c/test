@@ -105,7 +105,8 @@ class AssistantService : Service() {
                 intent.getLongExtra(EXTRA_TIME, System.currentTimeMillis()))
             ACTION_ANNOUNCE -> intent.getStringExtra(EXTRA_TEXT)?.let { announceIfIdle(it) }
             ACTION_REMOTE_LOCATE -> intent.getStringExtra(EXTRA_NUMBER)?.let { n -> runSession { remoteLocate(n) } }
-            ACTION_ENSURE_RUNNING, null -> Unit
+            ACTION_ENSURE_RUNNING -> startInForeground()
+            null -> Unit
         }
         return START_STICKY
     }
@@ -115,7 +116,10 @@ class AssistantService : Service() {
         nm.createNotificationChannel(
             NotificationChannel(CHANNEL, getString(R.string.notification_channel), NotificationManager.IMPORTANCE_LOW)
         )
-        val type = if (Build.VERSION.SDK_INT >= 30) ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE else 0
+        val camera = checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+        val type = if (Build.VERSION.SDK_INT >= 30) {
+            ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE or (if (camera) ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA else 0)
+        } else 0
         try {
             ServiceCompat.startForeground(this, NOTIFICATION_ID, buildNotification(), type)
         } catch (e: Exception) {
@@ -232,6 +236,8 @@ class AssistantService : Service() {
                 FollowUp.CALIBRATE_NAME -> { calibrateName(); return }
                 FollowUp.WAKE_WORD_CHANGED -> { refreshNotification(); return }
                 FollowUp.SOS -> { sos(); return }
+                FollowUp.VISION -> { reply.vision?.let { runVision(it) }; return }
+                FollowUp.OPEN_LOOKOUT -> { openLookout(); return }
                 FollowUp.NONE -> Unit
             }
             // Relance l'écoute pour une confirmation, au maximum 4 fois d'affilée.
@@ -278,6 +284,35 @@ class AssistantService : Service() {
             speak("Parfait, je ne me suis pas déclenché par erreur. Vous pouvez maintenant m'appeler en disant « $name », puis attendre le bip.")
         }
         refreshNotification()
+    }
+
+    // ------------------------------------------------------------------ vision
+
+    /** Séance caméra. L'écoute du nom reste active : « [nom], stop » interrompt la séance. */
+    private suspend fun runVision(req: fr.assistantvocal.core.vision.VisionRequest) {
+        if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            speak("Je n'ai pas l'autorisation d'utiliser la caméra. Demandez à un proche de l'activer.")
+            return
+        }
+        startInForeground() // ajoute le type « caméra » au service si l'autorisation vient d'être donnée
+        startWake()
+        val ui = object : fr.assistantvocal.core.vision.VisionUi {
+            override suspend fun say(text: String) { speak(text) }
+            override suspend fun tick(good: Boolean) = sounds.tone(if (good) 1200.0 else 600.0, 60)
+            override suspend fun tone(hz: Double, ms: Long) = sounds.tone(hz, ms)
+            override fun stopRequested() = false // l'arrêt passe par l'annulation de la séance
+        }
+        sounds.play(Earcon.THINKING)
+        val result = graph.vision.run(req, ui)
+        sounds.play(Earcon.SUCCESS)
+        speak(result)
+    }
+
+    private suspend fun openLookout() {
+        val intent = packageManager.getLaunchIntentForPackage("com.google.android.apps.accessibility.reveal")
+        if (intent == null) { speak("L'application Lookout n'est pas installée. Un proche peut l'installer depuis le Play Store."); return }
+        runCatching { startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+            .onFailure { speak("Je n'arrive pas à ouvrir Lookout.") }
     }
 
     // ------------------------------------------------------------------ rappels qui sonnent

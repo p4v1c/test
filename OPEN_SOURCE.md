@@ -13,8 +13,8 @@ Usage visé : personnel et non commercial. Toutes les licences ci-dessous le per
 | **[sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx)** | Apache 2.0 | Très active (k2-fsa) | lib ~10 Mo + modèles | ✅ | ASR streaming fr (121 Mo int8) ; KWS : pas de modèle fr | VAD Silero (filtre avant le mot d'activation), **voix Piper françaises** (TTS optionnel), ASR fr streaming en option, KWS expérimental |
 | **[Silero VAD](https://github.com/snakers4/silero-vad)** (via sherpa-onnx) | MIT | Active | ~2 Mo | ✅ | Indépendant de la langue | **Pas utilisé finalement** : un détecteur de niveau simple suffit (mesuré) |
 | **Voix Piper fr_FR** (siwis, tom, upmc…) ([Hugging Face](https://huggingface.co/rhasspy/piper-voices/tree/main/fr/fr_FR)) | Variable selon la voix (à vérifier voix par voix, certaines CC BY-NC) | Stable | 20-60 Mo/voix | ✅ | Oui | Voix hors ligne optionnelle |
-| **[Google ML Kit](https://developers.google.com/ml-kit)** (Text Recognition v2 latin, Barcode, Image Labeling, Object Detection) | Gratuit, conditions Google (pas open source) | Active | 5-20 Mo selon module | ✅ | OCR latin OK | OCR, codes-barres, étiquettes d'objets, guidage de cadrage |
-| **CameraX** (AndroidX) | Apache 2.0 | Active | — | ✅ | — | Caméra, lampe torche, analyse d'image |
+| **[Google ML Kit](https://developers.google.com/ml-kit)** (Text Recognition v2 latin, Barcode, Image Labeling, Object Detection) | Gratuit, conditions Google (pas open source) | Active | 5-20 Mo selon module | ✅ | OCR latin OK | **Utilisé (phase 4)** : OCR latin 16.0.1 et codes-barres/DataMatrix 17.3.0, modèles inclus dans l'app |
+| **CameraX 1.4** (AndroidX) | Apache 2.0 | Active | — | ✅ | — | **Utilisé (phase 4)** : caméra sans aperçu depuis le service, lampe, analyse d'image |
 | **[Dicio](https://github.com/Stypox/dicio-android)** | GPL-3.0 | Active | — | ✅ | Oui | **Idées seulement** (structure des « skills », phrases françaises). Pas de copie de code pour garder une licence libre de choix |
 | **[TalkBack](https://github.com/google/talkback)** | Apache 2.0 | Active | — | — | — | Bonnes pratiques : focus audio, gestion des touches dans un AccessibilityService, earcons |
 | **[Soundscape (Microsoft)](https://github.com/microsoft/soundscape)** | MIT | Archivé (repris par Scottish Tech Army) | — | — | — | Idées : description « autour de moi » avec repères horaires, filtrage des lieux intéressants |
@@ -33,7 +33,8 @@ Usage visé : personnel et non commercial. Toutes les licences ci-dessous le per
 | [Géoplateforme IGN — géocodage BAN](https://www.data.gouv.fr/fr/posts/lapi-adresse-de-la-base-adresse-nationale-est-transferee-a-lign-10/) (`data.geopf.fr/geocodage`) | Service public ouvert | Non (à confirmer) | « Où suis-je ? », adresses françaises, recherche d'adresse |
 | [Nominatim (OSM)](https://operations.osmfoundation.org/policies/nominatim/) | 1 requête/s max, User-Agent obligatoire, ODbL | Non | Repli hors de France |
 | [Overpass API (OSM)](https://wiki.openstreetmap.org/wiki/Overpass_API) | Usage raisonnable, ODbL | Non | Lieux proches (pharmacies, boulangeries, arrêts) |
-| [Open Food Facts](https://world.openfoodfacts.org/data) | ODbL, User-Agent obligatoire, limites de débit | Non | Produits par code-barres, allergènes |
+| [Open Food Facts](https://world.openfoodfacts.org/data) | ODbL, User-Agent obligatoire, limites de débit | Non | **Utilisé (phase 4)** : produits par code-barres, allergènes, Nutri-Score |
+| [Base de données publique des médicaments](https://base-donnees-publique.medicaments.gouv.fr/telechargement) | Licence Ouverte (Etalab) | Non | **Utilisé (phase 4)** : table CIP13 → nom et présentation, téléchargée à la compilation |
 | [Radio Browser](https://www.radio-browser.info/) | Gratuit, communautaire | Non | Flux radio (plus une liste fixe des radios françaises principales) |
 | Flux RSS (France Info, Le Monde, Radio France podcasts…) | Usage personnel | Non | Actualités, podcasts |
 | [PRIM Île-de-France Mobilités](https://prim.iledefrance-mobilites.fr/) | Gratuit avec compte | Oui (gratuite) | Prochains passages en Île-de-France |

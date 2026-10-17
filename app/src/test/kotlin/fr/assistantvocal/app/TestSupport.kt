@@ -95,6 +95,31 @@ class AppFakePhone : fr.assistantvocal.core.phone.PhoneActions, fr.assistantvoca
     fun backend() = PhoneBackend(this, this, this, this, this, this, this, this)
 }
 
+/** Caméra simulée : chaque photo renvoie la même image ; l'OCR renvoie le texte donné. */
+class AppFakeVision(var ocrText: List<String> = emptyList(), var rgb: Triple<Int, Int, Int> = Triple(200, 200, 200), var codes: List<String> = emptyList()) {
+    var torch = false
+    private fun frame() = fr.assistantvocal.core.vision.Frame(ByteArray(4), 1000, 1000, 150, rgb)
+    fun backend() = VisionBackend(
+        camera = {
+            object : fr.assistantvocal.core.vision.Camera {
+                override suspend fun preview() = frame()
+                override suspend fun capture() = frame()
+                override fun torch(on: Boolean) { torch = on }
+                override fun close() {}
+            }
+        },
+        ocr = object : fr.assistantvocal.core.vision.OcrEngine {
+            override suspend fun read(frame: fr.assistantvocal.core.vision.Frame) = fr.assistantvocal.core.vision.OcrResult(
+                ocrText.mapIndexed { i, t -> fr.assistantvocal.core.vision.TextLine(t, fr.assistantvocal.core.vision.Box(100, 100 + i * 60, 800, 140 + i * 60)) }, 1000, 1000)
+        },
+        barcodes = object : fr.assistantvocal.core.vision.BarcodeScanner {
+            override suspend fun scan(frame: fr.assistantvocal.core.vision.Frame) = codes
+        },
+        products = object : fr.assistantvocal.core.vision.ProductLookup { override suspend fun lookup(code: String) = null },
+        medications = object : fr.assistantvocal.core.vision.MedicationDatabase { override fun byCip13(cip: String) = null },
+    )
+}
+
 fun testGraph(
     app: App,
     input: SpeechInput = FakeInput(),
@@ -105,9 +130,10 @@ fun testGraph(
     secrets: SecretStore = InMemorySecrets(),
     wake: WakeEngine = FakeWake(),
     phone: AppFakePhone = AppFakePhone(),
+    vision: AppFakeVision = AppFakeVision(),
 ): AppGraph = AppGraph(
     app, InMemoryStore(), secrets, device, { input }, { output }, { sounds }, { wake },
-    phoneFactory = { _, _ -> phone.backend() }, sosCountdownMs = 300, geminiBaseUrl = geminiBaseUrl,
+    phoneFactory = { _, _ -> phone.backend() }, visionFactory = { vision.backend() }, sosCountdownMs = 300, geminiBaseUrl = geminiBaseUrl,
 ).also { it.settings.name = "Orphée"; app.graph = it }
 
 /** Fait tourner la boucle principale jusqu'à ce que [done] soit vrai (les appels réseau se font sur un autre fil). */

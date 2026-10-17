@@ -103,6 +103,19 @@ class Earcons(private val context: Context) : Sounds {
         }
     }
 
+    override suspend fun tone(hz: Double, ms: Long) {
+        val pcm = synth(listOf(Note(hz, ms.toInt())))
+        val track = runCatching {
+            AudioTrack.Builder()
+                .setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build())
+                .setAudioFormat(AudioFormat.Builder().setEncoding(AudioFormat.ENCODING_PCM_16BIT).setSampleRate(RATE)
+                    .setChannelMask(AudioFormat.CHANNEL_OUT_MONO).build())
+                .setTransferMode(AudioTrack.MODE_STATIC).setBufferSizeInBytes(pcm.size * 2).build()
+        }.getOrNull() ?: return
+        try { track.write(pcm, 0, pcm.size); track.play(); delay(ms + 20) } finally { runCatching { track.stop() }; track.release() }
+    }
+
     private fun synth(notes: List<Note>): ShortArray {
         val total = notes.sumOf { it.ms * RATE / 1000 + GAP }
         val out = ShortArray(total)

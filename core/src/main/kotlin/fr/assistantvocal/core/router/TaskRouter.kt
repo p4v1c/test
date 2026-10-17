@@ -29,6 +29,9 @@ data class DeleteReminder(val text: String) : Intent
 data class MedicationTaken(val text: String) : Intent
 data class MedicationQuestion(val text: String) : Intent
 data object Sos : Intent
+data class Vision(val request: fr.assistantvocal.core.vision.VisionRequest) : Intent
+data class DocumentQuestion(val text: String) : Intent
+data object OpenLookout : Intent
 
 /**
  * Routeur des tâches (appels, SMS, rappels, SOS). Les expressions sont testées sur une forme sans accents
@@ -72,7 +75,25 @@ class TaskRouter {
     private val alias1 = r("^(.+?) (?:c est|est) (mon|ma|mes) (.+)$")
     private val alias2 = r("^(mon|ma) (.+?) (?:s appelle|c est) (.+)$")
     private val alias3 = r("^(?:enregistre|retiens que|souviens toi que) (.+?) (?:comme|c est|est) (mon|ma) (.+)$")
+    // Vision
+    private val visionScene = r("\\b(qu est ce qu il y a (devant|autour de) moi|qu y a t il devant moi|decris (moi )?(ce que|ce qui|la scene|l image|la piece|ce qu il y a|ca|autour)|qu est ce que (je tiens|tu vois)|que vois tu|regarde (ca|devant moi|ce que je tiens)|c est quoi ca|qu est ce que c est que ca|decris)\\b")
+    private val visionExplain = r("\\b(c est quoi (ce|cette) (lettre|courrier|document|papier|facture|ordonnance)|explique (moi )?(ce|cette|le|la) (lettre|courrier|document|papier|facture|ordonnance)|de quoi parle (ce|cette) (lettre|courrier|document)|que dit (ce|cette) (lettre|courrier|document))\\b")
+    private val visionRead = r("\\b(lis (moi )?(ce|cette|ca|le|la|l)( texte| lettre| courrier| document| papier| etiquette| page| ecran| affiche| panneau| ordonnance)?$|qu est ce qui est ecrit|lis ce qui est ecrit|lire un document|lis un document|lis le courrier)")
+    private val visionNextPage = r("^(page suivante|la page suivante|autre page|lis la page suivante|la suite du document|j ai une autre page)$")
+    private val documentQuestion = r("^(relis|relire)\\b(?! (mes|le dernier|mon dernier|les) (messages?|sms))|\\b(quel est le montant|c est combien a payer|combien (je dois|dois je) payer|quelle est la date limite|a payer avant|date d echeance|que dois je faire|qu est ce que je dois faire)\\b")
+    private val visionBanknote = r("\\b(quel billet|ce billet|billet de combien|c est combien ce billet|reconnais (ce|le|mon) billet|combien d argent)\\b")
+    private val visionMatch = r("\\b(ca va ensemble|vont ensemble|c est assorti|sont assortis|est ce que ca va avec)\\b")
+    private val visionColor = r("\\b(quelle couleur|c est quelle couleur|de quelle couleur|detecteur de couleur)\\b")
+    private val visionLight = r("\\b(detecteur de lumiere|la lumiere est (allumee|eteinte)|la lampe est (allumee|eteinte)|est ce qu il y a de la lumiere|il fait jour)\\b")
+    private val visionMedication = r("\\b(quel medicament|c est quoi ce medicament|ce medicament|cette boite de medicaments?|lis la boite|quelle est cette boite|boite de medicament)\\b")
+    private val visionProduct = r("\\b(c est quoi ce produit|quel est ce produit|ce produit|code barres?|scanne|date de peremption|c est perime|est ce perime)\\b")
+    private val visionFind = r("\\b(?:ou sont|ou est|aide moi a trouver|cherche|trouve moi|retrouve|je ne trouve (?:pas|plus)) ((?:mes|mon|ma) .+)$")
+    private val lookout = r("\\b(ouvre|lance|demarre) lookout\\b")
+
     private val contactNumber = r("\\b(?:quel est le numero|donne moi le numero|c est quoi le numero|le numero de telephone) (?:de|d) (.+)$")
+
+    private fun vision(mode: fr.assistantvocal.core.vision.VisionMode, q: String = "") =
+        Vision(fr.assistantvocal.core.vision.VisionRequest(mode, q))
 
     fun route(utterance: String): Intent? {
         val t = Text(utterance)
@@ -120,6 +141,25 @@ class TaskRouter {
         }
 
         contactNumber.find(k)?.let { m -> return ContactNumber(t.group(m, 1)!!) }
+
+        // Vision (après les messages : « relis mes messages » est déjà traité)
+        if (lookout.containsMatchIn(k)) return OpenLookout
+        if (visionNextPage.matches(k)) return vision(fr.assistantvocal.core.vision.VisionMode.NEXT_PAGE)
+        if (documentQuestion.containsMatchIn(k)) return DocumentQuestion(t.raw)
+        if (visionExplain.containsMatchIn(k)) return vision(fr.assistantvocal.core.vision.VisionMode.EXPLAIN)
+        if (visionMedication.containsMatchIn(k)) return vision(fr.assistantvocal.core.vision.VisionMode.MEDICATION)
+        if (visionBanknote.containsMatchIn(k)) return vision(fr.assistantvocal.core.vision.VisionMode.BANKNOTE)
+        if (visionMatch.containsMatchIn(k)) return vision(fr.assistantvocal.core.vision.VisionMode.MATCH_COLORS)
+        if (visionColor.containsMatchIn(k)) return vision(fr.assistantvocal.core.vision.VisionMode.COLOR)
+        if (visionLight.containsMatchIn(k)) return vision(fr.assistantvocal.core.vision.VisionMode.LIGHT)
+        if (visionProduct.containsMatchIn(k)) return vision(fr.assistantvocal.core.vision.VisionMode.PRODUCT)
+        if (visionRead.containsMatchIn(k)) return vision(fr.assistantvocal.core.vision.VisionMode.READ)
+        if (visionScene.containsMatchIn(k)) return vision(fr.assistantvocal.core.vision.VisionMode.SCENE, t.raw)
+        visionFind.find(k)?.let { m ->
+            val what = t.group(m, 1)!!
+            if (!Regex("\\b(pharmacie|boulangerie|arret|gare|rue|mairie|poste|medecin|supermarche|magasin)\\b").containsMatchIn(FrenchText.stripAccents(what)))
+                return Vision(fr.assistantvocal.core.vision.VisionRequest(fr.assistantvocal.core.vision.VisionMode.FIND, what))
+        }
 
         call.find(k)?.let { m ->
             val target = t.group(m, 1)!!

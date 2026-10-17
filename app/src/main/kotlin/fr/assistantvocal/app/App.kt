@@ -18,7 +18,19 @@ import fr.assistantvocal.app.phone.AndroidPhoneActions
 import fr.assistantvocal.app.phone.AndroidSms
 import fr.assistantvocal.app.phone.AndroidSmsSender
 import fr.assistantvocal.app.phone.NotificationHub
+import fr.assistantvocal.app.vision.AndroidCamera
+import fr.assistantvocal.app.vision.AssetMedicationDatabase
+import fr.assistantvocal.app.vision.MlKitBarcodes
+import fr.assistantvocal.app.vision.MlKitOcr
 import fr.assistantvocal.core.assistant.Assistant
+import fr.assistantvocal.core.assistant.Prompts
+import fr.assistantvocal.core.vision.BarcodeScanner
+import fr.assistantvocal.core.vision.Camera
+import fr.assistantvocal.core.vision.MedicationDatabase
+import fr.assistantvocal.core.vision.OcrEngine
+import fr.assistantvocal.core.vision.ProductLookup
+import fr.assistantvocal.core.vision.VisionSkill
+import fr.assistantvocal.llm.OpenFoodFacts
 import fr.assistantvocal.core.assistant.Dialog
 import fr.assistantvocal.core.phone.CallLogSource
 import fr.assistantvocal.core.phone.ContactDirectory
@@ -61,6 +73,8 @@ class AppGraph(
     val soundsFactory: (Context) -> Sounds = { Earcons(it) },
     val wakeEngineFactory: (Context) -> WakeEngine = { VoskWakeEngine(it) },
     phoneFactory: ((Context, AssistantSettings) -> PhoneBackend)? = null,
+    /** Vision : caméra et analyses (remplacées par des faux dans les tests). */
+    val visionFactory: ((Context) -> VisionBackend)? = null,
     /** Délai d'annulation du SOS (10 s ; raccourci dans les tests). */
     val sosCountdownMs: Long = 10_000,
     geminiBaseUrl: String = "https://generativelanguage.googleapis.com",
@@ -88,7 +102,15 @@ class AppGraph(
     val comms = CommunicationSkill(directory, people, phone.callLog, phone.sms, phone.smsSender, phone.actions,
         phone.notifications, store, device, dialog)
     val reminders = ReminderSkill(ReminderStore(store), MedicationLog(store), phone.scheduler, store, device, dialog)
-    val skills = Skills(dialog, comms, reminders)
+    private val visionBackend: VisionBackend = visionFactory?.invoke(context) ?: VisionBackend.android(context)
+    val vision = VisionSkill(
+        camera = visionBackend.camera, ocr = visionBackend.ocr, barcodes = visionBackend.barcodes,
+        products = visionBackend.products, medications = visionBackend.medications, llm = llm,
+        canUseLlm = { !settings.privateMode && device.isOnline() && llm.isConfigured() },
+        systemPrompt = { Prompts.system(settings.name, settings.verbosity, device.now()) },
+        today = { device.now().toLocalDate() }, nowMs = { System.currentTimeMillis() },
+    )
+    val skills = Skills(dialog, comms, reminders, vision)
 
     val tools = ToolRegistry(CoreTools.all(settings, device) + CoreTools.phase3())
     val assistant = Assistant(settings, device, llm, tools, skills = skills)
@@ -96,6 +118,21 @@ class AppGraph(
     companion object {
         const val SECRET_GEMINI = "gemini_api_key"
         const val SECRET_CLAUDE = "claude_api_key"
+    }
+}
+
+/** Accès caméra et analyses d'image. */
+class VisionBackend(
+    val camera: () -> Camera,
+    val ocr: OcrEngine,
+    val barcodes: BarcodeScanner,
+    val products: ProductLookup,
+    val medications: MedicationDatabase,
+) {
+    companion object {
+        fun android(context: Context) = VisionBackend(
+            { AndroidCamera(context) }, MlKitOcr(), MlKitBarcodes(), OpenFoodFacts(), AssetMedicationDatabase(context),
+        )
     }
 }
 

@@ -28,7 +28,12 @@ import fr.assistantvocal.core.router.Speaker
 import fr.assistantvocal.core.router.TimerStatus
 
 /** Regroupe les compétences (partagent le même [dialog] que l'assistant). */
-class Skills(val dialog: Dialog, val comms: CommunicationSkill, val reminders: ReminderSkill) {
+class Skills(
+    val dialog: Dialog,
+    val comms: CommunicationSkill,
+    val reminders: ReminderSkill,
+    val vision: fr.assistantvocal.core.vision.VisionSkill? = null,
+) {
     fun handle(intent: Intent): AssistantReply? = when (intent) {
         is CallContact -> comms.call(intent.target)
         is CallNumber -> comms.callNumber(intent.number)

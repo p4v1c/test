@@ -232,6 +232,45 @@ class Phase3ServiceTest {
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
+class VisionServiceTest {
+    private lateinit var app: App
+
+    @Before fun setUp() {
+        app = ApplicationProvider.getApplicationContext()
+        shadowOf(app).grantPermissions(Manifest.permission.RECORD_AUDIO, Manifest.permission.CAMERA)
+    }
+
+    private fun listen() = Robolectric.buildService(AssistantService::class.java, AssistantService.intent(app, AssistantService.ACTION_LISTEN)).create().startCommand(0, 1)
+
+    @Test fun `il demande quel billet, il entend la valeur`() {
+        val out = FakeOutput()
+        testGraph(app, FakeInput(Heard.Text("c'est quel billet ?")), out, vision = AppFakeVision(listOf("50 EURO", "50"), rgb = Triple(230, 130, 40)))
+        listen()
+        awaitMain { out.spoken.any { it.contains("billet de") } }
+        assertEquals("C'est un billet de 50 euros.", out.spoken.last())
+    }
+
+    @Test fun `il demande de lire un courrier puis relis le montant`() {
+        val out = FakeOutput()
+        val input = FakeInput(Heard.Text("lis-moi ce courrier"))
+        val graph = testGraph(app, input, out, vision = AppFakeVision(listOf("Facture EDF", "Montant : 62,10 €", "À payer avant le 30/10/2026", "Merci")))
+        listen()
+        awaitMain { out.spoken.any { it.startsWith("Facture EDF") } }
+        kotlinx.coroutines.runBlocking { assertEquals("Montants trouvés : 62,10 €.", graph.assistant.handle("relis le montant").speech) }
+    }
+
+    @Test fun `sans autorisation camera, il le dit`() {
+        shadowOf(app).denyPermissions(Manifest.permission.CAMERA)
+        val out = FakeOutput()
+        testGraph(app, FakeInput(Heard.Text("qu'est-ce qu'il y a devant moi ?")), out)
+        listen()
+        awaitMain { out.spoken.isNotEmpty() }
+        assertTrue(out.spoken.last().startsWith("Je n'ai pas l'autorisation d'utiliser la caméra"))
+    }
+}
+
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34])
 class TriggersTest {
     @Test fun `le bouton assistant du casque Bluetooth lance l'ecoute`() {
         val app = ApplicationProvider.getApplicationContext<App>()
