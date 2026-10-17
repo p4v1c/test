@@ -56,6 +56,8 @@ class TaskRouter {
     private val alarm = r("\\b(reveille moi|reveilles moi|mets? (moi )?un reveil|regle (un|le|mon) reveil|programme (un|le) reveil|mets (moi )?une alarme)\\b")
     private val timer = r("\\b(minuteur|minuterie|compte a rebours|chrono)\\b")
     private val timerStatus = r("\\b(combien de temps|reste t il|il reste combien|ou en est)\\b")
+    /** Phrase courte et complète (README) : sans le mot « minuteur », c'est du minuteur en cours qu'il s'agit. */
+    private val timerStatusAlone = r("^(combien de temps (il )?reste t il|combien de temps il reste|il reste combien( de temps)?|c est bientot fini)$")
     private val cancelWord = r("\\b(annule|annuler|arrete|supprime|efface|enleve|stoppe)\\b")
     private val listReminders = r("\\b(quels sont mes rappels|mes rappels|liste (des|de mes|mes) rappels|qu est ce que j ai (de prevu|comme rappels?)|mes reveils|quels reveils)\\b")
     private val deleteReminder = r("\\b(?:supprime|annule|efface|enleve|retire)(?: le| mon| les| tous les| mes)? (?:rappel|reveil|alarme)s?\\b(.*)$")
@@ -109,6 +111,7 @@ class TaskRouter {
 
         reminder.find(k)?.let { m -> return CreateReminder(t.group(m, 1)!!) }
         if (alarm.containsMatchIn(k)) return SetAlarm(t.raw)
+        if (timerStatusAlone.containsMatchIn(k)) return TimerStatus
         if (timer.containsMatchIn(k)) {
             return when {
                 timerStatus.containsMatchIn(k) -> TimerStatus

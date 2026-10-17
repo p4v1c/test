@@ -106,4 +106,8 @@ class ConfirmationTest {
         now = 61_000
         assertNull(m.answer("oui"))
     }
+
+    @Test fun `combien de temps reste-t-il avant Noel reste une question libre`() {
+        assertEquals(null, fr.assistantvocal.core.router.TaskRouter().route("combien de temps reste-t-il avant Noël ?"))
+    }
 }

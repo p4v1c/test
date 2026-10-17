@@ -219,6 +219,9 @@ class Phase3ScenarioTest {
         assertEquals("Réveil réglé demain à 7 heures.", say("réveille-moi demain à 7 heures").speech)
         assertEquals("Minuteur des pâtes de 10 minutes, c'est parti.", say("mets un minuteur de 10 minutes pour les pâtes").speech)
         assertEquals("Le minuteur des pâtes : il reste 10 minutes.", say("combien de temps reste-t-il sur le minuteur ?").speech)
+        // La phrase du README, sans le mot « minuteur ».
+        assertEquals("Le minuteur des pâtes : il reste 10 minutes.", say("combien de temps reste-t-il ?").speech)
+        assertEquals("Le minuteur des pâtes : il reste 10 minutes.", say("il reste combien de temps").speech)
         assertEquals(2, phone.scheduled.size)
         val list = say("quels sont mes rappels ?").speech
         assertTrue(list, list.startsWith("Vous avez 2 rappels : Minuteur des pâtes, aujourd'hui à 14 heures 40. Réveil, demain à 7 heures."))
