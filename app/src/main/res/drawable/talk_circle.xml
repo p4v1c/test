@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Grand bouton rond « Parler » : dégradé avec halo ; gris quand l'assistant est éteint. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_enabled="false">
+        <shape android:shape="oval">
+            <solid android:color="@color/disabled" />
+            <stroke android:width="2dp" android:color="@color/outline" />
+        </shape>
+    </item>
+    <item android:state_pressed="true">
+        <layer-list>
+            <item><shape android:shape="oval"><solid android:color="#337C83FF" /></shape></item>
+            <item android:inset="14dp"><shape android:shape="oval">
+                <gradient android:angle="315" android:startColor="#5A61E6" android:endColor="#8A4FE6" />
+            </shape></item>
+        </layer-list>
+    </item>
+    <item>
+        <layer-list>
+            <item><shape android:shape="oval"><solid android:color="#1F7C83FF" /></shape></item>
+            <item android:inset="14dp"><shape android:shape="oval">
+                <gradient android:angle="315" android:startColor="@color/accent" android:endColor="@color/accent_2" />
+            </shape></item>
+        </layer-list>
+    </item>
+</selector>

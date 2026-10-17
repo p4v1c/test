@@ -1,40 +1,135 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Écran principal. Pour la personne aveugle, seul compte le grand bouton (TalkBack : double tap = parler).
+  Pour un proche : l'état de l'assistant et l'interrupteur marche / arrêt sont visibles en haut.
+-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/screen_background"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:paddingStart="20dp"
+    android:paddingTop="28dp"
+    android:paddingEnd="20dp"
+    android:paddingBottom="20dp">
 
-    <!-- Un seul gros bouton : toute la zone est cliquable. -->
-    <Button
-        android:id="@+id/talk"
+    <TextView
+        android:id="@+id/assistant_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:accessibilityHeading="true"
+        android:fontFamily="sans-serif-medium"
+        android:text="@string/app_name"
+        android:textColor="@color/text"
+        android:textSize="34sp" />
+
+    <TextView
+        android:id="@+id/status"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:accessibilityLiveRegion="polite"
+        android:drawableStart="@drawable/dot"
+        android:drawablePadding="10dp"
+        android:gravity="center_vertical"
+        android:textColor="@color/text_muted"
+        android:textSize="17sp" />
+
+    <!-- Interrupteur général : éteint, plus rien ne fonctionne (même le secours). -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:background="@drawable/card"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="18dp">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:importantForAccessibility="no"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
+                android:text="@string/power_title"
+                android:textColor="@color/text"
+                android:textSize="20sp" />
+
+            <TextView
+                android:id="@+id/power_detail"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textColor="@color/text_muted"
+                android:textSize="15sp" />
+        </LinearLayout>
+
+        <Switch
+            android:id="@+id/power"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:minHeight="56dp"
+            android:showText="false"
+            android:switchMinWidth="72dp"
+            android:thumb="@drawable/switch_thumb"
+            android:track="@drawable/switch_track" />
+    </LinearLayout>
+
+    <!-- Le grand bouton rond, au centre : toute la zone autour reste facile à viser. -->
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:backgroundTint="@color/talk_background"
-        android:text="@string/talk"
-        android:textAllCaps="false"
-        android:textColor="@color/talk_text"
-        android:textSize="56sp" />
+        android:layout_weight="1">
+
+        <Button
+            android:id="@+id/talk"
+            android:layout_width="264dp"
+            android:layout_height="264dp"
+            android:layout_gravity="center"
+            android:background="@drawable/talk_circle"
+            android:drawableTop="@drawable/ic_mic_large"
+            android:drawablePadding="6dp"
+            android:fontFamily="sans-serif-medium"
+            android:paddingTop="64dp"
+            android:stateListAnimator="@null"
+            android:text="@string/talk"
+            android:textAllCaps="false"
+            android:textColor="@color/on_button_text"
+            android:textSize="40sp" />
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/hint"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:gravity="center"
+        android:importantForAccessibility="no"
+        android:textColor="@color/text_muted"
+        android:textSize="17sp" />
 
     <Button
         android:id="@+id/tutorial"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:background="@drawable/button_primary"
         android:minHeight="72dp"
         android:text="@string/tutorial"
-        android:textAllCaps="false"
-        android:textSize="24sp" />
+        android:textColor="@color/on_button_text"
+        android:textSize="20sp" />
 
     <Button
         android:id="@+id/settings"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:minHeight="56dp"
+        android:layout_marginTop="12dp"
+        android:minHeight="60dp"
         android:text="@string/open_settings"
-        android:textAllCaps="false"
-        android:textSize="18sp" />
+        android:textColor="@color/text_muted"
+        android:textSize="17sp" />
 </LinearLayout>

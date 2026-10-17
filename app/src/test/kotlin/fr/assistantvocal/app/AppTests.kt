@@ -337,6 +337,67 @@ class TriggersTest {
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
+class PowerSwitchTest {
+    private lateinit var app: App
+
+    @Before fun setUp() {
+        app = ApplicationProvider.getApplicationContext()
+        shadowOf(app).grantPermissions(Manifest.permission.RECORD_AUDIO, Manifest.permission.POST_NOTIFICATIONS)
+    }
+
+    private fun service() = Robolectric.buildService(AssistantService::class.java).create()
+
+    @Test fun `assistant eteint, plus rien ne marche, ni ecoute, ni rappel, ni secours`() {
+        val out = FakeOutput(); val phone = AppFakePhone(); val wake = FakeWake()
+        val graph = testGraph(app, FakeInput(Heard.Text("quelle heure est-il ?")), out, wake = wake, phone = phone)
+        graph.people.emergencyContacts = listOf(fr.assistantvocal.core.phone.EmergencyContact("Marie", "0611223344"))
+        graph.settings.assistantEnabled = false
+        val s = service()
+        for (action in listOf(AssistantService.ACTION_LISTEN, AssistantService.ACTION_SOS, AssistantService.ACTION_ENSURE_RUNNING)) {
+            s.withIntent(AssistantService.intent(app, action)).startCommand(0, 1)
+        }
+        s.withIntent(AssistantService.intent(app, AssistantService.ACTION_REMINDER_FIRE).putExtra(fr.assistantvocal.app.phone.ReminderReceiver.EXTRA_ID, 1)).startCommand(0, 2)
+        shadowOf(android.os.Looper.getMainLooper()).idleFor(java.time.Duration.ofSeconds(3))
+        assertTrue(out.spoken.toString(), out.spoken.isEmpty())
+        assertTrue(phone.sent.isEmpty() && phone.calls.isEmpty())
+        assertTrue(!wake.isListening)
+        assertTrue(shadowOf(s.get()).isStoppedBySelf)
+    }
+
+    @Test fun `on l'eteint depuis l'ecran avec confirmation, il le dit puis s'arrete, on le rallume, il le dit`() {
+        val out = FakeOutput()
+        val graph = testGraph(app, output = out)
+        val activity = Robolectric.buildActivity(MainActivity::class.java).setup().get()
+        val power = activity.findViewById<android.widget.Switch>(R.id.power)
+        assertTrue(power.isChecked)
+        generateSequence { shadowOf(app).nextStartedService }.count()
+
+        power.performClick()
+        assertEquals("pas éteint sans confirmation", true, graph.settings.assistantEnabled)
+        org.robolectric.shadows.ShadowAlertDialog.getLatestAlertDialog().getButton(android.content.DialogInterface.BUTTON_POSITIVE).performClick()
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+        assertEquals(false, graph.settings.assistantEnabled)
+        assertTrue(!power.isChecked)
+        assertTrue(!activity.findViewById<Button>(R.id.talk).isEnabled)
+        val off = generateSequence { shadowOf(app).nextStartedService }.toList()
+        assertTrue(off.map { it.action }.toString(), off.any { it.action == AssistantService.ACTION_POWER_OFF })
+        val s = service()
+        s.withIntent(off.first { it.action == AssistantService.ACTION_POWER_OFF }).startCommand(0, 1)
+        awaitMain { out.spoken.isNotEmpty() }
+        assertTrue(out.spoken.single(), out.spoken.single().startsWith("Assistant arrêté"))
+
+        power.performClick()
+        assertEquals(true, graph.settings.assistantEnabled)
+        val on = generateSequence { shadowOf(app).nextStartedService }.toList()
+        assertTrue(on.any { it.action == AssistantService.ACTION_POWER_ON })
+        service().withIntent(on.first { it.action == AssistantService.ACTION_POWER_ON }).startCommand(0, 1)
+        awaitMain { out.spoken.size >= 2 }
+        assertTrue(out.spoken[1], out.spoken[1].startsWith("Assistant activé"))
+    }
+}
+
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34])
 class MainActivityTest {
     @Test fun `un seul gros bouton accessible qui lance l'ecoute`() {
         val app = ApplicationProvider.getApplicationContext<App>()

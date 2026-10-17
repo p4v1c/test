@@ -27,7 +27,7 @@ object Backup {
     private val VOLATILE = listOf(
         "usage.", "owner.lastInteraction", "calls.heardUntil", "sms.readUntil", "medication.pendingReminder",
         "medication.followUps", "reminders.lastFiredLabel", "wellbeing.attempts", "media.libraryUri", "journal.", "backup.",
-        "onboarding.",
+        "onboarding.", "assistant.enabled",
     )
     private val KEY = Regex("^[A-Za-z0-9._-]{1,80}$")
 

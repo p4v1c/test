@@ -74,7 +74,7 @@ class AssistantService : Service() {
         wake = graph.wakeEngineFactory(this)
         startInForeground()
         // « Forcer l'arrêt » (ou une app de ménage) efface les alarmes sans redémarrage : on les remet à chaque démarrage.
-        runCatching { graph.reminders.rescheduleAll(); DailyJobs.scheduleWellbeing(graph) }.onFailure { Log.w(TAG, "Rappels non reprogrammés", it) }
+        if (graph.settings.assistantEnabled) rescheduleJobs()
         headset = runCatching { HeadsetButtons(this) { onTrigger() } }.getOrNull()
         headset?.enabled = graph.settings.headsetButtonEnabled
         scope.launch {
@@ -90,8 +90,31 @@ class AssistantService : Service() {
         scope.launch(Dispatchers.IO) { fr.assistantvocal.app.support.Backups.autoIfDue(this@AssistantService, graph) }
     }
 
+    private fun rescheduleJobs() {
+        runCatching { graph.reminders.rescheduleAll(); DailyJobs.scheduleWellbeing(graph) }.onFailure { Log.w(TAG, "Rappels non reprogrammés", it) }
+    }
+
+    /** Assistant éteint : on coupe tout et le service s'arrête (plus de notification). */
+    private fun shutDown() {
+        interrupt()
+        wake.stop()
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        stopSelf()
+    }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // Interrupteur général : éteint, le service ne fait plus rien (sauf dire qu'il s'éteint).
+        if (!graph.settings.assistantEnabled && intent?.action != ACTION_POWER_OFF) { shutDown(); return START_NOT_STICKY }
         when (intent?.action) {
+            ACTION_POWER_OFF -> runSession {
+                applyVoiceSettings()
+                speak("Assistant arrêté. Je n'écoute plus, et plus rien ne marche, même le secours, jusqu'à ce qu'on me rallume depuis l'écran.")
+                shutDown()
+            }
+            ACTION_POWER_ON -> {
+                rescheduleJobs()
+                say("Assistant activé. Je vous écoute : dites « ${graph.settings.name} », ou appuyez sur Parler.")
+            }
             ACTION_LISTEN -> startConversation()
             ACTION_TUTORIAL -> startConversation(firstText = "tutoriel")
             // Tests sur émulateur (versions de debug uniquement) : la phrase est traitée comme si elle avait été entendue.
@@ -181,7 +204,7 @@ class AssistantService : Service() {
 
     /** (Re)démarre l'écoute du nom si elle est activée et que le micro est libre. */
     private fun startWake() {
-        if (!graph.settings.wakeWordEnabled || !hasMic() || !wake.isReady) { wake.stop(); return }
+        if (!graph.settings.assistantEnabled || !graph.settings.wakeWordEnabled || !hasMic() || !wake.isReady) { wake.stop(); return }
         val ok = wake.start(wakeConfig()) { onWakeWord() }
         if (!ok) Log.w(TAG, "Écoute du nom impossible (nom inconnu du modèle ? calibration nécessaire)")
     }
@@ -619,6 +642,8 @@ class AssistantService : Service() {
         const val ACTION_ENSURE_RUNNING = "fr.assistantvocal.ENSURE_RUNNING"
         const val ACTION_REMINDER_FIRE = "fr.assistantvocal.REMINDER_FIRE"
         const val ACTION_SOS = "fr.assistantvocal.SOS"
+        const val ACTION_POWER_OFF = "fr.assistantvocal.POWER_OFF"
+        const val ACTION_POWER_ON = "fr.assistantvocal.POWER_ON"
         const val ACTION_CALL_STATE = "fr.assistantvocal.CALL_STATE"
         const val ACTION_SMS_RECEIVED = "fr.assistantvocal.SMS_RECEIVED"
         const val ACTION_ANNOUNCE = "fr.assistantvocal.ANNOUNCE"

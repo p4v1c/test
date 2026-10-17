@@ -69,4 +69,27 @@
     <string name="notif_announce">Annoncer les notifications de messagerie (Gmail, Meet…)</string>
     <string name="speaker_on_answer">Haut-parleur automatique quand il décroche à la voix</string>
     <string name="notification_access">Autoriser la lecture des notifications</string>
+    <string name="power_title">Assistant</string>
+    <string name="power_on_detail">En marche</string>
+    <string name="power_off_detail">Arrêté : rien ne fonctionne, même le secours</string>
+    <string name="power_on_a11y">Assistant en marche</string>
+    <string name="power_off_a11y">Assistant arrêté. Rien ne fonctionne, même le secours.</string>
+    <string name="status_listening">À l\'écoute : dites « %1$s »</string>
+    <string name="status_ready">Prêt : appuyez sur Parler</string>
+    <string name="status_off">Assistant arrêté</string>
+    <string name="status_no_mic">Micro non autorisé</string>
+    <string name="hint_on">Ou dites « %1$s », puis attendez le bip</string>
+    <string name="hint_off">Rallumez l\'assistant pour lui parler</string>
+    <string name="power_off_confirm_title">Arrêter l\'assistant ?</string>
+    <string name="power_off_confirm_text">Plus rien ne fonctionnera : ni l\'écoute, ni les annonces, ni les rappels, ni le secours (SOS), jusqu\'à ce qu\'on le rallume ici.</string>
+    <string name="power_off_confirm_yes">Arrêter</string>
+    <string name="power_off_confirm_no">Annuler</string>
+    <string name="section_name">Nom de l\'assistant</string>
+    <string name="section_triggers">Façons de l\'appeler</string>
+    <string name="section_people">Proches et sécurité</string>
+    <string name="section_ai">Intelligence artificielle</string>
+    <string name="section_ai_more">Fournisseurs et limites</string>
+    <string name="section_books">Livres et mails</string>
+    <string name="section_voice">Voix</string>
+    <string name="section_backup">Sauvegarde et dépannage</string>
 </resources>

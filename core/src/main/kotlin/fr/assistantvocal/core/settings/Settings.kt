@@ -63,6 +63,14 @@ class AssistantSettings(private val store: KeyValueStore) {
         get() = store.getFloat(K_PITCH, 1.0f)
         set(value) = store.putFloat(K_PITCH, value.coerceIn(0.5f, 2.0f))
 
+    /**
+     * Interrupteur général. Éteint : plus rien ne fonctionne (écoute, annonces, rappels, secours, boutons)
+     * jusqu'à ce qu'on le rallume depuis l'écran.
+     */
+    var assistantEnabled: Boolean
+        get() = store.getBoolean(K_ENABLED, true)
+        set(value) = store.putBoolean(K_ENABLED, value)
+
     /** Écoute du nom en permanence (mot d'activation). */
     var wakeWordEnabled: Boolean
         get() = store.getBoolean(K_WAKE_ENABLED, true)
@@ -196,6 +204,7 @@ class AssistantSettings(private val store: KeyValueStore) {
         private const val K_NOTIF_ANNOUNCE = "notifications.announce"
         private const val K_SPEAKER = "calls.speakerOnAnswer"
         private const val K_VOLUME_KEY = "trigger.volumeKey"
+        private const val K_ENABLED = "assistant.enabled"
         private const val K_NEWS_LOCAL = "news.localFeed"
         private const val K_LIBRARY = "media.libraryUri"
         private const val K_MAIL = "mail.address"

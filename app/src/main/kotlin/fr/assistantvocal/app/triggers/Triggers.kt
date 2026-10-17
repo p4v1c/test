@@ -31,6 +31,7 @@ private const val TAG = "Triggers"
 
 /** Démarre l'écoute ; ignore l'erreur si Android refuse (l'appelant n'est pas autorisé à démarrer le service). */
 internal fun requestListen(context: Context, foreground: Boolean) {
+    if (!App.graph(context).settings.assistantEnabled) return
     val intent = AssistantService.intent(context, AssistantService.ACTION_LISTEN)
     try {
         if (foreground) context.startForegroundService(intent) else context.startService(intent)
@@ -59,6 +60,7 @@ class TriggerActivity : Activity() {
 class AssistantVoiceService : VoiceInteractionService() {
     override fun onReady() {
         super.onReady()
+        if (!App.graph(this).settings.assistantEnabled) return
         try {
             startForegroundService(AssistantService.intent(this, AssistantService.ACTION_ENSURE_RUNNING))
         } catch (e: Exception) {
@@ -82,6 +84,7 @@ class AssistantSessionService : VoiceInteractionSessionService() {
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != Intent.ACTION_BOOT_COMPLETED && intent.action != Intent.ACTION_MY_PACKAGE_REPLACED) return
+        if (!App.graph(context).settings.assistantEnabled) return // éteint : il reste éteint
         // Android oublie les alarmes au redémarrage : on reprogramme rappels, réveils et « tout va bien ».
         runCatching { val g = App.graph(context); g.reminders.rescheduleAll(); fr.assistantvocal.app.DailyJobs.scheduleWellbeing(g) }
             .onFailure { Log.e(TAG, "Reprogrammation impossible", it) }
@@ -124,7 +127,9 @@ class KeyAccessibilityService : AccessibilityService() {
             KeyEvent.KEYCODE_VOLUME_UP -> VolumeKeyGesture.Key.UP
             else -> return false
         }
-        if (!App.graph(this).settings.volumeKeyEnabled) return false
+        val settings = App.graph(this).settings
+        // Éteint : les boutons volume font leur travail normal.
+        if (!settings.assistantEnabled || !settings.volumeKeyEnabled) return false
         val decision = gesture.onKey(key, event.action == KeyEvent.ACTION_DOWN, event.repeatCount > 0, AssistantService.speakingNow)
         return when (decision) {
             VolumeKeyGesture.Decision.PASS -> false

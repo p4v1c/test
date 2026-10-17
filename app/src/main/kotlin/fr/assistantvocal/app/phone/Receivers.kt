@@ -22,6 +22,7 @@ import java.time.ZoneId
 private const val TAG = "Receivers"
 
 private fun Context.toService(intent: Intent) {
+    if (!App.graph(this).settings.assistantEnabled) return // éteint : SMS, appels, rappels ne réveillent rien
     runCatching { startForegroundService(intent) }.onFailure { e ->
         runCatching { startService(intent) }.onFailure { Log.w(TAG, "Service injoignable", e) }
     }

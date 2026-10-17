@@ -76,89 +76,101 @@ class SettingsActivity : Activity() {
         super.onCreate(savedInstanceState)
         graph = App.graph(this)
         val s = graph.settings
-        val root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(32, 32, 32, 32) }
+        val root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(20), dp(28), dp(20), dp(28)) }
+        root.addView(TextView(this).apply {
+            setText(R.string.settings_title); textSize = 32f; isAccessibilityHeading = true
+            typeface = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL)
+        })
+        var c = section(root, R.string.section_name)
 
-        nameField = field(root, R.string.label_name, s.name, InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_WORDS)
-        button(root, R.string.test_name) { testName() }
+        nameField = field(c, R.string.label_name, s.name, InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_WORDS)
+        button(c, R.string.test_name) { testName() }
 
         // Déclencheurs
-        wakeBox = check(root, R.string.wake_enabled, s.wakeWordEnabled)
-        headsetBox = check(root, R.string.headset_enabled, s.headsetButtonEnabled)
-        volumeBox = check(root, R.string.volume_enabled, s.volumeKeyEnabled)
-        button(root, R.string.calibrate) { save(); startForegroundService(AssistantService.intent(this, AssistantService.ACTION_CALIBRATE)) }
-        button(root, R.string.default_assistant) { openDefaultAssistantSettings() }
-        button(root, R.string.accessibility_settings) { startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
-        triggersStatus = TextView(this).apply { textSize = 16f; setPadding(0, 8, 0, 8) }
-        root.addView(triggersStatus)
+        c = section(root, R.string.section_triggers)
+        wakeBox = check(c, R.string.wake_enabled, s.wakeWordEnabled)
+        headsetBox = check(c, R.string.headset_enabled, s.headsetButtonEnabled)
+        volumeBox = check(c, R.string.volume_enabled, s.volumeKeyEnabled)
+        button(c, R.string.calibrate) { save(); startForegroundService(AssistantService.intent(this, AssistantService.ACTION_CALIBRATE)) }
+        button(c, R.string.default_assistant) { openDefaultAssistantSettings() }
+        button(c, R.string.accessibility_settings) { startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
+        triggersStatus = TextView(this).apply { textSize = 16f; setLineSpacing(0f, 1.25f); setPadding(dp(2), dp(14), 0, dp(4)) }
+        c.addView(triggersStatus)
 
         // Proches et sécurité
-        ownerField = field(root, R.string.label_owner, if (s.ownerName == "Votre proche") "" else s.ownerName, InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_WORDS)
-        emergencyField = field(root, R.string.label_emergency, PeopleStore.formatEmergency(graph.people.emergencyContacts), InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE)
-        favoritesField = field(root, R.string.label_favorites, graph.people.favorites.entries.sortedBy { it.key }.joinToString("; ") { "${it.key}: ${it.value}" })
-        aliasesField = field(root, R.string.label_aliases, graph.people.aliases.entries.joinToString("; ") { "${it.key}: ${it.value}" })
-        wellbeingField = field(root, R.string.label_wellbeing, s.wellbeingTime, InputType.TYPE_CLASS_DATETIME or InputType.TYPE_DATETIME_VARIATION_TIME)
-        remoteField = field(root, R.string.label_remote, s.remoteSecret)
-        root.addView(label(R.string.label_sms_mode))
+        c = section(root, R.string.section_people)
+        ownerField = field(c, R.string.label_owner, if (s.ownerName == "Votre proche") "" else s.ownerName, InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_WORDS)
+        emergencyField = field(c, R.string.label_emergency, PeopleStore.formatEmergency(graph.people.emergencyContacts), InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE)
+        favoritesField = field(c, R.string.label_favorites, graph.people.favorites.entries.sortedBy { it.key }.joinToString("; ") { "${it.key}: ${it.value}" })
+        aliasesField = field(c, R.string.label_aliases, graph.people.aliases.entries.joinToString("; ") { "${it.key}: ${it.value}" })
+        wellbeingField = field(c, R.string.label_wellbeing, s.wellbeingTime, InputType.TYPE_CLASS_DATETIME or InputType.TYPE_DATETIME_VARIATION_TIME)
+        remoteField = field(c, R.string.label_remote, s.remoteSecret)
+        c.addView(label(R.string.label_sms_mode))
         val smsGroup = RadioGroup(this)
         smsRead = RadioButton(this).apply { id = ids.next(); setText(R.string.sms_read) }
         smsAnnounce = RadioButton(this).apply { id = ids.next(); setText(R.string.sms_announce) }
         val smsOff = RadioButton(this).apply { id = ids.next(); setText(R.string.sms_off) }
         listOf(smsRead, smsAnnounce, smsOff).forEach { smsGroup.addView(it) }
         smsGroup.check(when (s.smsAnnounce) { "read" -> smsRead.id; "off" -> smsOff.id; else -> smsAnnounce.id })
-        root.addView(smsGroup)
-        notifBox = check(root, R.string.notif_announce, s.announceNotifications)
-        speakerBox = check(root, R.string.speaker_on_answer, s.speakerOnAnswer)
-        button(root, R.string.notification_access) { startActivity(Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS")) }
-        geminiKeyField = secretField(root, R.string.label_gemini_key, AppGraph.SECRET_GEMINI)
-        geminiModelField = field(root, R.string.label_gemini_model, s.geminiModel)
-        geminiHighModelField = field(root, R.string.label_gemini_high_model, s.geminiHighModel)
-        claudeKeyField = secretField(root, R.string.label_claude_key, AppGraph.SECRET_CLAUDE)
-        claudeModelField = field(root, R.string.label_claude_model, s.claudeModel)
-        newsFeedField = field(root, R.string.label_news_feed, s.newsLocalFeed, InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI)
-        tavilyKeyField = secretField(root, R.string.label_tavily_key, AppGraph.SECRET_TAVILY)
+        c.addView(smsGroup)
+        notifBox = check(c, R.string.notif_announce, s.announceNotifications)
+        speakerBox = check(c, R.string.speaker_on_answer, s.speakerOnAnswer)
+        button(c, R.string.notification_access) { startActivity(Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS")) }
+        c = section(root, R.string.section_ai)
+        geminiKeyField = secretField(c, R.string.label_gemini_key, AppGraph.SECRET_GEMINI)
+        geminiModelField = field(c, R.string.label_gemini_model, s.geminiModel)
+        geminiHighModelField = field(c, R.string.label_gemini_high_model, s.geminiHighModel)
+        claudeKeyField = secretField(c, R.string.label_claude_key, AppGraph.SECRET_CLAUDE)
+        claudeModelField = field(c, R.string.label_claude_model, s.claudeModel)
+        newsFeedField = field(c, R.string.label_news_feed, s.newsLocalFeed, InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI)
+        tavilyKeyField = secretField(c, R.string.label_tavily_key, AppGraph.SECRET_TAVILY)
         // Phase 6 : livres et mails
-        libraryLabel = label(R.string.label_library).also { root.addView(it) }
+        c = section(root, R.string.section_books)
+        libraryLabel = label(R.string.label_library).also { c.addView(it) }
         updateLibraryLabel()
-        button(root, R.string.choose_library) {
+        button(c, R.string.choose_library) {
             runCatching { startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT_TREE), REQUEST_LIBRARY) }
         }
-        autoDownloadBox = check(root, R.string.auto_download, fr.assistantvocal.core.media.MediaState(graph.store).autoDownload)
-        mailField = field(root, R.string.label_mail, s.mailAddress, InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS)
-        mailPasswordField = secretField(root, R.string.label_mail_password, AppGraph.SECRET_MAIL)
+        autoDownloadBox = check(c, R.string.auto_download, fr.assistantvocal.core.media.MediaState(graph.store).autoDownload)
+        mailField = field(c, R.string.label_mail, s.mailAddress, InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS)
+        mailPasswordField = secretField(c, R.string.label_mail_password, AppGraph.SECRET_MAIL)
 
-        root.addView(label(R.string.label_order))
+        c = section(root, R.string.section_ai_more)
+        c.addView(label(R.string.label_order))
         val group = RadioGroup(this)
         orderGeminiFirst = RadioButton(this).apply { id = ids.next(); setText(R.string.order_gemini_first) }
         val claudeFirst = RadioButton(this).apply { id = ids.next(); setText(R.string.order_claude_first) }
         group.addView(orderGeminiFirst); group.addView(claudeFirst)
         group.check(if (s.providerOrder.firstOrNull() == "claude") claudeFirst.id else orderGeminiFirst.id)
-        root.addView(group)
+        c.addView(group)
 
-        geminiLimitField = field(root, R.string.label_gemini_limit, s.dailyLimit("gemini").toString(), InputType.TYPE_CLASS_NUMBER)
-        claudeLimitField = field(root, R.string.label_claude_limit, s.dailyLimit("claude").toString(), InputType.TYPE_CLASS_NUMBER)
-        rateField = field(root, R.string.label_rate, s.speechRate.toString(), InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL)
+        geminiLimitField = field(c, R.string.label_gemini_limit, s.dailyLimit("gemini").toString(), InputType.TYPE_CLASS_NUMBER)
+        claudeLimitField = field(c, R.string.label_claude_limit, s.dailyLimit("claude").toString(), InputType.TYPE_CLASS_NUMBER)
+        c = section(root, R.string.section_voice)
+        rateField = field(c, R.string.label_rate, s.speechRate.toString(), InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL)
 
-        button(root, R.string.save) { save() }
+        primaryButton(root, R.string.save) { save() }
         // Phase 7 : sauvegarde, restauration, journal
-        button(root, R.string.backup_export) {
+        c = section(root, R.string.section_backup)
+        button(c, R.string.backup_export) {
             runCatching {
                 startActivityForResult(Intent(Intent.ACTION_CREATE_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("application/json")
                     .putExtra(Intent.EXTRA_TITLE, "assistant-sauvegarde.json"), REQUEST_EXPORT)
             }
         }
-        button(root, R.string.backup_import) {
+        button(c, R.string.backup_import) {
             runCatching {
                 startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*"), REQUEST_IMPORT)
             }
         }
-        button(root, R.string.share_journal) { shareJournal() }
-        button(root, R.string.test_ai) { testAi() }
-        button(root, R.string.battery_optimization) { askBatteryExemption() }
+        button(c, R.string.share_journal) { shareJournal() }
+        button(c, R.string.test_ai) { testAi() }
+        button(c, R.string.battery_optimization) { askBatteryExemption() }
         status = TextView(this).apply {
             textSize = 18f
             accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE
         }
-        root.addView(status)
+        c.addView(status)
 
         setContentView(ScrollView(this).apply { addView(root) })
     }
@@ -197,10 +209,25 @@ class SettingsActivity : Activity() {
         if (i <= 0) null else part.substring(0, i).trim() to part.substring(i + 1).trim()
     }.filter { it.first.isNotEmpty() && it.second.isNotEmpty() }.toMap()
 
-    private fun check(root: LinearLayout, textRes: Int, checked: Boolean): CheckBox =
-        CheckBox(this).apply { setText(textRes); isChecked = checked; textSize = 18f; minHeight = 96 }.also { root.addView(it) }
+    private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
 
-    private fun label(res: Int) = TextView(this).apply { setText(res); textSize = 18f; setPadding(0, 24, 0, 4) }
+    /** Titre de section, puis une carte arrondie qui reçoit les réglages de la section. */
+    private fun section(root: LinearLayout, titleRes: Int): LinearLayout {
+        root.addView(TextView(this).apply {
+            setText(titleRes); textSize = 15f; isAccessibilityHeading = true; isAllCaps = true; letterSpacing = 0.08f
+            setTextColor(getColor(R.color.accent)); setPadding(dp(6), dp(28), 0, dp(10))
+        })
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL; setBackgroundResource(R.drawable.card); setPadding(dp(16), dp(8), dp(16), dp(16))
+        }.also { root.addView(it) }
+    }
+
+    private fun check(root: LinearLayout, textRes: Int, checked: Boolean): CheckBox =
+        CheckBox(this).apply { setText(textRes); isChecked = checked; textSize = 17f; minHeight = dp(56) }.also { root.addView(it) }
+
+    private fun label(res: Int) = TextView(this).apply {
+        setText(res); textSize = 15f; setTextColor(getColor(R.color.text_muted)); setPadding(dp(2), dp(16), 0, dp(6))
+    }
 
     private fun field(root: LinearLayout, labelRes: Int, value: String, type: Int = InputType.TYPE_CLASS_TEXT): EditText {
         val edit = EditText(this).apply { id = ids.next(); setText(value); inputType = type; textSize = 18f }
@@ -216,7 +243,15 @@ class SettingsActivity : Activity() {
     }
 
     private fun button(root: LinearLayout, textRes: Int, onClick: () -> Unit) {
-        root.addView(Button(this).apply { setText(textRes); isAllCaps = false; textSize = 18f; setOnClickListener { onClick() } })
+        root.addView(Button(this).apply { setText(textRes); isAllCaps = false; textSize = 17f; setOnClickListener { onClick() } },
+            LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(10) })
+    }
+
+    private fun primaryButton(root: LinearLayout, textRes: Int, onClick: () -> Unit) {
+        root.addView(Button(this).apply {
+            setText(textRes); isAllCaps = false; textSize = 19f; setBackgroundResource(R.drawable.button_primary); minHeight = dp(64)
+            setOnClickListener { onClick() }
+        }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(24) })
     }
 
     private fun report(message: String) {
