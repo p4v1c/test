@@ -86,7 +86,7 @@ Tests automatiques au départ : 273 / 273 OK (2 tests d'intégration ignorés : 
    ou un appui sur un bouton volume pendant les 10 s du compte à rebours coupaient l'alerte : ni SMS, ni appel, ni message.
    Désormais, ces demandes attendent la fin de l'alerte et seul « stop » annule. Tests dans `Phase3ServiceTest`.
 
-5. **Rappels effacés par « Forcer l'arrêt »** (`a7d0f4c` environ, voir `git log`) : reprogrammés seulement au démarrage du téléphone.
+5. **Rappels effacés par « Forcer l'arrêt »** (`4e61fb3`) : reprogrammés seulement au démarrage du téléphone.
    Ils sont maintenant reprogrammés à chaque démarrage du service. Test dans `Phase3ServiceTest`.
 
 6. **Il se réveillait en entendant son propre nom** à la fin d'une phrase (« dites « Hector » ») : ignoré 1,5 s après une phrase contenant son nom.
