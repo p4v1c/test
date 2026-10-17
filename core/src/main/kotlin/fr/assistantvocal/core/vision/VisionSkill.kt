@@ -104,12 +104,15 @@ class VisionSkill(
 
     // ------------------------------------------------------------------ helpers
 
+    /** Photo en haute qualité ; si elle échoue (erreur de la caméra), l'image de l'aperçu suffit souvent. */
+    private suspend fun shot(cam: Camera): Frame? = cam.capture() ?: cam.preview()
+
     private suspend fun photo(cam: Camera, ui: VisionUi): Frame? {
-        var f = cam.capture() ?: return null
+        var f = shot(cam) ?: return null
         if (f.luminance < 35) {
             ui.say("Il fait sombre, j'allume la lampe.")
             cam.torch(true)
-            f = cam.capture() ?: return null
+            f = shot(cam) ?: return null
         }
         return f
     }
@@ -163,7 +166,7 @@ class VisionSkill(
             }
         }
         if (ui.stopRequested()) return null
-        val f = cam.capture() ?: return null
+        val f = shot(cam) ?: return null
         return f to ocr.read(f)
     }
 
@@ -264,7 +267,7 @@ class VisionSkill(
     private suspend fun product(cam: Camera, ui: VisionUi): String {
         ui.say("Tournez lentement le produit devant le téléphone, je cherche le code-barres.")
         val codes = scanCodes(cam, ui, 25)
-        val f = cam.capture()
+        val f = shot(cam)
         val code = codes.firstOrNull { it.all(Char::isDigit) && it.length in 8..14 }
         val gs1 = codes.firstNotNullOfOrNull { Gs1.parse(it) }
         if (gs1?.cip13 != null) return describeMedication(gs1, f)
@@ -289,7 +292,7 @@ class VisionSkill(
         ui.say("Tournez lentement la boîte devant le téléphone. Je cherche le petit code carré.")
         val codes = scanCodes(cam, ui, 25)
         val gs1 = codes.firstNotNullOfOrNull { Gs1.parse(it) }
-        val f = cam.capture()
+        val f = shot(cam)
         if (gs1 != null) return describeMedication(gs1, f)
         // Pas de code : on lit la boîte.
         val text = f?.let { ocr.read(it).text }.orEmpty()
@@ -322,7 +325,7 @@ class VisionSkill(
         ui.say("Tournez lentement sur vous-même avec le téléphone devant vous. Je cherche $what.")
         repeat(8) {
             if (ui.stopRequested()) return "D'accord, j'arrête de chercher."
-            val f = cam.capture() ?: return "Je n'arrive pas à utiliser la caméra."
+            val f = shot(cam) ?: return "Je n'arrive pas à utiliser la caméra."
             val answer = askAi(
                 "Cherche « $what » sur cette image. S'il est visible, réponds en commençant par TROUVÉ, puis sa position avec des repères " +
                     "d'horloge et une distance approximative. Sinon, réponds seulement : NON.", f,

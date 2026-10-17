@@ -123,11 +123,11 @@ class VisionLogicTest {
 
 // ---------------------------------------------------------------------- séance de vision simulée
 
-private class FakeCamera(var previews: MutableList<Frame>, var photo: Frame) : Camera {
+private class FakeCamera(var previews: MutableList<Frame>, var photo: Frame?) : Camera {
     var torchOn = false
     var closed = false
     override suspend fun preview(): Frame? = if (previews.size > 1) previews.removeAt(0) else previews.firstOrNull()
-    override suspend fun capture(): Frame = photo
+    override suspend fun capture(): Frame? = photo
     override fun torch(on: Boolean) { torchOn = on }
     override fun close() { closed = true }
 }
@@ -210,6 +210,12 @@ class VisionSkillTest {
         val cam = FakeCamera(mutableListOf(), frame("billet", rgb = Triple(40, 90, 200)))
         val out = skill(cam, online = false, ocrMap = mapOf("billet" to ocr("20" to Box(0, 0, 1, 1), "EURO" to Box(0, 0, 1, 1)))).run(VisionRequest(VisionMode.BANKNOTE), Ui())
         assertEquals("C'est un billet de 20 euros.", out)
+    }
+
+    @Test fun `photo ratee, il se sert de l'image de l'apercu`() = runTest {
+        val cam = FakeCamera(mutableListOf(frame("apercu", rgb = Triple(20, 30, 90))), photo = null)
+        assertEquals("C'est bleu marine.", skill(cam, online = false).run(VisionRequest(VisionMode.COLOR), Ui()))
+        assertTrue(cam.closed)
     }
 
     @Test fun `couleur hors ligne`() = runTest {
