@@ -8,7 +8,7 @@ Légende :
 
 ## État d'avancement
 
-- Phase 1 (socle) ✅ · Phase 2 (mot d'activation, déclencheurs) ✅ · Phase 3 (communication, organisation, sécurité) ✅ · Phase 4 (vision) ✅
+- Phase 1 (socle) ✅ · Phase 2 (mot d'activation, déclencheurs) ✅ · Phase 3 (communication, organisation, sécurité) ✅ · Phase 4 (vision) ✅ · Phase 5 (orientation, météo, infos, recherche) ✅
 - Réalisé en phase 3 : appels (nom, surnom, favori, numéro, rappel du dernier), annonce des appels entrants et décrocher
   à la voix ou au casque, journal d'appels, SMS (lecture, dictée, relecture, envoi vérifié, réponse), notifications
   (lecture, annonce, réponse rapide), alerte arnaque, réveils, minuteurs nommés, rappels ponctuels et récurrents,
@@ -20,6 +20,12 @@ Légende :
   dates de péremption, boîtes de médicaments (DataMatrix + base publique des médicaments, hors ligne), recherche d'objet,
   ouverture de Lookout.
 - Vision reportée : description des photos reçues (avec Gmail, phase 6), mode continu Live API et reconnaissance de proches (P2).
+- Réalisé en phase 5 : « où suis-je » (IGN), lieux proches (OpenStreetMap) avec distance et direction en heures
+  d'horloge, lieux enregistrés à la voix, guidage à pied par Google Maps, partage de position par SMS, météo
+  (Open-Meteo, conseils parapluie/verglas/chaleur), actualités France Info par thème + journal régional au choix,
+  résumé d'article, recherche web (Wikipédia, Tavily si clé), calculatrice et conversion euros/francs.
+- Reporté : vigilance météo annoncée le matin et horloge parlante (P2), repli Nominatim hors de France (inutile ici),
+  ouverture de Soundscape (P2).
 - Pas encore fait : emails Gmail (IMAP, phase 6), agenda (phase 6), Google Meet (P2).
 
 ## Décisions validées (17 octobre 2026)

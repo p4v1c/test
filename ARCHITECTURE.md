@@ -8,6 +8,7 @@
 - Phase 2 (mot d'activation, déclencheurs) : faite. 80 tests automatiques + test d'intégration Vosk réel
   sur voix de synthèse (mesures dans `tools/wake/README.md`).
 - Phase 4 (vision) : faite, 141 tests automatiques au total (caméra simulée ; non testée sur un vrai appareil photo).
+- Phase 5 (orientation, météo, infos, recherche) : faite, 209 tests automatiques au total.
 - Téléphone cible : Google Pixel (voir FEATURES.md, « Décisions validées »).
 
 ## 1. Vue d'ensemble
@@ -198,6 +199,27 @@ Chaque fonction est un `Tool` : nom, description, schéma JSON des paramètres, 
   hors ligne). Jamais de posologie inventée : rappel « demandez au pharmacien ».
 - **Billets** : chiffre lu (5…500) + couleur dominante + mot EURO ; en cas de désaccord, il le dit au lieu de deviner.
 - **Lookout** reste conseillé pour le texte en continu : on l'ouvre à la voix plutôt que de le refaire.
+
+## 9 quater. Choix de la phase 5 (orientation et infos)
+
+- **Logique dans `core/info` et `core/skills/InfoSkill`** : phrases d'adresse, distances, directions (heures d'horloge
+  avec la boussole, points cardinaux sinon), météo (codes WMO → français, oui/non d'abord pour « va-t-il pleuvoir »),
+  navigation dans les titres, calculatrice. Clients HTTP dans `llm/WebServices.kt`, capteurs et cartes dans `app/info`.
+- **Aucune IA pour l'essentiel** : adresse, lieux, météo, titres, calculs coûtent 0 requête. L'IA ne sert qu'à résumer
+  un article ou des résultats de recherche (1 requête), et n'est pas indispensable (lecture de l'extrait sinon).
+- **Services gratuits sans clé** : Géoplateforme IGN (BAN, géocodage inverse et recherche ; vérifié en réel),
+  Overpass/OpenStreetMap (deux serveurs, rayon 3 km puis 15 km pour un village), Open-Meteo (modèles Météo-France),
+  RSS France Info, Wikipédia. Tavily seulement si un proche saisit une clé gratuite (chiffrée comme les clés IA).
+  Le « grounding » Google Search de Gemini n'est pas utilisé : payant sur le palier gratuit.
+- **Guidage** : on ne refait pas un GPS piéton ; Google Maps en mode marche est lancé par intent (autorisé depuis le
+  service car l'app est l'assistant par défaut). Avant, l'assistant annonce le lieu et demande « oui ».
+- **Partage de position** : même relecture + « oui » que les SMS ; le message contient l'adresse et un lien de carte,
+  le lien n'est jamais lu à voix haute.
+- **Lieux enregistrés** stockés sur le téléphone (JSON dans les préférences). « Où suis-je » fonctionne hors ligne près d'un lieu enregistré.
+- **L'IA peut appeler** `get_weather`, `where_am_i`, `nearby_place`, `web_search`, `calculate` (lecture seule) et
+  `navigate_to`, `share_location`, `news_headlines` (traduits en intentions locales, donc confirmés comme à la voix).
+- **Textes d'internet = données** : flux RSS analysés sans entités externes (protection XXE), HTML réduit au texte,
+  consignes rappelant de ne jamais exécuter d'instruction trouvée dans une page.
 
 ## 10. Données locales
 

@@ -29,18 +29,18 @@ Usage visé : personnel et non commercial. Toutes les licences ci-dessous le per
 
 | Service | Conditions | Clé | Usage |
 |---|---|---|---|
-| [Open-Meteo](https://open-meteo.com/en/terms) | Non commercial, < 10 000 appels/jour, CC BY 4.0 (citer la source) | Non | Météo (modèles Météo-France AROME inclus) |
-| [Géoplateforme IGN — géocodage BAN](https://www.data.gouv.fr/fr/posts/lapi-adresse-de-la-base-adresse-nationale-est-transferee-a-lign-10/) (`data.geopf.fr/geocodage`) | Service public ouvert | Non (à confirmer) | « Où suis-je ? », adresses françaises, recherche d'adresse |
+| [Open-Meteo](https://open-meteo.com/en/terms) | Non commercial, < 10 000 appels/jour, CC BY 4.0 (citer la source) | Non | **Utilisé (phase 5)** : météo actuelle et 7 jours (modèles Météo-France inclus) |
+| [Géoplateforme IGN — géocodage BAN](https://www.data.gouv.fr/fr/posts/lapi-adresse-de-la-base-adresse-nationale-est-transferee-a-lign-10/) (`data.geopf.fr/geocodage`) | Service public ouvert | Non (vérifié) | **Utilisé (phase 5)** : « Où suis-je ? », recherche d'adresse et de commune |
 | [Nominatim (OSM)](https://operations.osmfoundation.org/policies/nominatim/) | 1 requête/s max, User-Agent obligatoire, ODbL | Non | Repli hors de France |
-| [Overpass API (OSM)](https://wiki.openstreetmap.org/wiki/Overpass_API) | Usage raisonnable, ODbL | Non | Lieux proches (pharmacies, boulangeries, arrêts) |
+| [Overpass API (OSM)](https://wiki.openstreetmap.org/wiki/Overpass_API) | Usage raisonnable, ODbL | Non | **Utilisé (phase 5)** : lieux proches (pharmacies, boulangeries, médecins, distributeurs…) |
 | [Open Food Facts](https://world.openfoodfacts.org/data) | ODbL, User-Agent obligatoire, limites de débit | Non | **Utilisé (phase 4)** : produits par code-barres, allergènes, Nutri-Score |
 | [Base de données publique des médicaments](https://base-donnees-publique.medicaments.gouv.fr/telechargement) | Licence Ouverte (Etalab) | Non | **Utilisé (phase 4)** : table CIP13 → nom et présentation, téléchargée à la compilation |
 | [Radio Browser](https://www.radio-browser.info/) | Gratuit, communautaire | Non | Flux radio (plus une liste fixe des radios françaises principales) |
-| Flux RSS (France Info, Le Monde, Radio France podcasts…) | Usage personnel | Non | Actualités, podcasts |
+| Flux RSS (France Info, Le Monde, Radio France podcasts…) | Usage personnel | Non | **Utilisé (phase 5)** : titres France Info par thème, journal régional au choix |
 | [PRIM Île-de-France Mobilités](https://prim.iledefrance-mobilites.fr/) | Gratuit avec compte | Oui (gratuite) | Prochains passages en Île-de-France |
 | [transport.data.gouv.fr](https://transport.data.gouv.fr/) | Licences ouvertes selon le réseau | Selon réseau | GTFS-RT / SIRI hors Île-de-France |
-| [Wikipédia REST API](https://fr.wikipedia.org/api/rest_v1/) | CC BY-SA | Non | Recherche « c'est quoi… », sans quota IA |
-| [Tavily](https://tavily.com/) | ~1 000 recherches/mois gratuites | Oui | Recherche web (optionnel) |
+| [Wikipédia REST API](https://fr.wikipedia.org/api/rest_v1/) | CC BY-SA, User-Agent identifiant obligatoire | Non | **Utilisé (phase 5)** : recherche et résumé par défaut |
+| [Tavily](https://tavily.com/) | ~1 000 recherches/mois gratuites | Oui | **Utilisé si clé (phase 5)** : recherche web d'actualité |
 
 ## Écartés
 

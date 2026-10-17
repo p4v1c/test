@@ -67,6 +67,25 @@ il allume la lampe tout seul s'il fait sombre et l'éteint toujours à la fin. D
 
 
 
+## Orientation, météo, infos, recherche (phase 5)
+
+| Domaine | Exemples | Internet ? |
+|---|---|---|
+| Où suis-je | « où suis-je ? », « quelle est mon adresse ? » → « Vous êtes près du 12 rue des Lilas, à Saint-Marcel » | Oui (sans internet : seulement « vous êtes à la maison ») |
+| Lieux proches | « où est la pharmacie la plus proche ? », « y a-t-il une boulangerie près d'ici ? », « un distributeur ? » : nom, distance, direction, téléphone ; puis « oui » pour être guidé | Oui |
+| Lieux à soi | « enregistre ici comme maison » (confirmé), « à quelle distance est la maison ? », « où est la maison ? », « quels sont mes lieux ? », « oublie le lieu … » | Non |
+| Guidage à pied | « emmène-moi à la maison », « guide-moi jusqu'à la pharmacie », « emmène-moi au 8 rue de la Paix à Valence » → Google Maps en mode piéton | Oui |
+| Partager sa position | « envoie ma position à mon fils », « dis à Paul où je suis » → SMS avec l'adresse et un lien de carte, après « oui » | Non (adresse si internet) |
+| Météo | « quel temps fait-il ? », « va-t-il pleuvoir demain ? », « la météo du week-end », « la météo de la semaine », « météo à Lyon », « il fait froid dehors ? » (conseils : parapluie, verglas, chaleur) | Oui |
+| Actualités | « les infos », « les infos sport / santé / monde / économie / régionales », « la suite », « lis le deuxième », « lis l'article » (résumé) | Oui |
+| Recherche | « cherche sur internet les horaires de la déchetterie », « que dit Wikipédia sur … » | Oui |
+| Calculs | « combien font 12 fois 7 ? », « 15 pour cent de 80 », « racine carrée de 81 », « 100 euros en francs » | Non |
+
+La direction est donnée **en heures d'horloge** (« à 3 heures, sur votre droite ») si la boussole du téléphone répond,
+téléphone tenu devant soi ; sinon en points cardinaux (« au nord-est »). Les distances sont à vol d'oiseau.
+
+## Ce qui marche aujourd'hui (phase 1)
+
 - Un seul gros bouton « Parler » (compatible TalkBack), et un bouton « Parler » dans la notification.
 - Commandes sans IA ni internet : heure, date, batterie, internet, « répète », « stop », « aide »,
   « parle plus vite / moins vite », « parle plus fort / moins fort », « sois plus bref / donne plus de détails »,
@@ -183,6 +202,19 @@ Mesures détaillées : [tools/wake/README.md](tools/wake/README.md).
 - [ ] « où sont mes clés ? » clés sur une table
 - [ ] « ouvre Lookout » (si installé ; sinon il propose de l'installer)
 - [ ] « stop » pendant le guidage arrête tout et éteint la lampe
+
+## Checklist de tests sur le vrai téléphone (phase 5)
+
+- [ ] Dehors, localisation activée : « où suis-je ? » → bonne rue et bonne commune
+- [ ] À la maison : « enregistre ici comme maison » → « oui » ; couper internet → « où suis-je ? » → « Vous êtes à la maison »
+- [ ] À 300 m de la maison : « à quelle distance est la maison ? » ; tourner sur soi avec le téléphone devant : les heures changent dans le bon sens
+- [ ] « où est la pharmacie la plus proche ? » (au village, il peut chercher jusqu'à 15 km) → « oui » → Google Maps démarre le guidage à pied, écran verrouillé compris
+- [ ] « envoie ma position à … » → « oui » → le proche reçoit l'adresse et un lien qui ouvre la bonne carte
+- [ ] « quel temps fait-il ? », « va-t-il pleuvoir demain ? » : comparer avec la météo de Météo-France
+- [ ] « les infos » → « la suite » → « lis le deuxième » → « lis l'article » (résumé, IA requise)
+- [ ] Réglages : adresse du flux RSS du journal régional → « les infos régionales »
+- [ ] « cherche sur internet … » avec et sans clé Tavily
+- [ ] « combien font 12 fois 7 ? » en mode privé (aucune IA) → « Ça fait 84 »
 
 ## Développement
 
