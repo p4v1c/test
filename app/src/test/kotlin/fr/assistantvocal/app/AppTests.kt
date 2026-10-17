@@ -575,3 +575,48 @@ class Phase7AppTest {
         assertTrue(started.any { it.action == AssistantService.ACTION_TUTORIAL })
     }
 }
+
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34])
+class Phase8AppTest {
+    private val app: App = ApplicationProvider.getApplicationContext()
+
+    @Test fun `telechargement d'un episode dans le stockage de l'app`() {
+        val server = MockWebServer().apply { enqueue(MockResponse().setBody("ID3-faux-mp3")); start() }
+        val dl = fr.assistantvocal.app.media.AndroidPodcastDownloader(app)
+        // Robolectric annonce 0 octet libre : sans place, rien n'est téléchargé.
+        val dir = java.io.File(app.filesDir, "podcasts").apply { mkdirs() }
+        assertEquals(null, kotlinx.coroutines.runBlocking { dl.download(server.url("/e0.mp3").toString(), "e0.mp3") })
+        org.robolectric.shadows.ShadowStatFs.registerStats(dir, 1_000_000, 1_000_000, 1_000_000)
+        server.enqueue(MockResponse().setBody("ID3-faux-mp3"))
+        val uri = kotlinx.coroutines.runBlocking { dl.download(server.url("/e1.mp3").toString(), "ep 1?.mp3") }!!
+        assertTrue(uri, uri.startsWith("file://") && uri.endsWith("ep_1_.mp3"))
+        assertTrue(dl.exists(uri))
+        assertEquals("ID3-faux-mp3", java.io.File(android.net.Uri.parse(uri).path!!).readText())
+        dl.delete(uri)
+        assertTrue(!dl.exists(uri))
+        server.shutdown()
+    }
+
+    @Test fun `texte d'un PDF extrait page par page`() {
+        com.tom_roush.pdfbox.android.PDFBoxResourceLoader.init(app)
+        val file = java.io.File(app.cacheDir, "lettre.pdf")
+        com.tom_roush.pdfbox.pdmodel.PDDocument().use { doc ->
+            listOf("Madame, Monsieur, votre facture est prete.", "Merci de payer avant le 5 novembre.").forEach { line ->
+                val page = com.tom_roush.pdfbox.pdmodel.PDPage()
+                doc.addPage(page)
+                com.tom_roush.pdfbox.pdmodel.PDPageContentStream(doc, page).use { cs ->
+                    cs.beginText(); cs.setFont(com.tom_roush.pdfbox.pdmodel.font.PDType1Font.HELVETICA, 12f)
+                    cs.newLineAtOffset(72f, 700f); cs.showText(line); cs.endText()
+                }
+            }
+            doc.save(file)
+        }
+        val doc = kotlinx.coroutines.runBlocking { fr.assistantvocal.app.media.PdfText(app).extract(android.net.Uri.fromFile(file), "lettre") }!!
+        assertEquals(listOf("Madame, Monsieur, votre facture est prete." to "1", "Merci de payer avant le 5 novembre." to "2"),
+            doc.blocks.map { it.text to it.page })
+        // Deuxième ouverture : depuis le cache.
+        file.delete()
+        assertEquals(2, kotlinx.coroutines.runBlocking { fr.assistantvocal.app.media.PdfText(app).extract(android.net.Uri.fromFile(file), "lettre") }!!.blocks.size)
+    }
+}

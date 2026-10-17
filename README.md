@@ -5,8 +5,8 @@ Le nom de l'assistant est personnalisable. Il répond aux commandes simples sans
 une intelligence artificielle (Gemini, Claude en secours) pour les questions libres. Toute action qui
 sort du téléphone (appel, SMS, mail, rendez-vous, alerte) est **relue puis confirmée par « oui »**.
 
-> État : **phases 1 à 7 terminées** — socle ; mot d'activation ; appels, SMS, rappels, SOS ; caméra ;
-> orientation, météo, infos ; lecteur façon Victor, mémos, agenda, mails ; tutoriel, sauvegarde, diagnostic.
+> État : **phases 1 à 8 terminées** — socle ; mot d'activation ; appels, SMS, rappels, SOS ; caméra ;
+> orientation, météo, infos ; lecteur façon Victor, mémos, agenda, mails ; tutoriel, sauvegarde, diagnostic ; livres texte et PDF lus à voix haute, podcasts sans internet.
 > Tout est testé automatiquement (simulations) ; les essais sur le vrai Pixel restent à faire (checklists en fin de page).
 
 Sommaire : [Installation](#installation-sur-le-téléphone-google-pixel) ·
@@ -171,12 +171,14 @@ après la réponse (sauf « pause » ou « stop »). Débrancher le casque met a
 | Domaine | Exemples |
 |---|---|
 | Bibliothèque | « quels livres ai-je ? », « lis le livre Le Petit Prince », « reprends mon livre », « continue » |
+| Livres texte et PDF | « lis le document lettre de la banque », « lis le PDF facture EDF », « lis le livre texte Les Misérables » : lus à voix haute (TXT, Word, HTML, EPUB sans DRM, PDF ; PDF scannés lus par reconnaissance de texte), avec les mêmes commandes : chapitres, pages, signets, « où j'en suis », vitesse |
 | Navigation | « chapitre suivant / précédent », « section suivante », « va au chapitre 5 », « va à la page 42 », « avance de 5 minutes », « recule de 30 secondes », « recule un peu », « au début du chapitre », « au début du livre » |
 | Où j'en suis | « où j'en suis ? » → titre, chapitre, page, pourcentage écouté, temps restant |
 | Signets | « pose un signet » (numérotés 1, 2, 3…), « va au signet 2 », « mes signets », « supprime le signet 2 », « supprime tous les signets » (confirmé) |
 | Vitesse et sommeil | « lis plus vite / moins vite », « vitesse normale », « arrête la lecture dans 30 minutes », « annule la minuterie de sommeil » |
 | Radio | « mets France Inter », « mets la radio » (dernière écoutée), « mets RTL », « mets France Bleu Drôme Ardèche », « radio suivante », « ajoute cette radio à mes favoris », « mes radios » |
 | Podcasts | « abonne-moi au podcast Affaires sensibles » (confirmé), « mes podcasts », « écoute le podcast Affaires sensibles » (reprend l'épisode commencé), « écoute le dernier épisode de … », « épisode suivant » |
+| Podcasts sans internet | Les 3 derniers épisodes de chaque abonnement se téléchargent **tout seuls en wifi** (comme sur le Victor) ; « télécharge les podcasts » (ou « … du podcast X ») pour le faire tout de suite ; « mes podcasts téléchargés » ; « supprime les épisodes téléchargés » (confirmé). Sans internet, « écoute le podcast X » joue l'épisode téléchargé |
 | Musique | « mets de la musique » (au hasard), « mets de la musique de Brassens » (fichiers du téléphone, sinon YouTube Music), « suivant », « pause » ; commande aussi la musique d'une autre application |
 | Mémos vocaux | « enregistre un mémo » → bip, parler, il s'arrête au silence ; « écoute mes mémos » (le plus récent d'abord), « mémo suivant », « supprime ce mémo » (confirmé) |
 | Notes écrites | « note que le code du portail est 1 2 3 4 », « lis mes notes », « supprime la note 2 » |
@@ -190,13 +192,15 @@ après la réponse (sauf « pause » ou « stop »). Débrancher le casque met a
 1. Retirer la carte SD du Victor et la brancher sur un ordinateur (ou un lecteur de carte USB-C branché au Pixel).
 2. Brancher le Pixel à l'ordinateur en USB, choisir « Transfert de fichiers » sur le téléphone.
 3. Créer un dossier `Victor` sur le téléphone et y copier les dossiers de la carte : `$VRDTB` (livres DAISY),
-   `$VROtherBooks` (livres audio), `$VRMusic`, `$VRPodcasts`, `$VRNotes`. Un simple dossier de livres
-   (un sous-dossier par livre) marche aussi.
+   `$VROtherBooks` (livres audio), `$VRText` (livres texte), `$VRMusic`, `$VRPodcasts`, `$VRNotes`. Un simple dossier de livres
+   (un sous-dossier par livre audio, ou des fichiers PDF, Word, TXT, EPUB) marche aussi.
 4. Dans l'app : **Réglages → Choisir le dossier des livres** → ouvrir `Victor` → « Utiliser ce dossier » → « Autoriser ».
 5. Dire « quels livres ai-je ? ».
 
-Les livres d'Éole (AVH) téléchargés au format DAISY se copient de la même façon. Pas encore pris en charge : livres en texte
-seul (étagère Texte du Victor), Audible, et les signets déjà posés sur le Victor (ils restent sur le Victor).
+Les livres d'Éole (AVH) téléchargés au format DAISY se copient de la même façon. Pour faire lire un courrier reçu en PDF :
+le copier dans ce dossier (par exemple depuis Gmail, « Enregistrer sur l'appareil », puis le déplacer), puis « lis le PDF … ».
+Pas pris en charge : livres DAISY en texte seul, EPUB protégés (DRM), Audible, et les signets déjà posés sur le Victor
+(ils restent sur le Victor).
 
 ### Brancher Gmail (lecture et envoi de mails)
 
@@ -225,7 +229,8 @@ seul (étagère Texte du Victor), Audible, et les signets déjà posés sur le V
 | Il se déclenche tout seul | « apprends mon nom » (l'écoute devient plus stricte si besoin), ou changer pour un nom plus rare |
 | « Je n'ai pas compris » trop souvent | Parler après le bip, plus près du téléphone ; « sois plus bref » pour des réponses plus courtes |
 | Plus de réponses aux questions | Quota gratuit du jour atteint (il le dit) : les commandes simples marchent toujours ; ajouter une clé Claude en secours |
-| Un livre ne s'ouvre pas | « quels livres ai-je ? » ; rechoisir le dossier des livres dans les réglages ; les livres en texte seul ne sont pas encore lus |
+| Un livre ne s'ouvre pas | « quels livres ai-je ? » ; rechoisir le dossier des livres dans les réglages ; un EPUB protégé (DRM) ne peut pas être lu |
+| Pas de podcast sans internet | « mes podcasts téléchargés » ; vérifier « Télécharger les podcasts en wifi » dans les réglages ; passer une nuit en wifi |
 | Les mails ne marchent pas | Recréer le mot de passe d'application Google et le ressaisir |
 | Quelque chose s'est mal passé | Dire « **signale un problème** » juste après : l'échange est noté ; un proche ouvre Réglages → **Partager le journal** et l'envoie par mail |
 
@@ -339,10 +344,19 @@ seul (étagère Texte du Victor), Audible, et les signets déjà posés sur le V
 - [ ] Réglages → Enregistrer une sauvegarde sur Drive ; modifier un surnom ; Restaurer → le surnom revient, les rappels sonnent toujours
 - [ ] « signale un problème » → Réglages → Partager le journal → mail reçu avec l'échange marqué
 
+### Phase 8
+
+- [ ] Copier dans le dossier des livres : un PDF texte (facture), un PDF scanné (photo d'un courrier), un .docx, un .txt, un EPUB → « quels livres ai-je ? »
+- [ ] « lis le PDF … » : la voix lit sans coupure entre les morceaux ; « va à la page 2 », « chapitre suivant », « où j'en suis ? », « pose un signet »
+- [ ] PDF scanné : le texte est lu (reconnaissance sur le téléphone, peut prendre quelques secondes à la première ouverture)
+- [ ] Pendant la lecture d'un document, appeler l'assistant → la lecture s'arrête, puis reprend après la réponse ; « lis plus vite »
+- [ ] Abonné à un podcast, laisser le téléphone une nuit en wifi → « mes podcasts téléchargés » ; mode avion → « écoute le podcast … » fonctionne
+- [ ] En 4G : « télécharge les podcasts » → il refuse poliment et attend le wifi
+
 ## Développement
 
 ```bash
-./gradlew :core:test :llm:test :app:testDebugUnitTest   # 255 tests (+ tests d'intégration Vosk et réseau réels, optionnels)
+./gradlew :core:test :llm:test :app:testDebugUnitTest   # 271 tests (+ tests d'intégration Vosk et réseau réels, optionnels)
 ./gradlew :app:assembleDebug
 ```
 

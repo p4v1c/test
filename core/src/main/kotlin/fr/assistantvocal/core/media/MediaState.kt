@@ -31,6 +31,20 @@ interface AudioPlayer {
 @Serializable data class Station(val name: String, val url: String)
 @Serializable data class PodcastSub(val title: String, val feedUrl: String, val author: String? = null)
 @Serializable data class TextNote(val text: String, val createdMs: Long)
+@Serializable data class DownloadedEpisode(
+    val feed: String, val show: String, val title: String, val url: String, val localUri: String,
+    val publishedMs: Long? = null, val durationMs: Long? = null,
+)
+
+/** Téléchargement des épisodes de podcast (stockage privé de l'app). */
+interface PodcastDownloader {
+    /** Wifi ou réseau non facturé. */
+    fun unmetered(): Boolean
+    /** Télécharge et renvoie l'adresse locale, ou null. */
+    suspend fun download(url: String, fileName: String): String?
+    fun delete(localUri: String)
+    fun exists(localUri: String): Boolean
+}
 
 /** Mémoire du lecteur : positions et signets par livre, radios, podcasts, notes, liste de courses. */
 class MediaState(private val store: KeyValueStore) {
@@ -96,6 +110,20 @@ class MediaState(private val store: KeyValueStore) {
         get() = load(K_NOTES, ListSerializer(TextNote.serializer()), emptyList())
         set(v) = save(K_NOTES, ListSerializer(TextNote.serializer()), v)
 
+    var downloads: List<DownloadedEpisode>
+        get() = load(K_DOWNLOADS, ListSerializer(DownloadedEpisode.serializer()), emptyList())
+        set(v) = save(K_DOWNLOADS, ListSerializer(DownloadedEpisode.serializer()), v)
+
+    /** Téléchargement automatique en wifi des derniers épisodes (comme le Victor). */
+    var autoDownload: Boolean
+        get() = store.getBoolean(K_AUTO_DL, true)
+        set(v) = store.putBoolean(K_AUTO_DL, v)
+
+    /** Nombre d'épisodes gardés par podcast (3 par défaut, comme le Victor). */
+    var keepEpisodes: Int
+        get() = store.getInt(K_KEEP, 3).coerceIn(1, 10)
+        set(v) = store.putInt(K_KEEP, v.coerceIn(1, 10))
+
     var shoppingList: List<String>
         get() = load(K_SHOP, ListSerializer(String.serializer()), emptyList())
         set(v) = save(K_SHOP, ListSerializer(String.serializer()), v)
@@ -114,6 +142,9 @@ class MediaState(private val store: KeyValueStore) {
         private const val K_LAST_FEED = "media.lastFeed"
         private const val K_NOTES = "notes.text"
         private const val K_SHOP = "notes.shopping"
+        private const val K_DOWNLOADS = "media.downloads"
+        private const val K_AUTO_DL = "media.autoDownload"
+        private const val K_KEEP = "media.keepEpisodes"
     }
 }
 

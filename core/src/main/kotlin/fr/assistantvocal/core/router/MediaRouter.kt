@@ -37,6 +37,10 @@ data class UnsubscribePodcast(val name: String) : MediaIntent
 data object ListPodcasts : MediaIntent
 data class PlayPodcast(val name: String?) : MediaIntent
 data class PlayMusic(val query: String?) : MediaIntent
+/** [name] null : tous les podcasts abonnés. */
+data class DownloadPodcasts(val name: String?) : MediaIntent
+data object ListDownloads : MediaIntent
+data object DeleteDownloads : MediaIntent
 data object RecordMemo : MediaIntent
 data object PlayMemos : MediaIntent
 data object DeleteMemo : MediaIntent
@@ -73,7 +77,7 @@ class MediaRouter {
 
     // Lecture
     private val listBooks = r("^(?:quels (?:livres|sont mes livres)(?: ai je| j ai)?|mes livres|ma bibliotheque|la bibliotheque|liste (?:des|de mes) livres|qu est ce que j ai comme livres|quels livres)$")
-    private val openBook = r("^(?:lis|lire|ecoute|ecouter|mets|mettre|ouvre|ouvrir|joue|lance|reprends|continue)(?: moi)? (?:le livre|mon livre|le roman|l audiolivre|le livre audio|l audio livre)(?: de| d)? ?(.*)$")
+    private val openBook = r("^(?:lis|lire|ecoute|ecouter|mets|mettre|ouvre|ouvrir|joue|lance|reprends|continue)(?: moi)? (?:le livre texte|le livre|mon livre|le roman|l audiolivre|le livre audio|l audio livre|le document|le pdf|le fichier|le texte)(?: de| d)? ?(.*)$")
     private val resumeBook = r("^(?:reprends|continue|relance|reprendre|continuer)(?: la lecture| ma lecture| mon livre| le livre| la lecture du livre| l ecoute)?$|^(?:lecture|play)$")
     private val pause = r("^(?:pause|mets en pause|mets pause|pause la lecture|arrete la lecture|stop la lecture|arrete le livre|arrete la radio|coupe la radio|eteins la radio|arrete la musique|coupe la musique|stoppe la musique|arrete le podcast|coupe le son de la radio)$")
     private val next = r("^(?:suivant|suivante|piste suivante|morceau suivant|chanson suivante|titre suivant|fichier suivant|episode suivant|memo suivant|radio suivante|station suivante|change de radio|autre radio|passe au suivant|passe a la suivante)$")
@@ -104,6 +108,10 @@ class MediaRouter {
     private val unsubscribe = r("^(?:desabonne moi|desabonne toi|supprime|enleve|retire)(?: du| le)? podcast (.+)$|^(?:desabonne moi|desabonne toi) (?:de|du|d) (.+)$")
     private val listPodcasts = r("^(?:mes podcasts|quels podcasts|liste des podcasts|mes abonnements|quels sont mes podcasts)$")
     private val podcast = r("^(?:ecoute|ecouter|mets|lance|joue|lis)(?: moi)?(?: le)?(?: dernier| nouvel| nouveau)? (?:episode|podcast)(?: du podcast| de l emission| du| de| d)? ?(.*)$")
+
+    private val download = r("^(?:telecharge|telecharger|telecharges|recupere|mets a jour)(?: moi)?(?: les| mes)?(?: derniers?| nouveaux?)?(?: episodes?)?(?: (?:des|de mes|du|de|d))? ?(?:podcasts?|episodes?)(?: (.+))?$")
+    private val listDownloads = r("^(?:mes podcasts telecharges|quels podcasts (?:sont )?telecharges|(?:mes |les )?episodes telecharges|qu est ce que j ai de telecharge|quels episodes (?:sont |ai je )?telecharges)$")
+    private val deleteDownloads = r("^(?:supprime|efface|vide|enleve) (?:les|mes|tous les) (?:podcasts|episodes) telecharges$")
 
     // Musique
     private val music = r("^(?:mets|met|joue|lance|ecoute|ecouter|mettre)(?: moi)?(?: de la| un peu de| la| ma)? musique(?: (?:de|d) (.+))?$")
@@ -205,6 +213,9 @@ class MediaRouter {
         namedRadio.find(k)?.let { m -> return PlayRadio(grp(raw, m)) }
         radio.find(k)?.let { m -> return PlayRadio(grp(raw, m)) }
 
+        if (listDownloads.matches(k)) return ListDownloads
+        if (deleteDownloads.matches(k)) return DeleteDownloads
+        download.find(k)?.let { m -> return DownloadPodcasts(grp(raw, m)?.takeIf { it.isNotBlank() }) }
         subscribe.find(k)?.let { m -> return SubscribePodcast(grp(raw, m)!!) }
         unsubscribe.find(k)?.let { m -> return UnsubscribePodcast(grp(raw, m)!!) }
         if (listPodcasts.matches(k)) return ListPodcasts

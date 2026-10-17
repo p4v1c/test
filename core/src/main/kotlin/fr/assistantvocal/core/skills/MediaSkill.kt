@@ -16,6 +16,7 @@ import fr.assistantvocal.core.media.Memo
 import fr.assistantvocal.core.media.MemoStore
 import fr.assistantvocal.core.media.MusicSource
 import fr.assistantvocal.core.media.PodcastDirectory
+import fr.assistantvocal.core.media.PodcastDownloader
 import fr.assistantvocal.core.media.PodcastSub
 import fr.assistantvocal.core.media.Pos
 import fr.assistantvocal.core.media.RadioCatalog
@@ -72,7 +73,7 @@ import java.util.Locale
  * L'écoute de l'assistant met la lecture en pause ; elle reprend après la réponse, sauf si la commande l'a arrêtée.
  */
 class MediaSkill(
-    private val player: AudioPlayer,
+    private val audioPlayer: AudioPlayer,
     private val library: LibrarySource,
     val state: MediaState,
     private val radios: RadioSearch,
@@ -82,8 +83,12 @@ class MediaSkill(
     private val dialog: Dialog,
     private val device: DeviceStatus,
     private val nowMs: () -> Long = { System.currentTimeMillis() },
+    /** Lecture des livres en texte par la synthèse vocale (étagère Texte). */
+    private val textPlayer: AudioPlayer? = null,
+    /** Téléchargement des podcasts pour l'écoute sans internet. */
+    private val downloader: PodcastDownloader? = null,
 ) {
-    enum class Kind { BOOK, RADIO, PODCAST, MUSIC, MEMOS }
+    enum class Kind { BOOK, TEXT, RADIO, PODCAST, MUSIC, MEMOS }
 
     private data class Session(
         val kind: Kind,
@@ -105,8 +110,12 @@ class MediaSkill(
     private var wasPlaying = false
     private var sleepAtMs: Long? = null
 
+    /** Lecteur de la séance en cours : synthèse vocale pour un livre texte, audio sinon. */
+    private val player: AudioPlayer get() = if (current?.kind == Kind.TEXT) textPlayer ?: audioPlayer else audioPlayer
+
     init {
-        player.onFinished = { onFinished() }
+        audioPlayer.onFinished = { onFinished() }
+        textPlayer?.onFinished = { onFinished() }
     }
 
     // ------------------------------------------------------------------ cycle avec la conversation
@@ -156,7 +165,7 @@ class MediaSkill(
 
     private fun onFinished() {
         val s = current ?: return
-        if (s.kind == Kind.BOOK && s.book != null) state.savePosition(s.book.id, Pos(0, 0)) // la prochaine fois, depuis le début
+        if ((s.kind == Kind.BOOK || s.kind == Kind.TEXT) && s.book != null) state.savePosition(s.book.id, Pos(0, 0)) // la prochaine fois, depuis le début
     }
 
     // ------------------------------------------------------------------ commandes
@@ -189,6 +198,9 @@ class MediaSkill(
         ListPodcasts -> listPodcasts()
         is PlayPodcast -> playPodcast(intent.name)
         is PlayMusic -> playMusic(intent.query)
+        is fr.assistantvocal.core.router.DownloadPodcasts -> askDownload(intent.name)
+        fr.assistantvocal.core.router.ListDownloads -> listDownloads()
+        fr.assistantvocal.core.router.DeleteDownloads -> deleteDownloads()
         RecordMemo -> AssistantReply("Je vous écoute pour votre mémo. Parlez après le bip, je m'arrête quand vous vous taisez.", followUp = FollowUp.RECORD_MEMO)
         PlayMemos -> playMemos()
         DeleteMemo -> deleteMemo()
@@ -198,10 +210,10 @@ class MediaSkill(
 
     private fun start(session: Session, start: Pos, live: Boolean = false) {
         savePosition()
-        player.stop()
+        audioPlayer.stop(); textPlayer?.stop()
         current = session
         state.lastKind = session.kind.name.lowercase()
-        val speed = if (session.kind == Kind.BOOK || session.kind == Kind.PODCAST || session.kind == Kind.MEMOS) state.bookSpeed else 1f
+        val speed = if (session.kind in setOf(Kind.BOOK, Kind.TEXT, Kind.PODCAST, Kind.MEMOS)) state.bookSpeed else 1f
         val tracks = session.book?.tracks ?: listOf(Track(session.station!!.url, session.station.name))
         pendingStart = { player.play(tracks, start, speed, live) }
         after = After.KEEP
@@ -243,7 +255,7 @@ class MediaSkill(
                 ?: return err("Je ne trouve pas de livre « $title ». Dites : quels livres ai-je, pour la liste.")
         }
         val full = runCatching { library.load(found) }.getOrNull() ?: return err("Je n'arrive pas à ouvrir « ${found.title} ».")
-        if (full.tracks.isEmpty()) return err("« ${found.title} » ne contient pas d'audio. Les livres en texte seul ne sont pas encore lus.")
+        if (full.tracks.isEmpty()) return err("« ${found.title} » ne contient rien que je puisse lire.")
         return startBook(full)
     }
 
@@ -251,7 +263,7 @@ class MediaSkill(
         state.lastBookId = book.id
         val saved = state.position(book.id)
         val pos = saved ?: Pos(0, 0)
-        start(Session(Kind.BOOK, book), pos)
+        start(Session(if (book.shelf == Shelf.TEXT) Kind.TEXT else Kind.BOOK, book), pos)
         val where = headingAt(book, pos)?.takeIf { FrenchText.key(it.title) != FrenchText.key(book.title) }?.let { ", ${it.title}" } ?: ""
         return AssistantReply(if (saved != null && (saved.track > 0 || saved.ms > 5_000)) "Je reprends « ${book.title} »$where." else "J'ouvre « ${book.title} »$where.")
     }
@@ -356,6 +368,13 @@ class MediaSkill(
 
     private fun jump(delta: Long): AssistantReply {
         val book = bookSession()?.book ?: return err("Il n'y a pas de lecture où avancer ou reculer.")
+        if (current?.kind == Kind.TEXT) {
+            // Livre texte : un segment (environ 400 caractères) dure à peu près 25 secondes.
+            val n = (kotlin.math.abs(delta) / 25_000).coerceAtLeast(1).toInt() * (if (delta > 0) 1 else -1)
+            val t = (pos().track + n).coerceIn(0, book.tracks.lastIndex)
+            val amount = FrenchTime.speakDuration(Duration.ofMillis(kotlin.math.abs(delta)))
+            return go(Pos(t, 0), if (delta > 0) "J'avance d'environ $amount." else "Je recule d'environ $amount.")
+        }
         var p = pos()
         var ms = p.ms + delta
         var track = p.track
@@ -386,6 +405,18 @@ class MediaSkill(
                 "Mémo ${i + 1} sur ${s.memoList.size}, enregistré ${s.memoList.getOrNull(i)?.let { whenSpoken(it.createdMs) } ?: ""}."
             }
             Kind.MUSIC -> "Musique : ${s.book?.tracks?.getOrNull(pos().track)?.title ?: ""}, morceau ${pos().track + 1} sur ${s.book?.tracks?.size}."
+            Kind.TEXT -> {
+                val book = s.book ?: return ""
+                val p = pos()
+                buildString {
+                    append("« ${book.title} ». ")
+                    headingAt(book, p)?.takeIf { FrenchText.key(it.title) != FrenchText.key(book.title) }?.let { append(it.title.trimEnd('.')).append(". ") }
+                    book.pages.lastOrNull { it.track <= p.track }?.let { append("Page ${it.label}. ") }
+                    val total = book.tracks.sumOf { it.title.length }.coerceAtLeast(1)
+                    val done = book.tracks.take(p.track).sumOf { it.title.length }
+                    append("${(done.toLong() * 100 / total).toInt()} pour cent lus.")
+                }.trim()
+            }
             Kind.PODCAST, Kind.BOOK -> {
                 val book = s.book ?: return ""
                 val p = pos()
@@ -512,7 +543,7 @@ class MediaSkill(
     private suspend fun step(dir: Int): AssistantReply {
         val s = current ?: return if (music.controlExternal(if (dir > 0) "next" else "previous")) AssistantReply("") else err("Rien n'est en cours de lecture.")
         return when (s.kind) {
-            Kind.BOOK -> heading(dir, chapter = false)
+            Kind.BOOK, Kind.TEXT -> heading(dir, chapter = false)
             Kind.RADIO -> {
                 val list = state.favoriteStations.takeIf { it.size >= 2 } ?: RadioCatalog.BUILT_IN
                 val i = list.indexOfFirst { it.url == s.station?.url }
@@ -565,7 +596,7 @@ class MediaSkill(
     }
 
     private suspend fun playPodcast(name: String?): AssistantReply {
-        if (!device.isOnline()) return err("Je n'ai pas internet pour écouter les podcasts.")
+        if (!device.isOnline()) return playOffline(name)
         val subs = state.podcasts
         val newest = name != null && Regex("\\bdernier\\b").containsMatchIn(FrenchText.key(name))
         val query = name?.let { FrenchText.key(it).replace(Regex("^(?:dernier |nouvel |nouveau )"), "") }
@@ -585,11 +616,31 @@ class MediaSkill(
         return playEpisode(title, feed, episodes, i).let { it.copy(speech = it.speech + notSubscribed) }
     }
 
+    /** Sans internet : les épisodes téléchargés. */
+    private fun playOffline(name: String?): AssistantReply {
+        val local = state.downloads.filter { downloader?.exists(it.localUri) == true }
+        if (local.isEmpty()) return err("Je n'ai pas internet, et aucun épisode n'est téléchargé. En wifi, dites : télécharge les podcasts.")
+        val query = name?.let { FrenchText.key(it).replace(Regex("^(?:dernier |nouvel |nouveau )"), "") }?.takeIf { it.isNotBlank() }
+        val feed = when {
+            query != null -> TitleMatch.best(query, local) { it.show }?.feed ?: return err("Aucun épisode de « $name » n'est téléchargé.")
+            else -> local.firstOrNull { it.feed == state.lastPodcastFeed }?.feed ?: local.maxByOrNull { it.publishedMs ?: 0 }!!.feed
+        }
+        val eps = local.filter { it.feed == feed }.sortedByDescending { it.publishedMs ?: 0 }
+        val episodes = eps.map { Episode(it.title, it.url, it.publishedMs, it.durationMs) }
+        val lastUrl = state.lastEpisode(feed)
+        val i = episodes.indexOfFirst { it.url == lastUrl }.takeIf { it >= 0 } ?: 0
+        return playEpisode(eps.first().show, feed, episodes, i).let { it.copy(speech = "Épisode téléchargé. " + it.speech) }
+    }
+
+    /** Fichier téléchargé de l'épisode s'il existe. */
+    private fun localFor(url: String): String? =
+        state.downloads.firstOrNull { it.url == url }?.localUri?.takeIf { downloader?.exists(it) == true }
+
     private fun playEpisode(show: String, feed: String, episodes: List<Episode>, i: Int): AssistantReply {
         val ep = episodes[i]
         state.lastPodcastFeed = feed
         state.setLastEpisode(feed, ep.url)
-        val book = Book(ep.url, ep.title, Shelf.PODCASTS, listOf(Track(ep.url, ep.title, ep.durationMs)))
+        val book = Book(ep.url, ep.title, Shelf.PODCASTS, listOf(Track(localFor(ep.url) ?: ep.url, ep.title, ep.durationMs)))
         val saved = state.position(ep.url)
         start(Session(Kind.PODCAST, book, show = show, feed = feed, episodes = episodes, episodeIndex = i), saved ?: Pos(0, 0))
         val date = ep.publishedMs?.let { ms ->
@@ -597,6 +648,83 @@ class MediaSkill(
             ", du ${d.dayOfMonth} ${d.month.getDisplayName(TextStyle.FULL, Locale.FRANCE)}"
         } ?: ""
         return AssistantReply("« $show » : ${ep.title.trimEnd('.')}$date." + if (saved != null && saved.ms > 30_000) " Je reprends où vous en étiez." else "")
+    }
+
+    // ------------------------------------------------------------------ téléchargements de podcasts
+
+    /** Podcast demandé pour le prochain téléchargement lancé par l'application (null = tous). */
+    var downloadFilter: String? = null
+        private set
+
+    private fun askDownload(name: String?): AssistantReply {
+        if (downloader == null) return err("Le téléchargement n'est pas disponible.")
+        if (state.podcasts.isEmpty()) return err("Vous n'êtes abonné à aucun podcast. Dites par exemple : abonne-moi au podcast Affaires sensibles.")
+        if (name != null && TitleMatch.best(name, state.podcasts) { it.title } == null) return err("Vous n'êtes pas abonné à « $name ».")
+        if (!device.isOnline()) return err("Je n'ai pas internet pour télécharger.")
+        if (!downloader.unmetered()) return AssistantReply("Vous n'êtes pas en wifi : pour ne pas consommer vos données mobiles, je téléchargerai dès que le téléphone sera en wifi.")
+        downloadFilter = name
+        val what = name?.let { "les derniers épisodes de « ${TitleMatch.best(it, state.podcasts) { s -> s.title }!!.title} »" } ?: "les derniers épisodes de vos podcasts"
+        return AssistantReply("Je télécharge $what. Je vous préviens quand c'est fini.", followUp = FollowUp.DOWNLOAD_PODCASTS)
+    }
+
+    /**
+     * Garde les [MediaState.keepEpisodes] derniers épisodes de chaque abonnement, plus l'épisode commencé.
+     * [force] : même hors wifi (demande explicite). Renvoie le nombre d'épisodes nouvellement téléchargés.
+     */
+    suspend fun syncDownloads(force: Boolean = false, filter: String? = downloadFilter): Int {
+        val dl = downloader ?: return 0
+        downloadFilter = null
+        if (!device.isOnline() || (!force && (!state.autoDownload || !dl.unmetered()))) return 0
+        val subs = filter?.let { f -> listOfNotNull(TitleMatch.best(f, state.podcasts) { it.title }) } ?: state.podcasts
+        var added = 0
+        for (sub in subs) {
+            val episodes = runCatching { podcasts.episodes(sub.feedUrl) }.getOrNull() ?: continue
+            val keep = episodes.take(state.keepEpisodes)
+            val inProgress = state.lastEpisode(sub.feedUrl)?.takeIf { (state.position(it)?.ms ?: 0) > 0 }
+            for (ep in keep) {
+                if (state.downloads.any { it.url == ep.url && dl.exists(it.localUri) }) continue
+                val name = "ep_" + Integer.toHexString(ep.url.hashCode()) + "_" + (ep.publishedMs ?: 0) + ".mp3"
+                val local = runCatching { dl.download(ep.url, name) }.getOrNull() ?: continue
+                state.downloads = state.downloads.filter { it.url != ep.url } +
+                    fr.assistantvocal.core.media.DownloadedEpisode(sub.feedUrl, sub.title, ep.title, ep.url, local, ep.publishedMs, ep.durationMs)
+                added++
+            }
+            // Les plus anciens partent, sauf l'épisode en cours d'écoute.
+            val keepUrls = keep.map { it.url }.toSet() + listOfNotNull(inProgress)
+            val (stay, drop) = state.downloads.partition { it.feed != sub.feedUrl || it.url in keepUrls }
+            drop.forEach { dl.delete(it.localUri) }
+            state.downloads = stay
+        }
+        // Désabonné : on supprime ses fichiers.
+        val (mine, orphans) = state.downloads.partition { d -> state.podcasts.any { it.feedUrl == d.feed } }
+        orphans.forEach { dl.delete(it.localUri) }
+        state.downloads = mine
+        return added
+    }
+
+    /** Annonce de fin de téléchargement. */
+    fun downloadDone(added: Int): String = when (added) {
+        0 -> "Vos podcasts sont à jour : pas de nouvel épisode à télécharger."
+        1 -> "Téléchargement terminé : 1 nouvel épisode, disponible même sans internet."
+        else -> "Téléchargement terminé : $added nouveaux épisodes, disponibles même sans internet."
+    }
+
+    private fun listDownloads(): AssistantReply {
+        val list = state.downloads.filter { downloader?.exists(it.localUri) == true }
+        if (list.isEmpty()) return AssistantReply("Aucun épisode n'est téléchargé." +
+            if (state.autoDownload && state.podcasts.isNotEmpty()) " Ils se téléchargent tout seuls en wifi." else "")
+        val byShow = list.groupBy { it.show }.entries.joinToString(" ; ") { (show, eps) -> "« $show », ${eps.size} ${if (eps.size == 1) "épisode" else "épisodes"}" }
+        return AssistantReply("${list.size} ${if (list.size == 1) "épisode téléchargé" else "épisodes téléchargés"} : $byShow.")
+    }
+
+    private fun deleteDownloads(): AssistantReply {
+        val list = state.downloads
+        if (list.isEmpty()) return AssistantReply("Aucun épisode n'est téléchargé.")
+        return dialog.confirm("Je supprime les ${list.size} épisodes téléchargés ? Répondez oui ou non.") {
+            list.forEach { downloader?.delete(it.localUri) }
+            state.downloads = emptyList()
+            "Les épisodes téléchargés sont supprimés." + if (state.autoDownload) " Les prochains se téléchargeront en wifi." else ""
+        }
     }
 
     // ------------------------------------------------------------------ musique

@@ -172,7 +172,7 @@ class Phase6ScenarioTest {
     }
     private val llm = ScriptedLlm()
 
-    private fun media() = MediaSkill(player, library, MediaState(store), radioSearch, podcastDir, musicSource, memoStore, dialog, device) { now }
+    private fun media() = MediaSkill(player, library, MediaState(store), radioSearch, podcastDir, musicSource, memoStore, dialog, device, nowMs = { now })
     private val mediaSkill = media()
     private val organizer = OrganizerSkill(MediaState(store), calendar, reminderStore, dialog, device,
         weatherToday = { "Aujourd'hui : ciel dégagé, de 8 degrés à 17 degrés." }, unreadSms = { 2 }, unreadMail = { 3 })

@@ -97,7 +97,7 @@ object CoreTools {
 
     /** Fonctions de la phase 6 : lecteur, notes, agenda, mails (toujours traduites en intentions locales). */
     fun phase6(organizer: fr.assistantvocal.core.skills.OrganizerSkill?): List<Tool> = listOfNotNull(
-        IntentTool(toolSpec("open_book", "Ouvre un livre audio de la bibliothèque (ou reprend le dernier si aucun titre).") {
+        IntentTool(toolSpec("open_book", "Ouvre un livre de la bibliothèque : livre audio, DAISY, ou document texte / PDF lu à voix haute (reprend le dernier si aucun titre).") {
             string("title", "Titre du livre", required = false)
         }) { a -> fr.assistantvocal.core.router.OpenBook(a.str("title")?.takeIf { it.isNotBlank() }) },
         IntentTool(toolSpec("play_radio", "Met une radio en direct.") { string("station", "Nom de la radio, ex. « France Inter »", required = false) })
@@ -108,6 +108,9 @@ object CoreTools {
             { a -> fr.assistantvocal.core.router.PlayMusic(a.str("query")?.takeIf { it.isNotBlank() }) },
         IntentTool(toolSpec("sleep_timer", "Arrête la lecture après un délai.") { integer("minutes", "Délai en minutes") })
             { a -> fr.assistantvocal.core.router.SleepTimer(a.str("minutes")?.toIntOrNull() ?: 30) },
+        IntentTool(toolSpec("download_podcasts", "Télécharge les derniers épisodes des podcasts abonnés pour les écouter sans internet (en wifi).") {
+            string("name", "Nom du podcast, sinon tous", required = false)
+        }) { a -> fr.assistantvocal.core.router.DownloadPodcasts(a.str("name")?.takeIf { it.isNotBlank() }) },
         IntentTool(toolSpec("record_memo", "Enregistre un mémo vocal (la personne parle après le bip).")) { fr.assistantvocal.core.router.RecordMemo },
         IntentTool(toolSpec("add_note", "Enregistre une note écrite.") { string("text", "Contenu de la note") })
             { a -> a.str("text")?.let { fr.assistantvocal.core.router.AddNote(it) } },

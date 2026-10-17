@@ -24,6 +24,7 @@ Usage visé : personnel et non commercial. Toutes les licences ci-dessous le per
 | **OkHttp + kotlinx.serialization** | Apache 2.0 | Active | — | — | — | `GeminiProvider` (REST `generateContent`), APIs de données |
 | **JavaMail pour Android** (`com.sun.mail:android-mail` 1.6.7) | EPL-2.0 / GPL+CE | Stable | ~0,7 Mo | ❌ | — | **Utilisé (phase 6)** : Gmail en IMAP/SMTP (Angus Mail écarté : dépendances Java absentes d'Android) |
 | **Media3 ExoPlayer 1.4.1** (+ HLS) | Apache 2.0 | Active (Google) | ~2 Mo | ✅ | — | **Utilisé (phase 6)** : livres, radios, podcasts, musique, mémos |
+| **PdfBox-Android 2.0.27.0** (`com.tom-roush:pdfbox-android`) | Apache 2.0 | Peu active (portage de PDFBox) | ~3 Mo | ✅ | — | **Utilisé (phase 8)** : texte des PDF ; les pages scannées passent par ML Kit |
 | **AndroidX DocumentFile** | Apache 2.0 | Stable | petit | ✅ | — | **Utilisé (phase 6)** : lecture du dossier des livres choisi par un proche |
 | **Format DAISY 2.02 / 3** (spécifications du DAISY Consortium) | Spécifications ouvertes | — | — | ✅ | — | **Implémenté (phase 6)** : analyse ncc.html, .ncx et SMIL, sans bibliothèque externe |
 | **Tests** : JUnit, Robolectric (MIT), MockWebServer (Apache 2.0), Turbine, Espresso | — | Active | — | — | — | Tests unitaires et instrumentés |

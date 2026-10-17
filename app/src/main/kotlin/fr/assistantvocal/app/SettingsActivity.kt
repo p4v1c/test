@@ -65,6 +65,7 @@ class SettingsActivity : Activity() {
     lateinit var mailField: EditText; private set
     lateinit var mailPasswordField: EditText; private set
     lateinit var libraryLabel: TextView; private set
+    lateinit var autoDownloadBox: android.widget.CheckBox; private set
     private lateinit var smsRead: RadioButton
     private lateinit var smsAnnounce: RadioButton
     private lateinit var notifBox: CheckBox
@@ -121,6 +122,7 @@ class SettingsActivity : Activity() {
         button(root, R.string.choose_library) {
             runCatching { startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT_TREE), REQUEST_LIBRARY) }
         }
+        autoDownloadBox = check(root, R.string.auto_download, fr.assistantvocal.core.media.MediaState(graph.store).autoDownload)
         mailField = field(root, R.string.label_mail, s.mailAddress, InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS)
         mailPasswordField = secretField(root, R.string.label_mail_password, AppGraph.SECRET_MAIL)
 
@@ -311,6 +313,7 @@ class SettingsActivity : Activity() {
         if (graph.secrets.has(AppGraph.SECRET_TAVILY)) tavilyKeyField.setHint(R.string.key_saved_hint)
         s.newsLocalFeed = newsFeedField.text.toString()
         s.mailAddress = mailField.text.toString()
+        fr.assistantvocal.core.media.MediaState(graph.store).autoDownload = autoDownloadBox.isChecked
         mailPasswordField.text.toString().replace(" ", "").takeIf { it.isNotEmpty() }?.let { graph.secrets.put(AppGraph.SECRET_MAIL, it) }
         mailPasswordField.setText("")
         if (graph.secrets.has(AppGraph.SECRET_MAIL)) mailPasswordField.setHint(R.string.key_saved_hint)

@@ -37,6 +37,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import fr.assistantvocal.core.phone.CallState
 import fr.assistantvocal.core.safety.DeviceAlerts
@@ -81,6 +82,8 @@ class AssistantService : Service() {
         DailyJobs.scheduleWellbeing(graph)
         // Lecteur : position mémorisée et minuterie de sommeil, toutes les 10 secondes.
         scope.launch { while (true) { delay(10_000); runCatching { graph.media.tick() } } }
+        // Podcasts : vérifie les nouveaux épisodes toutes les 6 heures, téléchargés seulement en wifi.
+        scope.launch { delay(60_000); while (true) { downloadPodcasts(force = false); delay(6 * 3_600_000L) } }
         // Sauvegarde hebdomadaire des réglages (hors clés et mots de passe).
         scope.launch(Dispatchers.IO) { fr.assistantvocal.app.support.Backups.autoIfDue(this@AssistantService, graph) }
     }
@@ -255,6 +258,7 @@ class AssistantService : Service() {
                 FollowUp.VISION -> { reply.vision?.let { runVision(it) }; return }
                 FollowUp.OPEN_LOOKOUT -> { openLookout(); return }
                 FollowUp.RECORD_MEMO -> { recordMemo(); return }
+                FollowUp.DOWNLOAD_PODCASTS -> downloadPodcasts(force = true)
                 FollowUp.NONE -> Unit
             }
             // Relance l'écoute pour une confirmation, au maximum 4 fois d'affilée.
@@ -323,6 +327,14 @@ class AssistantService : Service() {
         val result = graph.vision.run(req, ui)
         sounds.play(Earcon.SUCCESS)
         speak(result)
+    }
+
+    /** Téléchargement en arrière-plan ; la fin est annoncée si l'assistant ne parle pas à ce moment-là. */
+    private fun downloadPodcasts(force: Boolean) {
+        scope.launch(Dispatchers.IO) {
+            val n = runCatching { graph.media.syncDownloads(force = force) }.getOrDefault(0)
+            if (force || n > 0) withContext(Dispatchers.Main) { announceIfIdle(graph.media.downloadDone(n)) }
+        }
     }
 
     /** Mémo vocal : bip, enregistrement jusqu'au silence, puis durée annoncée. */
@@ -563,7 +575,8 @@ class AssistantService : Service() {
         wake.stop()
         headset?.release()
         input.release(); output.release(); sounds.release(); wake.release()
-        runCatching { graph.media.tick(); (graph.mediaBackend.player as? fr.assistantvocal.app.media.AndroidPlayer)?.release() }
+        runCatching { graph.media.tick(); (graph.mediaBackend.player as? fr.assistantvocal.app.media.AndroidPlayer)?.release()
+            (graph.mediaBackend.textPlayer as? fr.assistantvocal.app.media.TtsTextPlayer)?.release() }
         super.onDestroy()
     }
 

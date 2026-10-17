@@ -170,7 +170,8 @@ class AppGraph(
     )
     val mediaBackend: MediaBackend = mediaFactory?.invoke(context, this) ?: MediaBackend.android(context, this)
     val media = MediaSkill(mediaBackend.player, mediaBackend.library, MediaState(store), mediaBackend.radios, mediaBackend.podcasts,
-        mediaBackend.music, mediaBackend.memos, dialog, device)
+        mediaBackend.music, mediaBackend.memos, dialog, device,
+        textPlayer = mediaBackend.textPlayer, downloader = mediaBackend.downloader)
     val mail = MailSkill(mediaBackend.mail, mediaBackend.emailContacts, dialog, device, { settings.ownerName }, llm,
         canUseLlm = { !settings.privateMode && device.isOnline() && llm.isConfigured() },
         systemPrompt = { Prompts.system(settings.name, settings.verbosity, device.now()) })
@@ -209,6 +210,9 @@ class MediaBackend(
     val calendar: CalendarSource?,
     val mail: MailSource,
     val emailContacts: EmailContacts,
+    /** Lecture des livres texte par la synthèse vocale. */
+    val textPlayer: AudioPlayer? = null,
+    val downloader: fr.assistantvocal.core.media.PodcastDownloader? = null,
 ) {
     companion object {
         fun android(context: Context, g: AppGraph): MediaBackend {
@@ -218,6 +222,8 @@ class MediaBackend(
                 memos, { memos.record() }, AndroidCalendar(context),
                 ImapMail({ g.settings.mailAddress }, { g.secrets.get(AppGraph.SECRET_MAIL) }),
                 AndroidEmailContacts(context, g.people),
+                fr.assistantvocal.app.media.TtsTextPlayer(context) { g.settings.speechPitch },
+                fr.assistantvocal.app.media.AndroidPodcastDownloader(context),
             )
         }
     }

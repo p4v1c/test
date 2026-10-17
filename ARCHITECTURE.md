@@ -11,6 +11,7 @@
 - Phase 5 (orientation, météo, infos, recherche) : faite, 209 tests automatiques au total.
 - Phase 6 (lecteur façon Victor, mémos, agenda, mails) : faite, 241 tests automatiques au total.
 - Phase 7 (tutoriel, diagnostic, sauvegarde, journal) : faite, 255 tests automatiques au total.
+- Phase 8 (livres texte et PDF, podcasts hors ligne) : faite, 271 tests automatiques au total.
 - Téléphone cible : Google Pixel (voir FEATURES.md, « Décisions validées »).
 
 ## 1. Vue d'ensemble
@@ -268,6 +269,25 @@ Chaque fonction est un `Tool` : nom, description, schéma JSON des paramètres, 
   sauvegardables, garde les volatiles, puis reprogramme les rappels. Un fichier étranger ou d'une version future est refusé.
 - **Journal** : 60 derniers échanges sur le téléphone ; « signale un problème » marque le dernier ; un proche le partage
   (texte) depuis les réglages. Rien n'est envoyé automatiquement.
+
+## 9 septies. Choix de la phase 8 (livres texte, podcasts hors ligne)
+
+- **Un livre texte est un livre comme les autres** : `core/media/TextBooks` le découpe en segments d'environ 400 caractères
+  (coupés entre deux phrases) ; chaque segment est une « piste ». Chapitres (titres HTML/DOCX/EPUB, « Chapitre … » dans
+  un TXT ou un PDF) et pages (sauts de page EPUB, pages PDF) pointent vers un segment. Toute la logique du lecteur
+  (reprise, signets, chapitres, pages, « où j'en suis », pause pendant la conversation) est donc réutilisée telle quelle.
+- **`TtsTextPlayer`** implémente la même interface que le lecteur audio avec la synthèse vocale Android (flux média,
+  focus audio), en gardant toujours un segment d'avance dans la file pour éviter les silences. `MediaSkill` choisit le lecteur
+  selon le livre ; passer d'un document à la radio coupe la synthèse. « Avance de 5 minutes » = environ 12 segments.
+- **Formats** analysés sans bibliothèque externe dans le cœur (testés) : TXT/MD, HTML/XHTML, DOCX (XML Word),
+  EPUB (container → OPF → ordre du spine ; EPUB chiffrés refusés ; taille décompressée limitée contre les archives piégées).
+  **PDF** côté Android : PdfBox-Android pour la couche texte, page par page (lignes recollées en paragraphes, mots coupés
+  réparés) ; une page sans texte (scan) est rendue par `PdfRenderer` puis lue par ML Kit, hors ligne. Résultat mis en cache.
+- **Podcasts hors ligne** : `MediaSkill.syncDownloads` garde les N (3) derniers épisodes de chaque abonnement + l'épisode
+  commencé, supprime le reste et les podcasts quittés. Automatique toutes les 6 heures **seulement en réseau non facturé**
+  (wifi) ; à la voix aussi, mais jamais en données mobiles. Téléchargement OkHttp dans le stockage privé, fichier partiel
+  renommé à la fin, refus s'il reste moins de 300 Mo. La lecture prend le fichier local quand il existe (positions inchangées,
+  clé = adresse de l'épisode) ; sans internet, seuls les épisodes téléchargés sont proposés.
 
 ## 10. Données locales
 

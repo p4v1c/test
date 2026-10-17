@@ -47,6 +47,7 @@
     <string name="label_library">Dossier des livres audio (contenu de la carte du Victor copié sur le téléphone)</string>
     <string name="choose_library">Choisir le dossier des livres</string>
     <string name="library_none">aucun</string>
+    <string name="auto_download">Télécharger les 3 derniers épisodes des podcasts en wifi (écoute sans internet)</string>
     <string name="label_mail">Adresse Gmail (pour « lis mes mails »)</string>
     <string name="label_mail_password">Mot de passe d\'application Gmail (16 lettres, créé dans le compte Google, sécurité)</string>
     <string name="tutorial">Tutoriel : apprendre à utiliser l\'assistant</string>

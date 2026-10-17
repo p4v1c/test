@@ -87,7 +87,8 @@ class HelpCatalog(private val topics: List<HelpTopic>) {
             listOf("quels livres ai-je ?", "lis le livre Les Misérables", "reprends mon livre", "chapitre suivant", "va au chapitre 5",
                 "va à la page 42", "avance de 5 minutes", "où j'en suis ?", "pose un signet", "va au signet 2", "lis plus vite",
                 "arrête la lecture dans 30 minutes", "mets France Inter", "abonne-moi au podcast Affaires sensibles",
-                "écoute le podcast Affaires sensibles", "mets de la musique", "pause", "reprends"),
+                "écoute le podcast Affaires sensibles", "télécharge les podcasts", "mes podcasts téléchargés", "lis le document lettre de la banque",
+                "lis le PDF facture", "mets de la musique", "pause", "reprends"),
         )
         val NOTES = HelpTopic(
             "les mémos, notes, agenda et mails", listOf("memos", "memo", "notes", "courses", "agenda", "rendez vous", "mails", "mail", "courriels"),

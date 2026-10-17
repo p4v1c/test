@@ -9,6 +9,7 @@ enum class Shelf(val label: String, val victorFolder: String?) {
     MUSIC("musique", "\$VRMusic"),
     PODCASTS("podcasts enregistrés", "\$VRPodcasts"),
     NOTES("notes du Victor", "\$VRNotes"),
+    TEXT("livres texte", "\$VRText"),
 }
 
 /** Un fichier audio du livre ; [durationMs] connue d'après le DAISY, sinon fournie par le lecteur. */

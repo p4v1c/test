@@ -32,6 +32,7 @@ import fr.assistantvocal.core.media.MemoStore
 import fr.assistantvocal.core.media.MusicSource
 import fr.assistantvocal.core.media.Pos
 import fr.assistantvocal.core.media.Shelf
+import fr.assistantvocal.core.media.TextBooks
 import fr.assistantvocal.core.media.Track
 import fr.assistantvocal.core.text.FrenchText
 import kotlinx.coroutines.Dispatchers
@@ -126,6 +127,7 @@ class SafLibrary(private val context: Context, private val treeUri: () -> String
                     shelf == Shelf.PODCASTS || shelf == Shelf.MUSIC -> scanFolder(child, shelf, out, depth = 0, singleFilesAreBooks = shelf == Shelf.PODCASTS)
                     shelf != null -> scanFolder(child, shelf, out, depth = 0, singleFilesAreBooks = true)
                     child.isDirectory && !name.startsWith("$") -> classify(child, Shelf.BOOKS)?.let { out += it } ?: scanFolder(child, Shelf.BOOKS, out, 1, true)
+                    child.isFile && TextBooks.TEXT_FILE.matches(name) -> out += textStub(child)
                 }
             }
         }.onFailure { Log.e(TAG, "Lecture du dossier des livres impossible", it) }
@@ -139,8 +141,25 @@ class SafLibrary(private val context: Context, private val treeUri: () -> String
                 classify(f, shelf)?.let { out += it } ?: if (depth < 2) scanFolder(f, shelf, out, depth + 1, singleFilesAreBooks) else Unit
             } else if (singleFilesAreBooks && AudioFolderBook.AUDIO.matches(name)) {
                 AudioFolderBook.build(f.uri.toString(), name, shelf, listOf(name to f.uri.toString()))?.let { out += it }
+            } else if (TextBooks.TEXT_FILE.matches(name) && shelf != Shelf.MUSIC) {
+                out += textStub(f)
             }
         }
+    }
+
+    /** Livre texte (TXT, HTML, DOCX, EPUB, PDF) : analysé seulement à l'ouverture. */
+    private fun textStub(f: DocumentFile): Book =
+        Book("textfile:" + f.uri, Daisy.cleanTitle(f.name ?: "Document"), Shelf.TEXT, emptyList())
+
+    private val pdf by lazy { PdfText(context) }
+
+    private suspend fun loadText(book: Book): Book {
+        val uri = Uri.parse(book.id.removePrefix("textfile:"))
+        val file = DocumentFile.fromSingleUri(context, uri)
+        val name = file?.name ?: "document"
+        val doc = if (name.endsWith(".pdf", true)) pdf.extract(uri, "${book.id}|${file?.length()}|${file?.lastModified()}")
+        else runCatching { context.contentResolver.openInputStream(uri)?.use { TextBooks.parse(name, it.readBytes(), ::decode) } }.getOrNull()
+        return doc?.takeIf { it.blocks.isNotEmpty() }?.let { TextBooks.toBook(book.id, name, it).copy(title = book.title) } ?: book
     }
 
     /** Livre DAISY (titre seul, chargé à l'ouverture) ou dossier audio ; null sinon. */
@@ -160,7 +179,9 @@ class SafLibrary(private val context: Context, private val treeUri: () -> String
         AudioFolderBook.build(dir.uri.toString(), dir.name ?: "Livre", shelf, files.filter { it.isFile }.mapNotNull { f -> f.name?.let { it to f.uri.toString() } })
 
     override suspend fun load(book: Book): Book = withContext(Dispatchers.IO) {
-        if (!book.id.startsWith("daisy:") || book.tracks.isNotEmpty()) return@withContext book
+        if (book.tracks.isNotEmpty()) return@withContext book
+        if (book.id.startsWith("textfile:")) return@withContext loadText(book)
+        if (!book.id.startsWith("daisy:")) return@withContext book
         val folder = findDir(book.id.removePrefix("daisy:")) ?: return@withContext book
         val files = folder.listFiles().associateBy { it.name?.lowercase() ?: "" }
         val nav = files["ncc.html"] ?: files["ncc.htm"] ?: files.values.firstOrNull { it.name?.endsWith(".ncx", true) == true } ?: return@withContext book

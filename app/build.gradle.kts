@@ -60,6 +60,8 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer-hls:1.4.1")
     // Dossier des livres choisi par un proche (accès par le sélecteur de fichiers Android)
     implementation("androidx.documentfile:documentfile:1.0.1")
+    // Livres texte : extraction du texte des PDF (les pages scannées passent par ML Kit)
+    implementation("com.tom-roush:pdfbox-android:2.0.27.0")
     // Mails Gmail en IMAP/SMTP (version Android de JavaMail)
     implementation("com.sun.mail:android-mail:1.6.7")
     implementation("com.sun.mail:android-activation:1.6.7")

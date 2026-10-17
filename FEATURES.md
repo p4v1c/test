@@ -8,7 +8,7 @@ Légende :
 
 ## État d'avancement
 
-- Phase 1 (socle) ✅ · Phase 2 (mot d'activation, déclencheurs) ✅ · Phase 3 (communication, organisation, sécurité) ✅ · Phase 4 (vision) ✅ · Phase 5 (orientation, météo, infos, recherche) ✅ · Phase 6 (lecteur façon Victor, mémos, agenda, mails) ✅ · Phase 7 (finitions) ✅
+- Phase 1 (socle) ✅ · Phase 2 (mot d'activation, déclencheurs) ✅ · Phase 3 (communication, organisation, sécurité) ✅ · Phase 4 (vision) ✅ · Phase 5 (orientation, météo, infos, recherche) ✅ · Phase 6 (lecteur façon Victor, mémos, agenda, mails) ✅ · Phase 7 (finitions) ✅ · Phase 8 (livres texte, podcasts hors ligne) ✅
 - Réalisé en phase 3 : appels (nom, surnom, favori, numéro, rappel du dernier), annonce des appels entrants et décrocher
   à la voix ou au casque, journal d'appels, SMS (lecture, dictée, relecture, envoi vérifié, réponse), notifications
   (lecture, annonce, réponse rapide), alerte arnaque, réveils, minuteurs nommés, rappels ponctuels et récurrents,
@@ -38,8 +38,11 @@ Légende :
   solution), sauvegarde automatique hebdomadaire + à la voix + export/import depuis les réglages (sans clés ni mots de
   passe, avec résumé et confirmation), « signale un problème » + journal local partageable, README réorganisé
   (premiers pas, dépannage, sauvegarde).
-- Reporté : livres en texte seul et PDF lus par la synthèse (étagère Texte du Victor), téléchargement des podcasts pour
-  écoute hors ligne, import des signets du Victor, Google Meet (P2).
+- Réalisé en phase 8 : livres texte et documents lus à voix haute (étagère `$VRText` du Victor et tout fichier du dossier :
+  TXT, Markdown, HTML, Word DOCX, EPUB sans DRM, PDF ; pages de PDF scannées lues par ML Kit), avec chapitres, pages,
+  signets, reprise, vitesse et pause pendant la conversation ; podcasts téléchargés en wifi (3 derniers épisodes par
+  abonnement, l'épisode commencé est gardé, nettoyage au désabonnement), écoute sans internet, téléchargement à la voix.
+- Reporté : import des signets du Victor, Google Meet (P2), alerte météo du matin et horloge parlante (P2).
 
 ## Décisions validées (17 octobre 2026)
 

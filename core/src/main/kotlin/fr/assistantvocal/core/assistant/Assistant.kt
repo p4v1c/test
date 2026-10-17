@@ -50,7 +50,7 @@ import kotlinx.serialization.json.put
 import java.time.ZonedDateTime
 
 /** Action à lancer par l'application après avoir prononcé la réponse. */
-enum class FollowUp { NONE, CALIBRATE_NAME, WAKE_WORD_CHANGED, SOS, VISION, OPEN_LOOKOUT, RECORD_MEMO }
+enum class FollowUp { NONE, CALIBRATE_NAME, WAKE_WORD_CHANGED, SOS, VISION, OPEN_LOOKOUT, RECORD_MEMO, DOWNLOAD_PODCASTS }
 
 /** Sons courts joués avec la réponse. */
 enum class Earcon { NONE, LISTENING, THINKING, SUCCESS, ERROR, CONFIRM, CANCELLED }
