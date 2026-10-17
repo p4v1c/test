@@ -43,8 +43,10 @@ class VoskJsonTest {
 private class FakeFactory(private val known: Set<String> = setOf("orphée")) : DecoderFactory {
     var freeDecodes = 0
     var freeSaysName = true
+    /** Le vérificateur « nom contre mots fréquents » reconnaît-il le nom ? */
+    var distractorSaysName = true
 
-    inner class Dec(private val grammar: Boolean) : SpeechDecoder {
+    inner class Dec(private val grammar: Boolean, private val distractors: Boolean = false) : SpeechDecoder {
         private var sawName = false
         private var sawSpeech = false
         override fun acceptWaveform(pcm: ShortArray, length: Int): Boolean {
@@ -52,7 +54,7 @@ private class FakeFactory(private val known: Set<String> = setOf("orphée")) : D
             return false
         }
         private fun text() = when {
-            grammar && sawName -> "orphée"
+            grammar && sawName && (!distractors || distractorSaysName) -> "orphée"
             grammar && sawSpeech -> "[unk]"
             !grammar && sawName && freeSaysName -> "orphée quelle heure"
             !grammar && sawSpeech -> "bonjour"
@@ -69,7 +71,7 @@ private class FakeFactory(private val known: Set<String> = setOf("orphée")) : D
         override fun close() { if (!grammar) freeDecodes++ }
     }
 
-    override fun grammar(phrases: List<String>): SpeechDecoder = Dec(true)
+    override fun grammar(phrases: List<String>): SpeechDecoder = Dec(true, distractors = phrases.size > 5)
     override fun free(): SpeechDecoder = Dec(false)
     override fun inVocabulary(word: String) = word in known
 }
@@ -82,7 +84,7 @@ class WakeWordDetectorTest {
     @Test fun detectsNameAfterVerification() {
         val f = FakeFactory()
         val d = WakeWordDetector(f, WakeConfig("Orphée"))
-        val hits = run(d, silence(20) + List(5) { frame(3001) } + silence(10))
+        val hits = run(d, silence(20) + List(5) { frame(3001) } + silence(25))
         assertEquals(1, hits.size)
         assertTrue(hits.single().heard.contains("orphée"))
     }
@@ -92,21 +94,20 @@ class WakeWordDetectorTest {
         val d = WakeWordDetector(f, WakeConfig("Orphée"))
         assertTrue(run(d, silence(50)).isEmpty())
         assertEquals("aucune vérification pendant le silence", 0, f.freeDecodes)
-        assertTrue(run(d, List(10) { frame(3000) } + silence(10)).isEmpty())
+        assertTrue(run(d, List(10) { frame(3000) } + silence(25)).isEmpty())
     }
 
-    @Test fun verificationRejectsWhenFreeTranscriptLacksName() {
-        val f = FakeFactory().apply { freeSaysName = false }
+    @Test fun verificationRejectsWhenNameLosesAgainstCommonWords() {
+        val f = FakeFactory(known = setOf("orphée", "de", "la", "le", "et", "les", "est")).apply { freeSaysName = false; distractorSaysName = false }
         val d = WakeWordDetector(f, WakeConfig("Orphée"))
-        assertTrue(run(d, silence(20) + List(5) { frame(3001) } + silence(10)).isEmpty())
-        assertTrue(f.freeDecodes > 0)
+        assertTrue(run(d, silence(20) + List(5) { frame(3001) } + silence(25)).isEmpty())
     }
 
     @Test fun learnedAliasPassesVerification() {
-        val f = FakeFactory(known = setOf("orphée", "bonjour")).apply { freeSaysName = false }
+        val f = FakeFactory(known = setOf("orphée", "bonjour")).apply { freeSaysName = false; distractorSaysName = false }
         // La calibration a appris que le moteur libre entend « bonjour » pour ce nom (cas artificiel).
         val d = WakeWordDetector(f, WakeConfig("Orphée", aliases = listOf("bonjour")))
-        assertNotNull(run(d, silence(20) + List(5) { frame(3001) } + silence(10)).firstOrNull())
+        assertNotNull(run(d, silence(20) + List(5) { frame(3001) } + silence(25)).firstOrNull())
     }
 
     @Test fun unknownNameIsNotUsableUntilCalibrated() {

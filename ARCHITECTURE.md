@@ -3,7 +3,9 @@
 ## 0. État d'avancement
 
 - Phase 0 (recherche) : faite.
-- Phase 1 (socle) : faite. Modules `core`, `llm`, `app` ; 60 tests automatiques.
+- Phase 1 (socle) : faite. Modules `core`, `llm`, `app`.
+- Phase 2 (mot d'activation, déclencheurs) : faite. 80 tests automatiques + test d'intégration Vosk réel
+  sur voix de synthèse (mesures dans `tools/wake/README.md`).
 - Téléphone cible : Google Pixel (voir FEATURES.md, « Décisions validées »).
 
 ## 1. Vue d'ensemble
@@ -50,7 +52,7 @@ Séparer `core` et `llm` d'Android permet de tester 80 % de la logique sans ému
 
 **Problème** : depuis Android 14, une app ne peut pas créer un service qui utilise le micro depuis l'arrière-plan, ni depuis le démarrage du téléphone.
 
-**Solution retenue : l'app devient l'« assistant numérique par défaut »** (elle déclare un `VoiceInteractionService` et demande `RoleManager.ROLE_ASSISTANT`). D'après la documentation Android, un service démarré par l'app qui fournit le `VoiceInteractionService` est **exempté** de la restriction micro. Avantages en plus :
+**Solution retenue (implémentée) : l'app devient l'« assistant numérique par défaut »** (elle déclare un `VoiceInteractionService` et demande `RoleManager.ROLE_ASSISTANT`). D'après la documentation Android, un service démarré par l'app qui fournit le `VoiceInteractionService` est **exempté** de la restriction micro. Avantages en plus :
 - appui long sur le bouton d'accueil / geste assistant → déclenche notre app ;
 - fonctionne sur l'écran de verrouillage (`VoiceInteractionSession` avec `showOnLockscreen`) ;
 - accès au journal d'appels et aux SMS associé au rôle.
@@ -60,22 +62,30 @@ Compléments :
 - demande d'exclusion de l'optimisation de batterie (`REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`), qui lève aussi la restriction de démarrage en arrière-plan ;
 - **root (bonus)** : installation en priv-app ou `appops`/`deviceidle whitelist` pour une protection maximale.
 
+Piège évité : l'assistant par défaut doit déclarer un service de reconnaissance vocale, qu'Android peut alors
+utiliser comme reconnaissance par défaut du téléphone. Le nôtre (`ProxyRecognitionService`) relaie donc vers
+Google, et l'app choisit explicitement le service Google pour elle-même (`RecognizerChooser`).
+
 **Plan B** si le rôle assistant pose problème sur ce téléphone : notification persistante « Touchez pour réactiver l'écoute » + annonce vocale au démarrage demandant de toucher l'écran une fois (moins bien, mais fonctionnel).
 
 ## 4. Reconnaissance vocale
 
-### 4.1 Mot d'activation
+### 4.1 Mot d'activation (implémenté et mesuré en phase 2)
 
-| Option | Avantages | Inconvénients | Choix |
-|---|---|---|---|
-| **Vosk small-fr en grammaire restreinte** `["<nom>", "[unk]"]` | Français natif, nom arbitraire sans entraînement, changeable à la voix, 41 Mo, Apache 2.0 | Plus de calcul qu'un vrai KWS → filtré par VAD | **Par défaut** |
-| sherpa-onnx KWS | Très léger, nom arbitraire | Pas de modèle français (jetons anglais/chinois) | Expérimental, comparé pendant les tests |
-| openWakeWord (modèle entraîné) | Très précis et léger | Entraînement d'1 h par nom | Option avancée |
-| Porcupine | Excellent | Palier gratuit fermé | Seulement si clé fournie |
+Choix : **Vosk small-fr**, sans entraînement, nom changeable à la voix. Détails et mesures : `tools/wake/README.md`.
 
-Pipeline : micro 16 kHz → **VAD Silero** (seule la parole réveille Vosk) → Vosk grammaire → **double contrôle** : score de confiance du mot ≥ seuil **et** durée plausible. Le seuil est **calibré automatiquement** à la configuration : on fait dire le nom 3 fois, puis 30 secondes de conversation/télé sans le nom pour mesurer les faux déclenchements.
+1. Niveau sonore : Vosk n'est alimenté que quand quelqu'un parle (bruit de fond = minimum des 4 dernières secondes).
+   Un VAD Silero n'a pas été nécessaire : le coût mesuré est de 3–4 % d'un cœur pendant la parole, 0 en silence.
+2. Étape 1 : grammaire `[nom, "[unk]"]`, décodage continu, Vosk découpe lui-même les phrases.
+3. Étape 2 : le passage exact du nom (horodatage Vosk) est revérifié face à 1000 mots fréquents.
+4. Calibration : 3 enregistrements, seuil ajusté, test de 15 s de faux déclenchements → mode strict si besoin.
 
-Conseils de nom affichés et lus : 2-3 syllabes, sonorités rares (« Jarvis », « Orphée », « Balthazar »), pas un prénom de la famille, pas un mot courant. L'app **teste la distance phonétique** du nom avec un lexique de mots français fréquents et prévient si elle est trop faible.
+Pièges rencontrés et corrigés : grammaire JSON avec accents échappés (`\u00e9`) ignorée silencieusement par Vosk ;
+horodatages Vosk cumulés depuis la création du décodeur (même après `reset`) ; double fermeture d'un décodeur
+= plantage natif ; rebond (un nom déclenchait 8 fois).
+
+Écartés après mesure : sherpa-onnx KWS (pas de modèle français), Porcupine (palier gratuit fermé),
+openWakeWord (entraînement par nom), vérification par transcription libre (rate le nom trop souvent).
 
 ### 4.2 Commande après le mot d'activation
 

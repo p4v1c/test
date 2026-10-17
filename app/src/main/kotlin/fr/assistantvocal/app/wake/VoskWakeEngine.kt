@@ -113,7 +113,7 @@ class VoskWakeEngine(private val context: Context) : WakeEngine {
     override fun start(config: WakeConfig, onDetected: (WakeDetection) -> Unit): Boolean {
         val m = model ?: return false
         stop()
-        val detector = WakeWordDetector(VoskDecoderFactory(m), config)
+        val detector = WakeWordDetector(VoskDecoderFactory(m), config).apply { log = { Log.d(TAG, it) } }
         if (!detector.isUsable) { detector.close(); Log.w(TAG, "Nom inconnu du modèle : calibration nécessaire"); return false }
         val rec = openMic() ?: run { detector.close(); return false }
         running = true

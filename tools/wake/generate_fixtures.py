@@ -3,11 +3,11 @@
 Usage :
   python generate_fixtures.py <dossier_voix_piper> <dossier_sortie> <nom> [<nom> ...]
 
-Produit pour chaque nom : name_<nom>_<voix>_<vitesse>_<i>.wav (le nom seul ou en début de phrase),
+Produit pour chaque nom (sans accents dans les noms de fichiers) : name_<nom>_<voix>_<vitesse>_<i>.wav (le nom seul ou en début de phrase),
 et une fois : neg_<voix>_<i>.wav (phrases du quotidien sans le nom), plus stream_<nom>.wav : 2 minutes
 de conversation dans lesquelles le nom est dit 6 fois (fichier stream_<nom>.txt = positions).
 """
-import io, os, sys, wave
+import io, os, sys, unicodedata, wave
 import numpy as np
 from piper import PiperVoice, SynthesisConfig
 
@@ -49,6 +49,7 @@ def main():
             save(f"{out}/neg_{v}_{i:02d}.wav", synth(voice, t))
     for name in names:
         disp = name.capitalize()
+        name = "".join(c for c in unicodedata.normalize("NFD", name) if unicodedata.category(c) != "Mn")  # fichiers en ASCII
         for v, voice in voices.items():
             for ls in (0.85, 1.0, 1.25):
                 for i, t in enumerate([f"{disp}.", f"{disp}, quelle heure est-il ?"]):

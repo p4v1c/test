@@ -7,8 +7,11 @@ Usage visé : personnel et non commercial. Toutes les licences ci-dessous le per
 | Projet | Licence | Maintenance | Poids | Hors ligne | Français | Ce qu'on réutilise |
 |---|---|---|---|---|---|---|
 | **[Vosk](https://alphacephei.com/vosk/) + `vosk-model-small-fr-0.22`** | Apache 2.0 (code et modèle) | Active | 41 Mo | ✅ | Bon (WER ~20-24 %) | **Mot d'activation** (grammaire restreinte `[nom, "[unk]"]`), reconnaissance hors ligne des commandes et du « oui/non » de confirmation |
+| **vosk-android 0.3.47 + JNA** | Apache 2.0 / Apache 2.0-LGPL | Active | ~10 Mo/ABI | ✅ | — | Moteur du mot d'activation dans l'app (arm64 + x86_64 seulement) |
+| **Liste de mots fréquents [wordfreq](https://github.com/rspeer/wordfreq)** | Données CC BY-SA 4.0 | Figée | 8 Ko | ✅ | Oui | 1000 mots « concurrents » pour vérifier le nom |
+| **[Piper](https://github.com/rhasspy/piper) + voix siwis/tom/upmc** | MIT / voix variables | Active | — | ✅ | Oui | **Tests uniquement** : génération d'enregistrements pour mesurer le mot d'activation |
 | **[sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx)** | Apache 2.0 | Très active (k2-fsa) | lib ~10 Mo + modèles | ✅ | ASR streaming fr (121 Mo int8) ; KWS : pas de modèle fr | VAD Silero (filtre avant le mot d'activation), **voix Piper françaises** (TTS optionnel), ASR fr streaming en option, KWS expérimental |
-| **[Silero VAD](https://github.com/snakers4/silero-vad)** (via sherpa-onnx) | MIT | Active | ~2 Mo | ✅ | Indépendant de la langue | Ne réveiller Vosk que quand quelqu'un parle → batterie et faux déclenchements |
+| **[Silero VAD](https://github.com/snakers4/silero-vad)** (via sherpa-onnx) | MIT | Active | ~2 Mo | ✅ | Indépendant de la langue | **Pas utilisé finalement** : un détecteur de niveau simple suffit (mesuré) |
 | **Voix Piper fr_FR** (siwis, tom, upmc…) ([Hugging Face](https://huggingface.co/rhasspy/piper-voices/tree/main/fr/fr_FR)) | Variable selon la voix (à vérifier voix par voix, certaines CC BY-NC) | Stable | 20-60 Mo/voix | ✅ | Oui | Voix hors ligne optionnelle |
 | **[Google ML Kit](https://developers.google.com/ml-kit)** (Text Recognition v2 latin, Barcode, Image Labeling, Object Detection) | Gratuit, conditions Google (pas open source) | Active | 5-20 Mo selon module | ✅ | OCR latin OK | OCR, codes-barres, étiquettes d'objets, guidage de cadrage |
 | **CameraX** (AndroidX) | Apache 2.0 | Active | — | ✅ | — | Caméra, lampe torche, analyse d'image |
