@@ -64,6 +64,23 @@ class AssistantScenarioTest {
         assertTrue(llm.requests.isEmpty())
     }
 
+    @Test fun `un oui sans question posee ne part pas a l'IA`() = runTest {
+        val a = assistant()
+        a.handle("Quelle heure est-il ?")
+        assertEquals("Je ne vous avais rien demandé. Que voulez-vous faire ?", a.handle("oui").speech)
+        assertEquals("Je ne vous avais rien demandé. Que voulez-vous faire ?", a.handle("non").speech)
+        assertTrue(llm.requests.isEmpty())
+    }
+
+    @Test fun `un oui qui repond a une question de l'IA lui est bien transmis`() = runTest {
+        llm.enqueue(ScriptedLlm.text("Il faut de la farine et des œufs. Voulez-vous les quantités ?"))
+        llm.enqueue(ScriptedLlm.text("250 grammes de farine et 4 œufs."))
+        val a = assistant()
+        a.handle("comment faire une pâte à crêpes ?")
+        assertEquals("250 grammes de farine et 4 œufs.", a.handle("oui").speech)
+        assertEquals(2, llm.requests.size)
+    }
+
     @Test fun `il demande la batterie en charge`() = runTest {
         device.batteryInfo = BatteryInfo(42, true)
         assertEquals("La batterie est à 42 pour cent, en charge.", assistant().handle("batterie").speech)

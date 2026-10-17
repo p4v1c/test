@@ -127,7 +127,18 @@ class Assistant(
 
     private fun isRepeat(reply: AssistantReply) = reply.speech == lastSpeech
 
+    /** Vrai si la dernière réponse venait de l'IA et finissait par une question : un « oui » seul lui revient. */
+    private var llmAskedQuestion = false
+    private var answeredByLlm = false
+
     private suspend fun process(text: String, image: ByteArray?, quality: Quality): AssistantReply {
+        answeredByLlm = false
+        val reply = processInner(text, image, quality)
+        llmAskedQuestion = answeredByLlm && reply.speech.trimEnd().endsWith("?")
+        return reply
+    }
+
+    private suspend fun processInner(text: String, image: ByteArray?, quality: Quality): AssistantReply {
         settings.lastInteractionMs = nowMillis()
         // 0. Une question ouverte est en attente (« Que voulez-vous lui dire ? ») : la phrase est la réponse.
         dialog.takePending()?.let { q ->
@@ -158,6 +169,12 @@ class Assistant(
             match = RouteMatch(fr.assistantvocal.core.router.PlaybackSpeed(rate.faster), match!!.confidence)
         }
         if (match != null && match.confidence >= 0.8) return remember(text, handleIntent(match.intent))
+
+        // 2 bis. « Oui » ou « non » tout seul, sans question posée : ne pas laisser l'IA l'interpréter (elle inventait une action).
+        if (image == null && !llmAskedQuestion && text.split(' ').size <= 3 &&
+            fr.assistantvocal.core.dialog.YesNoParser.parse(text) != fr.assistantvocal.core.dialog.YesNo.UNKNOWN) {
+            return AssistantReply("Je ne vous avais rien demandé. Que voulez-vous faire ?", Earcon.CONFIRM, listenAgain = true)
+        }
 
         // 3. IA si possible.
         val llmBlocker = llmBlocker()
@@ -326,6 +343,7 @@ class Assistant(
     // ---------------------------------------------------------------- IA
 
     private suspend fun askLlm(text: String, image: ByteArray?, quality: Quality, hint: RouteMatch?): AssistantReply {
+        answeredByLlm = true
         val llm = llm!!
         val userParts = buildList<LlmPart> {
             if (image != null) add(LlmPart.Image(image))
