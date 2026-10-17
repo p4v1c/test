@@ -21,7 +21,9 @@ class AndroidSpeechInput(private val context: Context) : SpeechInput {
     private var recognizer: SpeechRecognizer? = null
 
     override suspend fun listen(preferOffline: Boolean): Heard {
-        if (!SpeechRecognizer.isRecognitionAvailable(context) && RecognizerChooser.find(context) == null) {
+        // isRecognitionAvailable() compte aussi notre propre relais (ProxyRecognitionService) : il ne suffit pas.
+        val onDevice = Build.VERSION.SDK_INT >= 31 && SpeechRecognizer.isOnDeviceRecognitionAvailable(context)
+        if (RecognizerChooser.find(context) == null && !onDevice) {
             return Heard.Failed("La reconnaissance vocale n'est pas disponible sur ce téléphone. Il faut installer l'application Google.")
         }
         val first = withTimeoutOrNull(25_000) { listenOnce(preferOffline) } ?: Heard.Nothing.also { cancel() }
@@ -36,11 +38,11 @@ class AndroidSpeechInput(private val context: Context) : SpeechInput {
 
     private suspend fun listenOnce(offline: Boolean): Heard = suspendCancellableCoroutine { cont ->
         cancel()
-        val onDevice = offline && Build.VERSION.SDK_INT >= 31 && SpeechRecognizer.isOnDeviceRecognitionAvailable(context)
+        val target = RecognizerChooser.find(context)
+        val onDevice = (offline || target == null) && Build.VERSION.SDK_INT >= 31 && SpeechRecognizer.isOnDeviceRecognitionAvailable(context)
         val rec = when {
             onDevice -> SpeechRecognizer.createOnDeviceSpeechRecognizer(context)
-            else -> RecognizerChooser.find(context)?.let { SpeechRecognizer.createSpeechRecognizer(context, it) }
-                ?: SpeechRecognizer.createSpeechRecognizer(context)
+            else -> target?.let { SpeechRecognizer.createSpeechRecognizer(context, it) } ?: SpeechRecognizer.createSpeechRecognizer(context)
         }
         recognizer = rec
         rec.setRecognitionListener(object : RecognitionListener {

@@ -9,3 +9,4 @@ captures/
 dist/
 app/src/main/assets/model-fr/
 app/src/main/assets/medicaments.tsv
+tools/emu/logs/
