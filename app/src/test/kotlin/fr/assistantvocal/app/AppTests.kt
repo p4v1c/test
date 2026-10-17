@@ -244,6 +244,17 @@ class Phase3ServiceTest {
         assertEquals("0611223344", phone.calls.single())
     }
 
+    @Test fun `apres un arret force, les rappels sont reprogrammes au redemarrage du service`() {
+        val out = FakeOutput(); val phone = AppFakePhone()
+        testGraph(app, FakeInput(Heard.Text("rappelle-moi de prendre mon Doliprane tous les jours à 8 heures")), out, phone = phone)
+        start(AssistantService.ACTION_LISTEN)
+        awaitMain { phone.scheduled.isNotEmpty() }
+        val id = phone.scheduled.keys.single()
+        phone.scheduled.clear() // « Forcer l'arrêt » : Android efface toutes les alarmes de l'app
+        Robolectric.buildService(AssistantService::class.java).create()
+        assertTrue(phone.scheduled.containsKey(id))
+    }
+
     @Test fun `SMS recu annonce`() {
         val out = FakeOutput()
         testGraph(app, output = out)

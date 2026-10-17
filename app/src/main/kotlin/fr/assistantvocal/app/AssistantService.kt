@@ -73,6 +73,8 @@ class AssistantService : Service() {
         sounds = graph.soundsFactory(this)
         wake = graph.wakeEngineFactory(this)
         startInForeground()
+        // « Forcer l'arrêt » (ou une app de ménage) efface les alarmes sans redémarrage : on les remet à chaque démarrage.
+        runCatching { graph.reminders.rescheduleAll(); DailyJobs.scheduleWellbeing(graph) }.onFailure { Log.w(TAG, "Rappels non reprogrammés", it) }
         headset = runCatching { HeadsetButtons(this) { onTrigger() } }.getOrNull()
         headset?.enabled = graph.settings.headsetButtonEnabled
         scope.launch {
