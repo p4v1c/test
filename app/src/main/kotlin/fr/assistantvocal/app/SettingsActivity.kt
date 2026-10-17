@@ -60,6 +60,8 @@ class SettingsActivity : Activity() {
     lateinit var aliasesField: EditText; private set
     private lateinit var wellbeingField: EditText
     private lateinit var remoteField: EditText
+    lateinit var newsFeedField: EditText; private set
+    lateinit var tavilyKeyField: EditText; private set
     private lateinit var smsRead: RadioButton
     private lateinit var smsAnnounce: RadioButton
     private lateinit var notifBox: CheckBox
@@ -108,6 +110,8 @@ class SettingsActivity : Activity() {
         geminiHighModelField = field(root, R.string.label_gemini_high_model, s.geminiHighModel)
         claudeKeyField = secretField(root, R.string.label_claude_key, AppGraph.SECRET_CLAUDE)
         claudeModelField = field(root, R.string.label_claude_model, s.claudeModel)
+        newsFeedField = field(root, R.string.label_news_feed, s.newsLocalFeed, InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI)
+        tavilyKeyField = secretField(root, R.string.label_tavily_key, AppGraph.SECRET_TAVILY)
 
         root.addView(label(R.string.label_order))
         val group = RadioGroup(this)
@@ -211,7 +215,10 @@ class SettingsActivity : Activity() {
         if (advice.acceptable) s.name = advice.name
         geminiKeyField.text.toString().trim().takeIf { it.isNotEmpty() }?.let { graph.secrets.put(AppGraph.SECRET_GEMINI, it) }
         claudeKeyField.text.toString().trim().takeIf { it.isNotEmpty() }?.let { graph.secrets.put(AppGraph.SECRET_CLAUDE, it) }
-        geminiKeyField.setText(""); claudeKeyField.setText("")
+        tavilyKeyField.text.toString().trim().takeIf { it.isNotEmpty() }?.let { graph.secrets.put(AppGraph.SECRET_TAVILY, it) }
+        geminiKeyField.setText(""); claudeKeyField.setText(""); tavilyKeyField.setText("")
+        if (graph.secrets.has(AppGraph.SECRET_TAVILY)) tavilyKeyField.setHint(R.string.key_saved_hint)
+        s.newsLocalFeed = newsFeedField.text.toString()
         if (graph.secrets.has(AppGraph.SECRET_GEMINI)) geminiKeyField.setHint(R.string.key_saved_hint)
         if (graph.secrets.has(AppGraph.SECRET_CLAUDE)) claudeKeyField.setHint(R.string.key_saved_hint)
         s.geminiModel = geminiModelField.text.toString()

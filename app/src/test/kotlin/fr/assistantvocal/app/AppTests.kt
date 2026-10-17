@@ -369,3 +369,56 @@ class StorageTest {
         assertTrue(b.charging)
     }
 }
+
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34])
+class Phase5ServiceTest {
+    private lateinit var app: App
+
+    @Before fun setUp() {
+        app = ApplicationProvider.getApplicationContext()
+        shadowOf(app).grantPermissions(Manifest.permission.RECORD_AUDIO, Manifest.permission.ACCESS_FINE_LOCATION)
+    }
+
+    private fun listen() = Robolectric.buildService(AssistantService::class.java, AssistantService.intent(app, AssistantService.ACTION_LISTEN)).create().startCommand(0, 1)
+
+    @Test fun `il demande la meteo, il entend la temperature`() {
+        val out = FakeOutput()
+        testGraph(app, FakeInput(Heard.Text("quel temps fait-il ?")), out)
+        listen()
+        awaitMain { out.spoken.isNotEmpty() }
+        assertEquals("En ce moment : 21 degrés, ciel dégagé. Aujourd'hui : ciel dégagé, de 10 degrés à 23 degrés.", out.spoken.last())
+    }
+
+    @Test fun `il demande ou il est, il entend l'adresse`() {
+        val out = FakeOutput()
+        testGraph(app, FakeInput(Heard.Text("où suis-je ?")), out)
+        listen()
+        awaitMain { out.spoken.isNotEmpty() }
+        assertEquals("Vous êtes près du 4 place de la Mairie, à Saint-Marcel.", out.spoken.last())
+    }
+
+    @Test fun `boulangerie la plus proche, oui, Google Maps s'ouvre`() {
+        val out = FakeOutput()
+        val info = AppFakeInfo()
+        testGraph(app, FakeInput(Heard.Text("où est la boulangerie la plus proche ?"), Heard.Text("oui")), out, info = info)
+        listen()
+        awaitMain { info.walks.isNotEmpty() && out.spoken.size >= 2 }
+        assertEquals("La boulangerie la plus proche : Boulangerie Martin, à 220 mètres, au nord, rue Haute. Voulez-vous que Google Maps vous y guide à pied ?", out.spoken[0])
+        assertEquals(listOf("Boulangerie Martin"), info.walks)
+    }
+
+    @Test fun `la cle Tavily est enregistree chiffree et utilisee pour la recherche`() {
+        val info = AppFakeInfo()
+        val graph = testGraph(app, info = info)
+        val activity = Robolectric.buildActivity(SettingsActivity::class.java).setup().get()
+        activity.tavilyKeyField.setText("tvly-abc")
+        activity.newsFeedField.setText("https://journal.example/rss")
+        activity.save()
+        assertEquals("tvly-abc", graph.secrets.get(AppGraph.SECRET_TAVILY))
+        assertEquals("https://journal.example/rss", graph.settings.newsLocalFeed)
+        assertEquals("", activity.tavilyKeyField.text.toString())
+        kotlinx.coroutines.runBlocking { graph.assistant.handle("cherche sur internet la fête du village") }
+        assertEquals("tvly-abc", info.tavilyKey)
+    }
+}

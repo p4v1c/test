@@ -70,6 +70,18 @@ class HelpCatalog(private val topics: List<HelpTopic>) {
                 "c'est quel billet ?", "c'est quelle couleur ?", "est-ce que ça va ensemble ?", "c'est quoi ce produit ?",
                 "c'est quel médicament ?", "détecteur de lumière", "où sont mes clés ?"),
         )
+        val ORIENTATION = HelpTopic(
+            "l'orientation", listOf("orientation", "ou suis je", "position", "lieux", "guidage", "pharmacie", "adresse"),
+            listOf("où suis-je ?", "où est la pharmacie la plus proche ?", "enregistre ici comme maison", "à quelle distance est la maison ?",
+                "emmène-moi à la boulangerie", "envoie ma position à mon fils", "quels sont mes lieux ?"),
+        )
+        val NEWS = HelpTopic(
+            "la météo, les infos et les recherches", listOf("meteo", "infos", "actualites", "nouvelles", "recherche", "internet", "calcul"),
+            listOf("quel temps fait-il ?", "va-t-il pleuvoir demain ?", "la météo de la semaine", "météo à Lyon", "les infos",
+                "les infos sport", "lis le deuxième", "lis l'article", "la suite", "cherche sur internet les horaires de la déchetterie",
+                "combien font 12 fois 7 ?", "100 euros en francs"),
+        )
+        val PHASE5 = HelpCatalog(listOf(CALLS, MESSAGES, REMINDERS, VISION, ORIENTATION, NEWS, INFOS, QUESTIONS, SAFETY, TRIGGERS, SETTINGS))
         val PHASE1 = HelpCatalog(listOf(INFOS, QUESTIONS, SETTINGS))
         val PHASE3 = HelpCatalog(listOf(CALLS, MESSAGES, REMINDERS, INFOS, QUESTIONS, SAFETY, TRIGGERS, SETTINGS))
         val PHASE4 = HelpCatalog(listOf(CALLS, MESSAGES, REMINDERS, VISION, INFOS, QUESTIONS, SAFETY, TRIGGERS, SETTINGS))

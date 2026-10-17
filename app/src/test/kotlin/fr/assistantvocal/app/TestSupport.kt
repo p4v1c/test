@@ -120,6 +120,42 @@ class AppFakeVision(var ocrText: List<String> = emptyList(), var rgb: Triple<Int
     )
 }
 
+/** Réseau simulé pour la phase 5. */
+class AppFakeInfo {
+    val walks = mutableListOf<String>()
+    var tavilyKey: String? = null
+    fun backend(key: () -> String?) = InfoBackend(
+        geocoder = object : fr.assistantvocal.core.info.Geocoder {
+            override suspend fun reverse(lat: Double, lon: Double) =
+                fr.assistantvocal.core.info.Address("4 Place de la Mairie", "Saint-Marcel", isHouseNumber = true, distanceM = 5.0)
+            override suspend fun search(query: String, near: fr.assistantvocal.core.phone.GeoPoint?, municipality: Boolean) =
+                listOf(fr.assistantvocal.core.info.GeoResult("Lyon", 45.75, 4.83, "Lyon"))
+        },
+        places = object : fr.assistantvocal.core.info.PlacesSource {
+            override suspend fun nearby(lat: Double, lon: Double, category: fr.assistantvocal.core.info.PlaceCategory, radiusM: Int) =
+                listOf(fr.assistantvocal.core.info.Place("Boulangerie Martin", category, lat + 0.002, lon, "rue Haute"))
+        },
+        weather = object : fr.assistantvocal.core.info.WeatherSource {
+            override suspend fun forecast(lat: Double, lon: Double) = fr.assistantvocal.core.info.Forecast(
+                fr.assistantvocal.core.info.CurrentWeather(21.0, 21.0, 0, 5.0, 0.0),
+                listOf(fr.assistantvocal.core.info.DailyWeather(java.time.LocalDate.of(2026, 10, 17), 0, 10.0, 23.0, 0, 10.0)),
+            )
+        },
+        news = object : fr.assistantvocal.core.info.NewsSource {
+            override suspend fun headlines(feedUrl: String, max: Int) = listOf(fr.assistantvocal.core.info.NewsItem("Premier titre", "Résumé du premier titre de la journée.", null))
+            override suspend fun article(url: String): String? = null
+        },
+        search = object : fr.assistantvocal.core.info.WebSearch {
+            override suspend fun search(query: String, max: Int) =
+                listOf(fr.assistantvocal.core.info.SearchResult("Résultat", "Texte trouvé. Deuxième phrase.", null)).also { tavilyKey = key() }
+        },
+        heading = null,
+        navigator = object : fr.assistantvocal.core.info.Navigator {
+            override fun walkTo(lat: Double, lon: Double, label: String): Boolean { walks += label; return true }
+        },
+    )
+}
+
 fun testGraph(
     app: App,
     input: SpeechInput = FakeInput(),
@@ -131,9 +167,10 @@ fun testGraph(
     wake: WakeEngine = FakeWake(),
     phone: AppFakePhone = AppFakePhone(),
     vision: AppFakeVision = AppFakeVision(),
+    info: AppFakeInfo = AppFakeInfo(),
 ): AppGraph = AppGraph(
     app, InMemoryStore(), secrets, device, { input }, { output }, { sounds }, { wake },
-    phoneFactory = { _, _ -> phone.backend() }, visionFactory = { vision.backend() }, sosCountdownMs = 300, geminiBaseUrl = geminiBaseUrl,
+    phoneFactory = { _, _ -> phone.backend() }, visionFactory = { vision.backend() }, infoFactory = { _, key -> info.backend(key) }, sosCountdownMs = 300, geminiBaseUrl = geminiBaseUrl,
 ).also { it.settings.name = "Orphée"; app.graph = it }
 
 /** Fait tourner la boucle principale jusqu'à ce que [done] soit vrai (les appels réseau se font sur un autre fil). */

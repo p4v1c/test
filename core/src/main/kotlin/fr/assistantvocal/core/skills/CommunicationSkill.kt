@@ -149,6 +149,15 @@ class CommunicationSkill(
         askBodyThenConfirm(c.name, number.number, body)
     }
 
+    /** Envoie un texte préparé par l'app (ex. position) : [spoken] décrit le contenu dans la confirmation. */
+    fun sendPrepared(target: String, spoken: String, body: String): AssistantReply = resolve(target, "écrire à") { c, n ->
+        val number = if (n.isMobile) n else c.numbers.firstOrNull { it.isMobile } ?: n
+        dialog.confirm("Je vais envoyer $spoken à ${c.name}, avec un lien de carte. J'envoie ? Répondez oui ou non.", "D'accord, je n'envoie rien.") {
+            if (smsSender.send(number.number, body)) "Message envoyé à ${c.name}."
+            else "Le message n'est pas parti. Vérifiez le réseau, puis redemandez-moi."
+        }
+    }
+
     fun reply(body: String?): AssistantReply {
         if (phone.state() == CallState.RINGING) return answer()
         val conv = lastConversation ?: return AssistantReply(

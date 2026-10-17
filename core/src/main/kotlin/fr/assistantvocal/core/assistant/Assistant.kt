@@ -91,7 +91,7 @@ class Assistant(
     private val device: DeviceStatus,
     private val llm: LlmProvider?,
     private val tools: ToolRegistry,
-    private val help: HelpCatalog = HelpCatalog.PHASE4,
+    private val help: HelpCatalog = HelpCatalog.PHASE5,
     private val router: LocalRouter = LocalRouter(),
     private val nowMillis: () -> Long = { System.currentTimeMillis() },
     /** Appels, SMS, rappels… (absents dans certains tests). */
@@ -267,6 +267,8 @@ class Assistant(
                 else -> AssistantReply("Je n'ai pas de document récent en mémoire. Dites : lis ce texte.", Earcon.ERROR)
             }
         }
+        is fr.assistantvocal.core.router.InfoIntent -> skills?.info?.handle(intent)
+            ?: AssistantReply("Cette fonction n'est pas encore disponible.", Earcon.ERROR)
         is CallContact, is CallNumber, is CallFavorite, CallBack, AnswerCall, HangUp, is Speaker, MissedCalls,
         is ReadMessages, is SendSms, is Reply, ReadNotifications, is SetAlias, is ContactNumber,
         is SetAlarm, is SetTimer, TimerStatus, is CancelTimer, is CreateReminder, ListReminders, is DeleteReminder,

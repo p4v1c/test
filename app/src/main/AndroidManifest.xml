@@ -35,6 +35,11 @@
 
     <!-- Visibilité des services de reconnaissance et de synthèse vocale (Android 11+). -->
     <queries>
+        <package android:name="com.google.android.apps.maps" />
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="geo" />
+        </intent>
         <intent>
             <action android:name="android.speech.RecognitionService" />
         </intent>

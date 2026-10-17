@@ -33,6 +33,7 @@ class Skills(
     val comms: CommunicationSkill,
     val reminders: ReminderSkill,
     val vision: fr.assistantvocal.core.vision.VisionSkill? = null,
+    val info: InfoSkill? = null,
 ) {
     fun handle(intent: Intent): AssistantReply? = when (intent) {
         is CallContact -> comms.call(intent.target)

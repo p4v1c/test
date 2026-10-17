@@ -125,6 +125,11 @@ class AssistantSettings(private val store: KeyValueStore) {
         get() = store.getBoolean(K_SPEAKER, true)
         set(value) = store.putBoolean(K_SPEAKER, value)
 
+    /** Flux RSS du journal régional (« les infos régionales »), vide = aucun. */
+    var newsLocalFeed: String
+        get() = store.getString(K_NEWS_LOCAL) ?: ""
+        set(value) = store.putString(K_NEWS_LOCAL, value.trim())
+
     /** Ordre des fournisseurs IA, ex. "gemini,claude". */
     var providerOrder: List<String>
         get() = (store.getString(K_PROVIDERS) ?: "gemini,claude").split(',').map { it.trim() }.filter { it.isNotEmpty() }
@@ -178,5 +183,6 @@ class AssistantSettings(private val store: KeyValueStore) {
         private const val K_NOTIF_ANNOUNCE = "notifications.announce"
         private const val K_SPEAKER = "calls.speakerOnAnswer"
         private const val K_VOLUME_KEY = "trigger.volumeKey"
+        private const val K_NEWS_LOCAL = "news.localFeed"
     }
 }
