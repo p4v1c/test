@@ -122,3 +122,25 @@ Toutes les sources sont citées en lien dans le texte. Les principales :
 - Données : [Open-Meteo](https://open-meteo.com/en/terms), [IGN / BAN](https://www.data.gouv.fr/fr/posts/lapi-adresse-de-la-base-adresse-nationale-est-transferee-a-lign-10/), [PRIM / Transilien](https://www.data.gouv.fr/datasets/api-temps-reel-transilien/informations)
 - Picovoice : [fin du palier gratuit](https://community.home-assistant.io/t/porcupine-free-tier-shutdown-alternatives-for-home-assistant-voice-users/1012382)
 - Gmail OAuth : [Nango](https://www.nango.dev/docs/integrations/all/google-mail)
+
+
+## Complément phase 6 : le Victor Reader Stream (17 octobre 2026)
+
+Le père utilise un **Victor Reader Stream** (HumanWare). Le lecteur de l'app en reprend le fonctionnement pour ne pas changer ses habitudes :
+
+- **Étagères et dossiers de la carte SD** : `$VRDTB` (livres DAISY/NISO, un sous-dossier par livre), `$VROtherBooks` (livres audio),
+  `$VRMusic`, `$VRPodcasts`, `$VRText`, `$VRNotes` (notes vocales), `$VRAudible`, `$VRInternetRadio`
+  ([guide d'utilisation Stream 4.8, HumanWare](https://www.humanware.com/wp-content/uploads/2024/11/Victor-Reader-Stream-4.8-User-Guide-6.html)).
+- **Navigation** par niveaux (chapitre, section, page, phrase) et **sauts dans le temps** (30 s, 1, 5, 10, 30 min) ; avance/recul de 5 s.
+- **Signets** numérotés (1 à 99 998), signets vocaux et surlignés ; liste, suppression d'un ou de tous.
+- **Reprise automatique** de la position et des signets pour chaque livre.
+- **Touche « où suis-je »** : titre, page ou section, pourcentage et temps restant.
+- **Minuterie de mise en veille** : 15, 30, 45, 60 minutes ou personnalisée.
+- **Enregistreur** : notes vocales numérotées dans `$VRNotes`.
+- **Radio Internet et podcasts** (abonnements, épisodes conservés).
+- Autres sources : [RNIB, Victor Stream 3](https://shop.rnib.org.uk/victor-stream-3-94322),
+  [Accessolutions](https://accessolutions.fr/shop/lecteur-enregistreur-victor-stream3),
+  [évaluation CERTAM / AVH](https://www.avh.asso.fr/implantations/certam/evaluations-de-produits/victor-reader-stream-3-version-131).
+
+Conséquence : l'app lit directement le contenu de la carte du Victor copié sur le Pixel. Les signets du Victor ne sont pas
+importés (format interne non documenté). Le Victor garde l'avantage des touches physiques ; le Pixel apporte la voix, l'agenda, les mails.

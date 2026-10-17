@@ -58,6 +58,28 @@ import fr.assistantvocal.core.tools.ToolRegistry
 import fr.assistantvocal.llm.ClaudeProvider
 import fr.assistantvocal.llm.GeminiProvider
 import java.time.Instant
+import fr.assistantvocal.app.media.AndroidMemos
+import fr.assistantvocal.app.media.AndroidMusic
+import fr.assistantvocal.app.media.AndroidPlayer
+import fr.assistantvocal.app.media.SafLibrary
+import fr.assistantvocal.app.organizer.AndroidCalendar
+import fr.assistantvocal.app.organizer.AndroidEmailContacts
+import fr.assistantvocal.app.organizer.ImapMail
+import fr.assistantvocal.core.media.AudioPlayer
+import fr.assistantvocal.core.media.LibrarySource
+import fr.assistantvocal.core.media.MediaState
+import fr.assistantvocal.core.media.MemoStore
+import fr.assistantvocal.core.media.MusicSource
+import fr.assistantvocal.core.media.PodcastDirectory
+import fr.assistantvocal.core.media.RadioSearch
+import fr.assistantvocal.core.skills.CalendarSource
+import fr.assistantvocal.core.skills.EmailContacts
+import fr.assistantvocal.core.skills.MailSkill
+import fr.assistantvocal.core.skills.MailSource
+import fr.assistantvocal.core.skills.MediaSkill
+import fr.assistantvocal.core.skills.OrganizerSkill
+import fr.assistantvocal.llm.Podcasts
+import fr.assistantvocal.llm.RadioBrowser
 import fr.assistantvocal.app.info.AndroidHeading
 import fr.assistantvocal.app.info.GoogleMapsNavigator
 import fr.assistantvocal.core.info.Geocoder
@@ -96,6 +118,8 @@ class AppGraph(
     val visionFactory: ((Context) -> VisionBackend)? = null,
     /** Orientation, météo, actualités, recherche (remplacés par des faux dans les tests). */
     val infoFactory: ((Context, () -> String?) -> InfoBackend)? = null,
+    /** Lecteur, bibliothèque, agenda, mails (remplacés par des faux dans les tests). */
+    val mediaFactory: ((Context, AppGraph) -> MediaBackend)? = null,
     /** Délai d'annulation du SOS (10 s ; raccourci dans les tests). */
     val sosCountdownMs: Long = 10_000,
     geminiBaseUrl: String = "https://generativelanguage.googleapis.com",
@@ -141,15 +165,53 @@ class AppGraph(
         systemPrompt = { Prompts.system(settings.name, settings.verbosity, device.now()) },
         localFeed = { settings.newsLocalFeed },
     )
-    val skills = Skills(dialog, comms, reminders, vision, info)
+    val mediaBackend: MediaBackend = mediaFactory?.invoke(context, this) ?: MediaBackend.android(context, this)
+    val media = MediaSkill(mediaBackend.player, mediaBackend.library, MediaState(store), mediaBackend.radios, mediaBackend.podcasts,
+        mediaBackend.music, mediaBackend.memos, dialog, device)
+    val mail = MailSkill(mediaBackend.mail, mediaBackend.emailContacts, dialog, device, { settings.ownerName }, llm,
+        canUseLlm = { !settings.privateMode && device.isOnline() && llm.isConfigured() },
+        systemPrompt = { Prompts.system(settings.name, settings.verbosity, device.now()) })
+    val organizer = OrganizerSkill(MediaState(store), mediaBackend.calendar, ReminderStore(store), dialog, device,
+        weatherToday = { if (device.isOnline()) runCatching { info.weather("météo aujourd'hui", null) }.getOrNull() else null },
+        unreadSms = { runCatching { comms.unreadSmsCount() }.getOrDefault(0) },
+        unreadMail = { mail.unreadCount() })
+    val skills = Skills(dialog, comms, reminders, vision, info, media, organizer, mail)
 
-    val tools = ToolRegistry(CoreTools.all(settings, device) + CoreTools.phase3() + CoreTools.phase5(info))
+    val tools = ToolRegistry(CoreTools.all(settings, device) + CoreTools.phase3() + CoreTools.phase5(info) + CoreTools.phase6(organizer))
     val assistant = Assistant(settings, device, llm, tools, skills = skills)
 
     companion object {
         const val SECRET_GEMINI = "gemini_api_key"
         const val SECRET_CLAUDE = "claude_api_key"
         const val SECRET_TAVILY = "tavily_api_key"
+        const val SECRET_MAIL = "mail_app_password"
+    }
+}
+
+/** Lecteur et organisation (phase 6). */
+class MediaBackend(
+    val player: AudioPlayer,
+    val library: LibrarySource,
+    val radios: RadioSearch,
+    val podcasts: PodcastDirectory,
+    val music: MusicSource,
+    val memos: MemoStore,
+    /** Enregistre un mémo ; renvoie sa durée (0 = rien dit, null = erreur). */
+    val recordMemo: suspend () -> Long?,
+    val calendar: CalendarSource?,
+    val mail: MailSource,
+    val emailContacts: EmailContacts,
+) {
+    companion object {
+        fun android(context: Context, g: AppGraph): MediaBackend {
+            val memos = AndroidMemos(context)
+            return MediaBackend(
+                AndroidPlayer(context), SafLibrary(context) { g.settings.libraryUri }, RadioBrowser(), Podcasts(), AndroidMusic(context),
+                memos, { memos.record() }, AndroidCalendar(context),
+                ImapMail({ g.settings.mailAddress }, { g.secrets.get(AppGraph.SECRET_MAIL) }),
+                AndroidEmailContacts(context, g.people),
+            )
+        }
     }
 }
 

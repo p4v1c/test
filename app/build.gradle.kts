@@ -55,6 +55,14 @@ dependencies {
     implementation("com.google.mlkit:text-recognition:16.0.1")
     implementation("com.google.mlkit:barcode-scanning:17.3.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.10.2")
+    // Lecteur (livres, radio, podcasts, musique, mémos) : Media3 ExoPlayer, avec flux HLS des radios
+    implementation("androidx.media3:media3-exoplayer:1.4.1")
+    implementation("androidx.media3:media3-exoplayer-hls:1.4.1")
+    // Dossier des livres choisi par un proche (accès par le sélecteur de fichiers Android)
+    implementation("androidx.documentfile:documentfile:1.0.1")
+    // Mails Gmail en IMAP/SMTP (version Android de JavaMail)
+    implementation("com.sun.mail:android-mail:1.6.7")
+    implementation("com.sun.mail:android-activation:1.6.7")
     // Mot d'activation hors ligne
     implementation("com.alphacephei:vosk-android:0.3.47@aar")
     implementation("net.java.dev.jna:jna:5.13.0@aar")

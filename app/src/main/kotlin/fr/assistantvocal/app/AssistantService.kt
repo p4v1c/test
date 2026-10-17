@@ -79,6 +79,8 @@ class AssistantService : Service() {
         }
         startDeviceWatch()
         DailyJobs.scheduleWellbeing(graph)
+        // Lecteur : position mémorisée et minuterie de sommeil, toutes les 10 secondes.
+        scope.launch { while (true) { delay(10_000); runCatching { graph.media.tick() } } }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -118,7 +120,8 @@ class AssistantService : Service() {
         )
         val camera = checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
         val type = if (Build.VERSION.SDK_INT >= 30) {
-            ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE or (if (camera) ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA else 0)
+            ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE or ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK or
+                (if (camera) ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA else 0)
         } else 0
         try {
             ServiceCompat.startForeground(this, NOTIFICATION_ID, buildNotification(), type)
@@ -207,7 +210,14 @@ class AssistantService : Service() {
 
     private fun say(text: String) = runSession { applyVoiceSettings(); speak(text) }
 
-    private fun startConversation() = runSession { conversation() }
+    /** La lecture en cours (livre, radio…) se met en pause pendant l'échange, et reprend après si rien ne l'a changée. */
+    private fun startConversation() = runSession {
+        stoppedByUser = false
+        graph.media.beforeConversation()
+        try { conversation() } finally { graph.media.afterConversation(stoppedByUser) }
+    }
+
+    private var stoppedByUser = false
 
     private suspend fun conversation() {
         applyVoiceSettings()
@@ -225,7 +235,7 @@ class AssistantService : Service() {
                     think { graph.assistant.handle(heard.text) }
                 }
             }
-            if (reply.stopAll) { sounds.play(Earcon.CANCELLED); return }
+            if (reply.stopAll) { stoppedByUser = true; sounds.play(Earcon.CANCELLED); return }
             sounds.play(reply.earcon)
             applyVoiceSettings()
             requestFocus(exclusive = false)
@@ -238,6 +248,7 @@ class AssistantService : Service() {
                 FollowUp.SOS -> { sos(); return }
                 FollowUp.VISION -> { reply.vision?.let { runVision(it) }; return }
                 FollowUp.OPEN_LOOKOUT -> { openLookout(); return }
+                FollowUp.RECORD_MEMO -> { recordMemo(); return }
                 FollowUp.NONE -> Unit
             }
             // Relance l'écoute pour une confirmation, au maximum 4 fois d'affilée.
@@ -306,6 +317,15 @@ class AssistantService : Service() {
         val result = graph.vision.run(req, ui)
         sounds.play(Earcon.SUCCESS)
         speak(result)
+    }
+
+    /** Mémo vocal : bip, enregistrement jusqu'au silence, puis durée annoncée. */
+    private suspend fun recordMemo() {
+        wake.stop()
+        sounds.play(Earcon.LISTENING)
+        val duration = graph.mediaBackend.recordMemo()
+        sounds.play(if (duration != null && duration >= 1_000) Earcon.SUCCESS else Earcon.ERROR)
+        speak(graph.media.memoRecorded(duration))
     }
 
     private suspend fun openLookout() {
@@ -537,6 +557,7 @@ class AssistantService : Service() {
         wake.stop()
         headset?.release()
         input.release(); output.release(); sounds.release(); wake.release()
+        runCatching { graph.media.tick(); (graph.mediaBackend.player as? fr.assistantvocal.app.media.AndroidPlayer)?.release() }
         super.onDestroy()
     }
 

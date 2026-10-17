@@ -44,6 +44,11 @@
     <string name="label_wellbeing">« Tout va bien ? » chaque matin à (ex. 11:00, vide = désactivé)</string>
     <string name="label_news_feed">Adresse du flux RSS du journal régional (« les infos régionales »), vide = aucun</string>
     <string name="label_tavily_key">Clé Tavily pour la recherche internet (optionnelle, gratuite ; sinon Wikipédia)</string>
+    <string name="label_library">Dossier des livres audio (contenu de la carte du Victor copié sur le téléphone)</string>
+    <string name="choose_library">Choisir le dossier des livres</string>
+    <string name="library_none">aucun</string>
+    <string name="label_mail">Adresse Gmail (pour « lis mes mails »)</string>
+    <string name="label_mail_password">Mot de passe d\'application Gmail (16 lettres, créé dans le compte Google, sécurité)</string>
     <string name="label_remote">Mot secret pour retrouver le téléphone par SMS (« où es-tu » + mot), vide = désactivé</string>
     <string name="label_sms_mode">SMS reçus</string>
     <string name="sms_read">Les lire directement</string>

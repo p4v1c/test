@@ -95,6 +95,37 @@ object CoreTools {
         }) { a -> fr.assistantvocal.core.router.News(a.str("topic")) },
     )
 
+    /** Fonctions de la phase 6 : lecteur, notes, agenda, mails (toujours traduites en intentions locales). */
+    fun phase6(organizer: fr.assistantvocal.core.skills.OrganizerSkill?): List<Tool> = listOfNotNull(
+        IntentTool(toolSpec("open_book", "Ouvre un livre audio de la bibliothèque (ou reprend le dernier si aucun titre).") {
+            string("title", "Titre du livre", required = false)
+        }) { a -> fr.assistantvocal.core.router.OpenBook(a.str("title")?.takeIf { it.isNotBlank() }) },
+        IntentTool(toolSpec("play_radio", "Met une radio en direct.") { string("station", "Nom de la radio, ex. « France Inter »", required = false) })
+            { a -> fr.assistantvocal.core.router.PlayRadio(a.str("station")?.takeIf { it.isNotBlank() }) },
+        IntentTool(toolSpec("play_podcast", "Écoute un podcast (épisode en cours ou le plus récent).") { string("name", "Nom du podcast", required = false) })
+            { a -> fr.assistantvocal.core.router.PlayPodcast(a.str("name")?.takeIf { it.isNotBlank() }) },
+        IntentTool(toolSpec("play_music", "Met de la musique (fichiers du téléphone, sinon application de musique).") { string("query", "Artiste, chanson ou genre", required = false) })
+            { a -> fr.assistantvocal.core.router.PlayMusic(a.str("query")?.takeIf { it.isNotBlank() }) },
+        IntentTool(toolSpec("sleep_timer", "Arrête la lecture après un délai.") { integer("minutes", "Délai en minutes") })
+            { a -> fr.assistantvocal.core.router.SleepTimer(a.str("minutes")?.toIntOrNull() ?: 30) },
+        IntentTool(toolSpec("record_memo", "Enregistre un mémo vocal (la personne parle après le bip).")) { fr.assistantvocal.core.router.RecordMemo },
+        IntentTool(toolSpec("add_note", "Enregistre une note écrite.") { string("text", "Contenu de la note") })
+            { a -> a.str("text")?.let { fr.assistantvocal.core.router.AddNote(it) } },
+        IntentTool(toolSpec("add_to_shopping_list", "Ajoute des articles à la liste de courses.") { string("items", "Articles, séparés par des virgules") })
+            { a -> a.str("items")?.let { fr.assistantvocal.core.router.AddToList(it) } },
+        IntentTool(toolSpec("add_event", "Ajoute un rendez-vous à l'agenda (confirmation demandée).") {
+            string("what", "Objet du rendez-vous"); string("when", "Jour et heure en français, ex. « mardi à 14 heures »")
+        }) { a -> fr.assistantvocal.core.router.AddEvent("${a.str("what") ?: ""} ${a.str("when") ?: ""}") },
+        organizer?.let { o ->
+            InfoTool(toolSpec("get_agenda", "Rendez-vous et rappels prévus.") { string("when", "« aujourd'hui », « demain », « cette semaine », un jour…", required = false) })
+                { a -> o.agenda(a.str("when") ?: "aujourd'hui") }
+        },
+        IntentTool(toolSpec("read_mail", "Lit les nouveaux courriels.")) { fr.assistantvocal.core.router.ReadMail },
+        IntentTool(toolSpec("send_mail", "Écrit un courriel à un contact (relu et confirmé).") {
+            string("name", "Nom du contact"); string("message", "Texte", required = false)
+        }) { a -> a.str("name")?.let { fr.assistantvocal.core.router.SendMail(it, a.str("message")) } },
+    )
+
     /** Outil d'information : la phrase produite repart vers l'IA comme donnée. */
     class InfoTool(override val spec: fr.assistantvocal.core.llm.ToolSpec, private val run: suspend (JsonObject) -> String) : Tool {
         override val risk = Risk.SAFE

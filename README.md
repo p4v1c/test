@@ -84,6 +84,49 @@ il allume la lampe tout seul s'il fait sombre et l'éteint toujours à la fin. D
 La direction est donnée **en heures d'horloge** (« à 3 heures, sur votre droite ») si la boussole du téléphone répond,
 téléphone tenu devant soi ; sinon en points cardinaux (« au nord-est »). Les distances sont à vol d'oiseau.
 
+## Livres, radio, musique, mémos, agenda, mails (phase 6)
+
+Le lecteur reprend les habitudes du **Victor Reader Stream** : mêmes étagères, livres DAISY et MP3, reprise
+automatique de chaque livre, chapitres, pages, sauts dans le temps, signets numérotés, « où j'en suis »,
+vitesse, minuterie de sommeil, notes vocales. Quand on appelle l'assistant, la lecture se met en pause, puis reprend
+après la réponse (sauf « pause » ou « stop »). Débrancher le casque met aussi en pause.
+
+| Domaine | Exemples |
+|---|---|
+| Bibliothèque | « quels livres ai-je ? », « lis le livre Le Petit Prince », « reprends mon livre », « continue » |
+| Navigation | « chapitre suivant / précédent », « section suivante », « va au chapitre 5 », « va à la page 42 », « avance de 5 minutes », « recule de 30 secondes », « recule un peu », « au début du chapitre », « au début du livre » |
+| Où j'en suis | « où j'en suis ? » → titre, chapitre, page, pourcentage écouté, temps restant |
+| Signets | « pose un signet » (numérotés 1, 2, 3…), « va au signet 2 », « mes signets », « supprime le signet 2 », « supprime tous les signets » (confirmé) |
+| Vitesse et sommeil | « lis plus vite / moins vite », « vitesse normale », « arrête la lecture dans 30 minutes », « annule la minuterie de sommeil » |
+| Radio | « mets France Inter », « mets la radio » (dernière écoutée), « mets RTL », « mets France Bleu Drôme Ardèche », « radio suivante », « ajoute cette radio à mes favoris », « mes radios » |
+| Podcasts | « abonne-moi au podcast Affaires sensibles » (confirmé), « mes podcasts », « écoute le podcast Affaires sensibles » (reprend l'épisode commencé), « écoute le dernier épisode de … », « épisode suivant » |
+| Musique | « mets de la musique » (au hasard), « mets de la musique de Brassens » (fichiers du téléphone, sinon YouTube Music), « suivant », « pause » ; commande aussi la musique d'une autre application |
+| Mémos vocaux | « enregistre un mémo » → bip, parler, il s'arrête au silence ; « écoute mes mémos » (le plus récent d'abord), « mémo suivant », « supprime ce mémo » (confirmé) |
+| Notes écrites | « note que le code du portail est 1 2 3 4 », « lis mes notes », « supprime la note 2 » |
+| Liste de courses | « ajoute du pain et du lait à la liste », « il faut acheter des œufs », « lis ma liste », « enlève le pain de la liste », « vide la liste » (confirmé) |
+| Agenda | « qu'est-ce que j'ai demain ? », « mes rendez-vous de la semaine », « ajoute un rendez-vous chez le dentiste mardi à 14 heures » (confirmé) — les rappels du jour sont dits aussi |
+| Point du jour | « fais-moi le point » : date, heure, météo, rendez-vous et rappels du jour, SMS et mails non lus, liste de courses |
+| Mails (Gmail) | « lis mes mails », « lis le premier », « résume le mail », « réponds » (relu et confirmé), « écris un mail à Paul pour lui dire que … » ; alerte si le mail ressemble à une arnaque |
+
+### Mettre les livres du Victor sur le téléphone
+
+1. Retirer la carte SD du Victor et la brancher sur un ordinateur (ou un lecteur de carte USB-C branché au Pixel).
+2. Brancher le Pixel à l'ordinateur en USB, choisir « Transfert de fichiers » sur le téléphone.
+3. Créer un dossier `Victor` sur le téléphone et y copier les dossiers de la carte : `$VRDTB` (livres DAISY),
+   `$VROtherBooks` (livres audio), `$VRMusic`, `$VRPodcasts`, `$VRNotes`. Un simple dossier de livres
+   (un sous-dossier par livre) marche aussi.
+4. Dans l'app : **Réglages → Choisir le dossier des livres** → ouvrir `Victor` → « Utiliser ce dossier » → « Autoriser ».
+5. Dire « quels livres ai-je ? ».
+
+Les livres d'Éole (AVH) téléchargés au format DAISY se copient de la même façon. Pas encore pris en charge : livres en texte
+seul (étagère Texte du Victor), Audible, et les signets déjà posés sur le Victor (ils restent sur le Victor).
+
+### Brancher Gmail (lecture et envoi de mails)
+
+1. Sur le compte Google de votre père (sur un ordinateur) : **Gérer le compte → Sécurité → Validation en deux étapes** (à activer si besoin).
+2. Toujours dans Sécurité : **Mots de passe des applications** → nom « Assistant » → Créer → noter les 16 lettres.
+3. Dans l'app : **Réglages** → adresse Gmail + ce mot de passe → Enregistrer. Il est stocké chiffré sur le téléphone.
+
 ## Ce qui marche aujourd'hui (phase 1)
 
 - Un seul gros bouton « Parler » (compatible TalkBack), et un bouton « Parler » dans la notification.
@@ -215,6 +258,24 @@ Mesures détaillées : [tools/wake/README.md](tools/wake/README.md).
 - [ ] Réglages : adresse du flux RSS du journal régional → « les infos régionales »
 - [ ] « cherche sur internet … » avec et sans clé Tavily
 - [ ] « combien font 12 fois 7 ? » en mode privé (aucune IA) → « Ça fait 84 »
+
+## Checklist de tests sur le vrai téléphone (phase 6)
+
+- [ ] Copier 2 livres DAISY du Victor + 1 dossier MP3, choisir le dossier dans les réglages → « quels livres ai-je ? » donne les bons titres
+- [ ] « lis le livre … » : la lecture démarre après l'annonce ; écran verrouillé, elle continue ; casque débranché → pause
+- [ ] Pendant la lecture : dire le nom → la lecture s'arrête pendant l'écoute ; « où j'en suis ? » → réponse, puis la lecture reprend
+- [ ] « chapitre suivant », « va au chapitre 3 », « va à la page 10 » (livre DAISY avec pages), « avance de 5 minutes », « recule un peu »
+- [ ] « pose un signet », avancer, « va au signet 1 » ; éteindre et rallumer le téléphone → « reprends mon livre » repart au bon endroit
+- [ ] « lis plus vite » (le livre accélère, la voix de l'assistant ne change pas) ; « parle plus vite » (l'inverse)
+- [ ] « arrête la lecture dans 1 minute » → la lecture s'arrête seule
+- [ ] Livre DAISY ancien avec accents (encodage windows-1252) : titres bien prononcés
+- [ ] « mets France Inter », « mets RTL », « radio suivante », « pause », « reprends »
+- [ ] « abonne-moi au podcast … » → « oui » → « écoute le podcast … » ; le lendemain, l'épisode reprend où il en était
+- [ ] « mets de la musique », « mets de la musique de … » (avec et sans fichiers sur le téléphone)
+- [ ] « enregistre un mémo » : parler 10 s, se taire → « Mémo enregistré » ; « écoute mes mémos » ; « supprime ce mémo » → « oui »
+- [ ] Liste de courses et notes ; « fais-moi le point » le matin
+- [ ] Agenda : « qu'est-ce que j'ai demain ? » ; ajouter un rendez-vous → il apparaît dans Google Agenda sur un autre appareil
+- [ ] Gmail : « lis mes mails », « lis le premier », « réponds » → « oui » → le correspondant reçoit la réponse ; « écris un mail à … »
 
 ## Développement
 

@@ -153,3 +153,34 @@ class LiveWebServicesTest {
         assertEquals("Saint-Étienne", r.first().city)
     }
 }
+
+class MediaServicesTest {
+    @Test fun `Radio Browser, reponse reelle`() {
+        // Extrait réel (17/10/2026), flux HLS.
+        val body = """[{"changeuuid":"424b","stationuuid":"042d","name":"RTL","url":"https://live.m6radio.quortex.io/x/grouprtl/national/short/audio-64000/index.m3u8","url_resolved":"https://live.m6radio.quortex.io/x/grouprtl/national/short/audio-64000/index.m3u8","countrycode":"FR","votes":2681,"codec":"AAC","bitrate":64,"hls":1},{"name":"  RTL2 ","url":"http://streaming.radio.rtl2.fr/rtl2-1-44-128","url_resolved":""}]"""
+        val s = RadioBrowser.parse(body)
+        assertEquals(listOf("RTL", "RTL2"), s.map { it.name })
+        assertTrue(s[0].url.endsWith("index.m3u8"))
+        assertEquals("http://streaming.radio.rtl2.fr/rtl2-1-44-128", s[1].url)
+        assertTrue(RadioBrowser.parse("<html>").isEmpty())
+    }
+
+    @Test fun `podcasts, annuaire et flux`() = runTest {
+        val shows = Podcasts.parseSearch("""{"resultCount":1,"results":[{"wrapperType":"track","kind":"podcast","collectionName":"Affaires sensibles","artistName":"France Inter","feedUrl":"https://radiofrance-podcast.net/podcast09/rss_13940.xml"}]}""")
+        assertEquals("Affaires sensibles", shows.single().title)
+        val rss = """<rss xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd"><channel><title>Affaires sensibles</title>
+<item><title><![CDATA[Le procès Papon]]></title><pubDate>Mon, 13 Oct 2026 14:00:00 +0200</pubDate><itunes:duration>00:54:12</itunes:duration>
+<enclosure url="https://media.radiofrance-podcast.net/podcast09/a.mp3?abc=1&amp;d=2" type="audio/mpeg" length="1"/></item>
+<item><title>L'affaire Grégory</title><pubDate>Thu, 16 Oct 2026 14:00:00 +0200</pubDate><itunes:duration>3000</itunes:duration>
+<enclosure url="https://media.radiofrance-podcast.net/podcast09/b.mp3" type="audio/mpeg"/></item>
+<item><title>Sans audio</title></item></channel></rss>"""
+        val eps = Podcasts.parseFeed(rss)
+        assertEquals(listOf("L'affaire Grégory", "Le procès Papon"), eps.map { it.title })
+        assertEquals("https://media.radiofrance-podcast.net/podcast09/a.mp3?abc=1&d=2", eps[1].url)
+        assertEquals(3_252_000L, eps[1].durationMs)
+        assertEquals(3_000_000L, eps[0].durationMs)
+        val server = MockWebServer().apply { enqueue(MockResponse().setBody(rss)); start() }
+        assertEquals(2, Podcasts().episodes(server.url("/feed.xml").toString()).size)
+        server.shutdown()
+    }
+}

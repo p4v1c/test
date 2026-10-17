@@ -304,3 +304,79 @@ class CompositeSearch(private val tavily: TavilySearch, private val wikipedia: W
         return wikipedia.search(query, max)
     }
 }
+
+// ---------------------------------------------------------------------- radio (Radio Browser)
+
+/** Annuaire communautaire de radios en ligne, gratuit et sans clé. */
+class RadioBrowser(
+    private val baseUrl: String = "https://de1.api.radio-browser.info",
+    private val client: OkHttpClient = GeminiProvider.defaultClient(),
+) : fr.assistantvocal.core.media.RadioSearch {
+    override suspend fun search(name: String): List<fr.assistantvocal.core.media.Station> {
+        val q = name.trim().replace(Regex("^(?i)(la )?radio "), "")
+        val url = "${baseUrl.trimEnd('/')}/json/stations/search".toHttpUrl().newBuilder()
+            .addQueryParameter("name", q).addQueryParameter("countrycode", "FR").addQueryParameter("order", "votes")
+            .addQueryParameter("reverse", "true").addQueryParameter("limit", "5").addQueryParameter("hidebroken", "true").build()
+        return parse(client.fetch(Request.Builder().url(url).build()))
+    }
+
+    companion object {
+        fun parse(body: String?): List<fr.assistantvocal.core.media.Station> =
+            ((parseJson(body) as? JsonArray) ?: JsonArray(emptyList())).mapNotNull { e ->
+                val o = e as? JsonObject ?: return@mapNotNull null
+                val url = o.str("url_resolved") ?: o.str("url") ?: return@mapNotNull null
+                fr.assistantvocal.core.media.Station(o.str("name")?.trim() ?: return@mapNotNull null, url)
+            }
+    }
+}
+
+// ---------------------------------------------------------------------- podcasts (annuaire iTunes + flux RSS)
+
+class Podcasts(
+    private val searchBase: String = "https://itunes.apple.com",
+    private val client: OkHttpClient = GeminiProvider.defaultClient(),
+) : fr.assistantvocal.core.media.PodcastDirectory {
+    override suspend fun search(term: String): List<fr.assistantvocal.core.media.PodcastShow> {
+        val url = "${searchBase.trimEnd('/')}/search".toHttpUrl().newBuilder().addQueryParameter("term", term)
+            .addQueryParameter("media", "podcast").addQueryParameter("country", "fr").addQueryParameter("limit", "5").build()
+        return parseSearch(client.fetch(Request.Builder().url(url).build()))
+    }
+
+    override suspend fun episodes(feedUrl: String): List<fr.assistantvocal.core.media.Episode> =
+        client.fetch(Request.Builder().url(feedUrl).build())?.let { parseFeed(it) } ?: emptyList()
+
+    companion object {
+        fun parseSearch(body: String?): List<fr.assistantvocal.core.media.PodcastShow> =
+            ((parseJson(body) as? JsonObject)?.get("results") as? JsonArray).orEmpty().mapNotNull { e ->
+                val o = e.jsonObject
+                fr.assistantvocal.core.media.PodcastShow(o.str("collectionName") ?: return@mapNotNull null, o.str("artistName"), o.str("feedUrl") ?: return@mapNotNull null)
+            }
+
+        /** « 01:02:03 », « 45:10 » ou « 3600 » (secondes). */
+        fun durationMs(v: String?): Long? {
+            val s = v?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+            val parts = s.split(':').map { it.toLongOrNull() ?: return null }
+            return when (parts.size) { 1 -> parts[0]; 2 -> parts[0] * 60 + parts[1]; 3 -> parts[0] * 3600 + parts[1] * 60 + parts[2]; else -> return null } * 1000
+        }
+
+        /** Épisodes avec un fichier audio, du plus récent au plus ancien. */
+        fun parseFeed(xml: String): List<fr.assistantvocal.core.media.Episode> {
+            val items = Regex("(?is)<item\\b.*?</item>").findAll(xml).map { it.value }
+            return items.mapNotNull { item ->
+                val enclosure = Regex("(?is)<enclosure\\b[^>]*>").find(item)?.value ?: return@mapNotNull null
+                val url = Regex("(?i)\\burl\\s*=\\s*\"([^\"]+)\"").find(enclosure)?.groupValues?.get(1)?.let { Html.unescape(it) } ?: return@mapNotNull null
+                val title = Regex("(?is)<title>(.*?)</title>").find(item)?.groupValues?.get(1)
+                    ?.replace(Regex("(?s)<!\\[CDATA\\[(.*?)]]>"), "$1")?.let { Html.text(it) } ?: return@mapNotNull null
+                val date = Regex("(?is)<pubDate>(.*?)</pubDate>").find(item)?.groupValues?.get(1)?.trim()?.let { d ->
+                    runCatching { java.time.ZonedDateTime.parse(d, java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME).toInstant().toEpochMilli() }.getOrNull()
+                        // Jour de la semaine parfois faux dans les flux : on l'ignore.
+                        ?: runCatching {
+                            java.time.ZonedDateTime.parse(d.substringAfter(", ").trim(), java.time.format.DateTimeFormatter.ofPattern("d MMM yyyy HH:mm[:ss] [Z][z]", java.util.Locale.ENGLISH)).toInstant().toEpochMilli()
+                        }.getOrNull()
+                }
+                val dur = durationMs(Regex("(?is)<itunes:duration>(.*?)</itunes:duration>").find(item)?.groupValues?.get(1))
+                fr.assistantvocal.core.media.Episode(title, url, date, dur)
+            }.sortedByDescending { it.publishedMs ?: 0L }.toList()
+        }
+    }
+}

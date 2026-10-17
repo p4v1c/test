@@ -50,7 +50,7 @@ import kotlinx.serialization.json.put
 import java.time.ZonedDateTime
 
 /** Action à lancer par l'application après avoir prononcé la réponse. */
-enum class FollowUp { NONE, CALIBRATE_NAME, WAKE_WORD_CHANGED, SOS, VISION, OPEN_LOOKOUT }
+enum class FollowUp { NONE, CALIBRATE_NAME, WAKE_WORD_CHANGED, SOS, VISION, OPEN_LOOKOUT, RECORD_MEMO }
 
 /** Sons courts joués avec la réponse. */
 enum class Earcon { NONE, LISTENING, THINKING, SUCCESS, ERROR, CONFIRM, CANCELLED }
@@ -91,7 +91,7 @@ class Assistant(
     private val device: DeviceStatus,
     private val llm: LlmProvider?,
     private val tools: ToolRegistry,
-    private val help: HelpCatalog = HelpCatalog.PHASE5,
+    private val help: HelpCatalog = HelpCatalog.PHASE6,
     private val router: LocalRouter = LocalRouter(),
     private val nowMillis: () -> Long = { System.currentTimeMillis() },
     /** Appels, SMS, rappels… (absents dans certains tests). */
@@ -146,7 +146,12 @@ class Assistant(
         }
 
         // 2. Routeur local (sauf si une image accompagne la demande : c'est pour l'IA).
-        val match = if (image == null) router.route(text) else null
+        var match = if (image == null) router.route(text) else null
+        // Pendant un livre, « lis plus vite » règle la vitesse de lecture (« parle plus vite » reste la voix).
+        val rate = match?.intent as? Intent.SpeechRate
+        if (rate != null && skills?.media?.isActive() == true && !FrenchText.key(text).contains("parle")) {
+            match = RouteMatch(fr.assistantvocal.core.router.PlaybackSpeed(rate.faster), match!!.confidence)
+        }
         if (match != null && match.confidence >= 0.8) return remember(text, handleIntent(match.intent))
 
         // 3. IA si possible.
@@ -267,6 +272,14 @@ class Assistant(
                 else -> AssistantReply("Je n'ai pas de document récent en mémoire. Dites : lis ce texte.", Earcon.ERROR)
             }
         }
+        is fr.assistantvocal.core.router.NewsDetail -> if (dialog.lastTopic == "mail" && skills?.mail != null) skills.mail.readBody(intent.index)
+            else skills?.info?.handle(intent) ?: AssistantReply("Cette fonction n'est pas encore disponible.", Earcon.ERROR)
+        is fr.assistantvocal.core.router.MediaIntent -> skills?.media?.handle(intent)
+            ?: AssistantReply("Le lecteur n'est pas disponible.", Earcon.ERROR)
+        is fr.assistantvocal.core.router.OrganizerIntent -> skills?.organizer?.handle(intent)
+            ?: AssistantReply("Cette fonction n'est pas encore disponible.", Earcon.ERROR)
+        is fr.assistantvocal.core.router.MailIntent -> skills?.mail?.handle(intent)
+            ?: AssistantReply("Les mails ne sont pas disponibles.", Earcon.ERROR)
         is fr.assistantvocal.core.router.InfoIntent -> skills?.info?.handle(intent)
             ?: AssistantReply("Cette fonction n'est pas encore disponible.", Earcon.ERROR)
         is CallContact, is CallNumber, is CallFavorite, CallBack, AnswerCall, HangUp, is Speaker, MissedCalls,

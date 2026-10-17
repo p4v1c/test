@@ -8,7 +8,7 @@ Légende :
 
 ## État d'avancement
 
-- Phase 1 (socle) ✅ · Phase 2 (mot d'activation, déclencheurs) ✅ · Phase 3 (communication, organisation, sécurité) ✅ · Phase 4 (vision) ✅ · Phase 5 (orientation, météo, infos, recherche) ✅
+- Phase 1 (socle) ✅ · Phase 2 (mot d'activation, déclencheurs) ✅ · Phase 3 (communication, organisation, sécurité) ✅ · Phase 4 (vision) ✅ · Phase 5 (orientation, météo, infos, recherche) ✅ · Phase 6 (lecteur façon Victor, mémos, agenda, mails) ✅
 - Réalisé en phase 3 : appels (nom, surnom, favori, numéro, rappel du dernier), annonce des appels entrants et décrocher
   à la voix ou au casque, journal d'appels, SMS (lecture, dictée, relecture, envoi vérifié, réponse), notifications
   (lecture, annonce, réponse rapide), alerte arnaque, réveils, minuteurs nommés, rappels ponctuels et récurrents,
@@ -26,7 +26,15 @@ Légende :
   résumé d'article, recherche web (Wikipédia, Tavily si clé), calculatrice et conversion euros/francs.
 - Reporté : vigilance météo annoncée le matin et horloge parlante (P2), repli Nominatim hors de France (inutile ici),
   ouverture de Soundscape (P2).
-- Pas encore fait : emails Gmail (IMAP, phase 6), agenda (phase 6), Google Meet (P2).
+- Réalisé en phase 6 (sur le modèle du Victor Reader Stream que votre père utilise) : bibliothèque lue dans le dossier du
+  Victor copié sur le téléphone ($VRDTB, $VROtherBooks, $VRMusic, $VRPodcasts, $VRNotes), livres DAISY 2.02 et 3 et
+  dossiers MP3, reprise par livre, chapitres/sections/pages, sauts dans le temps, signets numérotés, « où j'en suis »,
+  vitesse, minuterie de sommeil, pause automatique quand on parle à l'assistant ; radios (Radio France + Radio Browser,
+  favoris) ; podcasts (abonnements, reprise par épisode) ; musique locale ou application de musique ; mémos vocaux ;
+  notes écrites ; liste de courses ; agenda (lecture, ajout confirmé) ; point du jour ; Gmail (lire, résumer, répondre,
+  écrire, alerte arnaque).
+- Reporté : livres en texte seul et PDF lus par la synthèse (étagère Texte du Victor), téléchargement des podcasts pour
+  écoute hors ligne, import des signets du Victor, Google Meet (P2).
 
 ## Décisions validées (17 octobre 2026)
 

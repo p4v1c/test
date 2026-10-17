@@ -422,3 +422,97 @@ class Phase5ServiceTest {
         assertEquals("tvly-abc", info.tavilyKey)
     }
 }
+
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34])
+class Phase6ServiceTest {
+    private lateinit var app: App
+
+    @Before fun setUp() {
+        app = ApplicationProvider.getApplicationContext()
+        shadowOf(app).grantPermissions(Manifest.permission.RECORD_AUDIO)
+    }
+
+    private fun listen() = Robolectric.buildService(AssistantService::class.java, AssistantService.intent(app, AssistantService.ACTION_LISTEN)).create().startCommand(0, 1)
+
+    @Test fun `il demande son livre, il l'entend annoncer puis le livre demarre`() {
+        val out = FakeOutput()
+        val media = AppFakeMedia()
+        testGraph(app, FakeInput(Heard.Text("lis le livre Monte-Cristo")), out, media = media)
+        listen()
+        awaitMain { media.playing }
+        assertEquals("J'ouvre « Le Comte de Monte-Cristo », Marseille, l'arrivée.", out.spoken.first())
+        assertEquals(listOf("content://livre/1.mp3"), media.plays)
+    }
+
+    @Test fun `une question pendant la lecture met le livre en pause puis il reprend`() {
+        val out = FakeOutput()
+        val media = AppFakeMedia()
+        val input = FakeInput(Heard.Text("lis le livre Monte-Cristo"), Heard.Text("où j'en suis ?"))
+        testGraph(app, input, out, media = media)
+        listen()
+        awaitMain { media.playing }
+        media.pos = fr.assistantvocal.core.media.Pos(1, 30_000)
+        listen()
+        awaitMain { out.spoken.size >= 2 && media.playing }
+        assertEquals("« Le Comte de Monte-Cristo ». Le père et le fils. 75 pour cent écoutés, il reste 1 minute.", out.spoken[1])
+        assertTrue(media.playing)
+    }
+
+    @Test fun `memo vocal enregistre`() {
+        val out = FakeOutput()
+        testGraph(app, FakeInput(Heard.Text("enregistre un mémo")), out)
+        listen()
+        awaitMain { out.spoken.size >= 2 }
+        assertEquals("Mémo enregistré : 4 secondes. Pour l'écouter, dites : écoute mes mémos.", out.spoken.last())
+    }
+
+    @Test fun `agenda du jour`() {
+        val out = FakeOutput()
+        testGraph(app, FakeInput(Heard.Text("qu'est-ce que j'ai aujourd'hui ?")), out)
+        listen()
+        awaitMain { out.spoken.isNotEmpty() }
+        assertEquals("Aujourd'hui : à 16 heures, Kiné.", out.spoken.last())
+    }
+
+    @Test fun `reglages, dossier des livres et mail`() {
+        val graph = testGraph(app)
+        val activity = Robolectric.buildActivity(SettingsActivity::class.java).setup().get()
+        activity.onLibraryChosen(android.net.Uri.parse("content://com.android.externalstorage.documents/tree/primary%3AVictor"))
+        assertEquals("content://com.android.externalstorage.documents/tree/primary%3AVictor", graph.settings.libraryUri)
+        assertTrue(activity.libraryLabel.text.toString().endsWith(": Victor"))
+        activity.mailField.setText("jean.dupont@gmail.com")
+        activity.mailPasswordField.setText("abcd efgh ijkl mnop")
+        activity.save()
+        assertEquals("jean.dupont@gmail.com", graph.settings.mailAddress)
+        assertEquals("abcdefghijklmnop", graph.secrets.get(AppGraph.SECRET_MAIL))
+        assertEquals("", activity.mailPasswordField.text.toString())
+    }
+}
+
+class MailAndLibraryTest {
+    @Test fun `texte d'un mail multipart, le texte brut est prefere`() {
+        val raw = "From: =?UTF-8?Q?Mairie_de_Saint-Marcel?= <mairie@stmarcel.fr>\r\nSubject: =?UTF-8?Q?Repas_des_a=C3=AEn=C3=A9s?=\r\n" +
+            "Message-ID: <m1@x>\r\nMIME-Version: 1.0\r\nContent-Type: multipart/alternative; boundary=\"b\"\r\n\r\n" +
+            "--b\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: quoted-printable\r\n\r\nLe repas aura lieu =C3=A0 midi.\r\n" +
+            "--b\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n<p>Le repas aura lieu &agrave; midi.</p>\r\n--b--\r\n"
+        val m = javax.mail.internet.MimeMessage(javax.mail.Session.getInstance(java.util.Properties()), raw.byteInputStream())
+        assertEquals("Le repas aura lieu à midi.", fr.assistantvocal.app.organizer.MailText.extract(m))
+        val h = fr.assistantvocal.app.organizer.MailText.header(m, 42)
+        assertEquals("Mairie de Saint-Marcel", h.fromName)
+        assertEquals("Repas des aînés", h.subject)
+        assertEquals("42", h.id)
+        val html = javax.mail.internet.MimeMessage(javax.mail.Session.getInstance(java.util.Properties()),
+            "Subject: x\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n<div>Bonjour&nbsp;<b>Jean</b></div>".byteInputStream())
+        assertEquals("Bonjour Jean", fr.assistantvocal.app.organizer.MailText.extract(html))
+    }
+
+    @Test fun `livres DAISY anciens en windows-1252 ou declares`() {
+        val cp1252 = "<html><h1><a href=\"a.smil#x\">Chère élève</a></h1></html>".toByteArray(charset("windows-1252"))
+        assertTrue(fr.assistantvocal.app.media.SafLibrary.decode(cp1252).contains("Chère élève"))
+        val utf8 = "<h1>Été</h1>".toByteArray()
+        assertEquals("<h1>Été</h1>", fr.assistantvocal.app.media.SafLibrary.decode(utf8))
+        val declared = "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?><t>café</t>".toByteArray(Charsets.ISO_8859_1)
+        assertTrue(fr.assistantvocal.app.media.SafLibrary.decode(declared).contains("café"))
+    }
+}

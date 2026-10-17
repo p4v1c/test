@@ -22,7 +22,10 @@ Usage visé : personnel et non commercial. Toutes les licences ci-dessous le per
 | **Porcupine (Picovoice)** | Propriétaire, **palier gratuit fermé le 30/06/2026** | — | — | ✅ | Oui | Option uniquement si l'utilisateur fournit sa clé et son `.ppn` |
 | **Anthropic Java SDK** (`com.anthropic:anthropic-java`) | MIT | Officiel | — | ❌ | — | `ClaudeProvider` |
 | **OkHttp + kotlinx.serialization** | Apache 2.0 | Active | — | — | — | `GeminiProvider` (REST `generateContent`), APIs de données |
-| **Angus Mail** (Jakarta Mail) | EPL-2.0 / GPL+CE | Active | ~1 Mo | ❌ | — | Emails IMAP/SMTP |
+| **JavaMail pour Android** (`com.sun.mail:android-mail` 1.6.7) | EPL-2.0 / GPL+CE | Stable | ~0,7 Mo | ❌ | — | **Utilisé (phase 6)** : Gmail en IMAP/SMTP (Angus Mail écarté : dépendances Java absentes d'Android) |
+| **Media3 ExoPlayer 1.4.1** (+ HLS) | Apache 2.0 | Active (Google) | ~2 Mo | ✅ | — | **Utilisé (phase 6)** : livres, radios, podcasts, musique, mémos |
+| **AndroidX DocumentFile** | Apache 2.0 | Stable | petit | ✅ | — | **Utilisé (phase 6)** : lecture du dossier des livres choisi par un proche |
+| **Format DAISY 2.02 / 3** (spécifications du DAISY Consortium) | Spécifications ouvertes | — | — | ✅ | — | **Implémenté (phase 6)** : analyse ncc.html, .ncx et SMIL, sans bibliothèque externe |
 | **Tests** : JUnit, Robolectric (MIT), MockWebServer (Apache 2.0), Turbine, Espresso | — | Active | — | — | — | Tests unitaires et instrumentés |
 
 ## Données et APIs gratuites
@@ -35,7 +38,9 @@ Usage visé : personnel et non commercial. Toutes les licences ci-dessous le per
 | [Overpass API (OSM)](https://wiki.openstreetmap.org/wiki/Overpass_API) | Usage raisonnable, ODbL | Non | **Utilisé (phase 5)** : lieux proches (pharmacies, boulangeries, médecins, distributeurs…) |
 | [Open Food Facts](https://world.openfoodfacts.org/data) | ODbL, User-Agent obligatoire, limites de débit | Non | **Utilisé (phase 4)** : produits par code-barres, allergènes, Nutri-Score |
 | [Base de données publique des médicaments](https://base-donnees-publique.medicaments.gouv.fr/telechargement) | Licence Ouverte (Etalab) | Non | **Utilisé (phase 4)** : table CIP13 → nom et présentation, téléchargée à la compilation |
-| [Radio Browser](https://www.radio-browser.info/) | Gratuit, communautaire | Non | Flux radio (plus une liste fixe des radios françaises principales) |
+| [Radio Browser](https://www.radio-browser.info/) | Gratuit, communautaire | Non | **Utilisé (phase 6)** : recherche de radios (vérifié en réel) |
+| Flux Radio France (`icecast.radiofrance.fr`) | Flux publics officiels | Non | **Utilisé (phase 6)** : France Inter, France Info, France Culture, France Musique, FIP, Mouv' |
+| [Annuaire iTunes Search](https://performance-partners.apple.com/search-api) | Gratuit, ~20 requêtes/min | Non | **Utilisé (phase 6)** : trouver le flux RSS d'un podcast |
 | Flux RSS (France Info, Le Monde, Radio France podcasts…) | Usage personnel | Non | **Utilisé (phase 5)** : titres France Info par thème, journal régional au choix |
 | [PRIM Île-de-France Mobilités](https://prim.iledefrance-mobilites.fr/) | Gratuit avec compte | Oui (gratuite) | Prochains passages en Île-de-France |
 | [transport.data.gouv.fr](https://transport.data.gouv.fr/) | Licences ouvertes selon le réseau | Selon réseau | GTFS-RT / SIRI hors Île-de-France |

@@ -13,6 +13,9 @@ class PendingQuestion(
 class Dialog(private val nowMillis: () -> Long) {
     val confirmations = ConfirmationMachine(nowMillis)
 
+    /** Dernier sujet lu (« sms », « mail », « news ») : décide à quoi s'appliquent « réponds » ou « lis le premier ». */
+    var lastTopic: String? = null
+
     var pending: PendingQuestion? = null
         private set
 

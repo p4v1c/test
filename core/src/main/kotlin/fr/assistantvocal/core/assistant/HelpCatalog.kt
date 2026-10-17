@@ -81,6 +81,21 @@ class HelpCatalog(private val topics: List<HelpTopic>) {
                 "les infos sport", "lis le deuxième", "lis l'article", "la suite", "cherche sur internet les horaires de la déchetterie",
                 "combien font 12 fois 7 ?", "100 euros en francs"),
         )
+        val READING = HelpTopic(
+            "les livres et la radio", listOf("livres", "livre", "lecture", "radio", "podcasts", "musique", "signets", "victor"),
+            listOf("quels livres ai-je ?", "lis le livre Les Misérables", "reprends mon livre", "chapitre suivant", "va au chapitre 5",
+                "va à la page 42", "avance de 5 minutes", "où j'en suis ?", "pose un signet", "va au signet 2", "lis plus vite",
+                "arrête la lecture dans 30 minutes", "mets France Inter", "abonne-moi au podcast Affaires sensibles",
+                "écoute le podcast Affaires sensibles", "mets de la musique", "pause", "reprends"),
+        )
+        val NOTES = HelpTopic(
+            "les mémos, notes, agenda et mails", listOf("memos", "memo", "notes", "courses", "agenda", "rendez vous", "mails", "mail", "courriels"),
+            listOf("enregistre un mémo", "écoute mes mémos", "note que le code du portail est 1234", "lis mes notes",
+                "ajoute du pain et du lait à la liste", "lis la liste de courses", "qu'est-ce que j'ai demain ?",
+                "ajoute un rendez-vous chez le dentiste mardi à 14 heures", "fais-moi le point", "lis mes mails", "lis le premier",
+                "réponds", "écris un mail à Paul"),
+        )
+        val PHASE6 = HelpCatalog(listOf(CALLS, MESSAGES, READING, NOTES, REMINDERS, VISION, ORIENTATION, NEWS, INFOS, QUESTIONS, SAFETY, TRIGGERS, SETTINGS))
         val PHASE5 = HelpCatalog(listOf(CALLS, MESSAGES, REMINDERS, VISION, ORIENTATION, NEWS, INFOS, QUESTIONS, SAFETY, TRIGGERS, SETTINGS))
         val PHASE1 = HelpCatalog(listOf(INFOS, QUESTIONS, SETTINGS))
         val PHASE3 = HelpCatalog(listOf(CALLS, MESSAGES, REMINDERS, INFOS, QUESTIONS, SAFETY, TRIGGERS, SETTINGS))

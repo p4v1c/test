@@ -9,9 +9,10 @@ KEYS_SERVICE="$PKG/$PKG.triggers.KeyAccessibilityService"
 echo "1/6 Installation de l'application…"
 adb install -r "$APK"
 
-echo "2/6 Autorisations (micro, notifications, contacts, appels, SMS, position)…"
+echo "2/6 Autorisations (micro, notifications, contacts, appels, SMS, position, caméra, agenda, musique)…"
 for P in RECORD_AUDIO POST_NOTIFICATIONS READ_CONTACTS CALL_PHONE ANSWER_PHONE_CALLS READ_PHONE_STATE READ_CALL_LOG \
-         READ_SMS RECEIVE_SMS SEND_SMS CAMERA ACCESS_FINE_LOCATION ACCESS_COARSE_LOCATION ACCESS_BACKGROUND_LOCATION; do
+         READ_SMS RECEIVE_SMS SEND_SMS CAMERA ACCESS_FINE_LOCATION ACCESS_COARSE_LOCATION ACCESS_BACKGROUND_LOCATION \
+         READ_CALENDAR WRITE_CALENDAR READ_MEDIA_AUDIO; do
   adb shell pm grant "$PKG" "android.permission.$P" 2>/dev/null || echo "   (autorisation $P à accorder à la main)"
 done
 echo "   Accès aux notifications (lecture des notifications Gmail, Meet…)…"

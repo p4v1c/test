@@ -34,6 +34,9 @@ class Skills(
     val reminders: ReminderSkill,
     val vision: fr.assistantvocal.core.vision.VisionSkill? = null,
     val info: InfoSkill? = null,
+    val media: MediaSkill? = null,
+    val organizer: OrganizerSkill? = null,
+    val mail: MailSkill? = null,
 ) {
     fun handle(intent: Intent): AssistantReply? = when (intent) {
         is CallContact -> comms.call(intent.target)
@@ -46,7 +49,7 @@ class Skills(
         MissedCalls -> comms.missedCalls()
         is ReadMessages -> comms.readMessages(intent.onlyLast)
         is SendSms -> comms.sendSms(intent.target, intent.body)
-        is Reply -> comms.reply(intent.body)
+        is Reply -> if (dialog.lastTopic == "mail" && mail != null) mail.reply(intent.body) else comms.reply(intent.body)
         ReadNotifications -> comms.readNotifications()
         is SetAlias -> comms.setAlias(intent.target, intent.alias)
         is ContactNumber -> comms.contactNumber(intent.target)

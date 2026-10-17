@@ -9,6 +9,7 @@
   sur voix de synthèse (mesures dans `tools/wake/README.md`).
 - Phase 4 (vision) : faite, 141 tests automatiques au total (caméra simulée ; non testée sur un vrai appareil photo).
 - Phase 5 (orientation, météo, infos, recherche) : faite, 209 tests automatiques au total.
+- Phase 6 (lecteur façon Victor, mémos, agenda, mails) : faite, 241 tests automatiques au total.
 - Téléphone cible : Google Pixel (voir FEATURES.md, « Décisions validées »).
 
 ## 1. Vue d'ensemble
@@ -220,6 +221,38 @@ Chaque fonction est un `Tool` : nom, description, schéma JSON des paramètres, 
   `navigate_to`, `share_location`, `news_headlines` (traduits en intentions locales, donc confirmés comme à la voix).
 - **Textes d'internet = données** : flux RSS analysés sans entités externes (protection XXE), HTML réduit au texte,
   consignes rappelant de ne jamais exécuter d'instruction trouvée dans une page.
+
+## 9 quinquies. Choix de la phase 6 (lecteur et organisation)
+
+- **Calqué sur le Victor Reader Stream** (guide HumanWare 4.8) pour que les habitudes restent : étagères `$VR…`,
+  reprise par livre, navigation par niveaux (chapitre / section / page / temps), signets numérotés, touche « où suis-je »
+  devenue « où j'en suis ? », minuterie de sommeil, enregistreur de notes.
+- **Analyse DAISY dans `core/media/Library.kt`** (sans Android, testée) : DAISY 2.02 (`ncc.html` + SMIL `clip-begin`)
+  et DAISY 3/NISO (`.ncx` + SMIL `clipBegin`). Le livre devient une suite de fichiers audio, chaque titre et page
+  un couple (fichier, décalage). Encodage windows-1252 des vieux livres détecté. La liste des livres ne lit que le titre ;
+  le livre complet est analysé à l'ouverture (grandes bibliothèques).
+- **Accès aux fichiers par le sélecteur Android** (`ACTION_OPEN_DOCUMENT_TREE`, accès gardé) : pas de permission
+  « tous les fichiers », un proche choisit le dossier une fois.
+- **Lecture par Media3 ExoPlayer** dans le service (type de premier plan `mediaPlayback`) : MP3/AAC, flux HLS des radios,
+  vitesse sans changer la hauteur de la voix, pause si le casque est débranché, gestion du focus audio (les annonces
+  font une pause puis la lecture reprend).
+- **Cycle avec la conversation** (`MediaSkill.beforeConversation/afterConversation`) : la lecture se met en pause avant
+  d'écouter, reprend après la réponse ; une commande de navigation relance la lecture, « pause » et « stop » la laissent arrêtée ;
+  un livre demandé démarre **après** l'annonce vocale. « Lis plus vite » règle le livre pendant une lecture, « parle plus vite » la voix.
+- **Radios** : flux officiels Radio France intégrés, les autres via Radio Browser (annuaire libre). `usesCleartextTraffic`
+  est activé car beaucoup de radios sont encore en http ; tous les autres appels sont en https.
+- **Podcasts** : recherche par l'annuaire iTunes (gratuit, sans clé), épisodes lus en continu depuis le flux RSS, position gardée par épisode.
+- **Musique** : fichiers du téléphone (MediaStore), sinon recherche envoyée à YouTube Music ; la musique d'une autre
+  application se commande par MediaSession (grâce à l'accès aux notifications déjà demandé en phase 3).
+- **Mémos** : MediaRecorder AAC, arrêt automatique après 2,5 s de silence (niveau du micro), 5 minutes au plus ; le mot
+  d'activation est coupé pendant l'enregistrement.
+- **Agenda** : `CalendarContract` (instances, donc récurrences incluses) ; ajout dans l'agenda principal modifiable, après « oui ».
+- **Gmail par IMAP/SMTP + mot de passe d'application** (RESEARCH.md : les jetons OAuth de test expirent tous les 7 jours).
+  JavaMail version Android. Lecture des non-lus, marqués lus quand on les écoute ; réponses avec `In-Reply-To`.
+  « Réponds » et « lis le premier » s'appliquent au dernier sujet lu (SMS, mails ou actualités).
+- **IA** : non nécessaire au lecteur ni à l'agenda ; sert au résumé d'un long mail. Fonctions ajoutées pour l'IA :
+  `open_book`, `play_radio`, `play_podcast`, `play_music`, `sleep_timer`, `record_memo`, `add_note`, `add_to_shopping_list`,
+  `add_event` (confirmé), `get_agenda`, `read_mail`, `send_mail` (confirmé).
 
 ## 10. Données locales
 

@@ -327,6 +327,7 @@ class InfoSkill(
             ?: return error("Aucun journal régional n'est réglé. Un proche peut ajouter son adresse dans les réglages.")
         val items = runCatching { s.news.headlines(url) }.getOrNull().orEmpty()
         if (items.isEmpty()) return error("Je n'arrive pas à récupérer les actualités pour l'instant.")
+        dialog.lastTopic = "news"
         headlines = items; newsAt = nowMs(); newsCursor = 0; current = null; source = name
         return AssistantReply("Les titres de $name. " + nextBatch())
     }

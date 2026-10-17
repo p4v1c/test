@@ -62,6 +62,9 @@ class SettingsActivity : Activity() {
     private lateinit var remoteField: EditText
     lateinit var newsFeedField: EditText; private set
     lateinit var tavilyKeyField: EditText; private set
+    lateinit var mailField: EditText; private set
+    lateinit var mailPasswordField: EditText; private set
+    lateinit var libraryLabel: TextView; private set
     private lateinit var smsRead: RadioButton
     private lateinit var smsAnnounce: RadioButton
     private lateinit var notifBox: CheckBox
@@ -112,6 +115,14 @@ class SettingsActivity : Activity() {
         claudeModelField = field(root, R.string.label_claude_model, s.claudeModel)
         newsFeedField = field(root, R.string.label_news_feed, s.newsLocalFeed, InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI)
         tavilyKeyField = secretField(root, R.string.label_tavily_key, AppGraph.SECRET_TAVILY)
+        // Phase 6 : livres et mails
+        libraryLabel = label(R.string.label_library).also { root.addView(it) }
+        updateLibraryLabel()
+        button(root, R.string.choose_library) {
+            runCatching { startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT_TREE), REQUEST_LIBRARY) }
+        }
+        mailField = field(root, R.string.label_mail, s.mailAddress, InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS)
+        mailPasswordField = secretField(root, R.string.label_mail_password, AppGraph.SECRET_MAIL)
 
         root.addView(label(R.string.label_order))
         val group = RadioGroup(this)
@@ -209,6 +220,25 @@ class SettingsActivity : Activity() {
         if (advice.acceptable) speak("Bonjour, je m'appelle ${advice.name}.")
     }
 
+    private fun updateLibraryLabel() {
+        val uri = graph.settings.libraryUri
+        val name = uri.takeIf { it.isNotBlank() }?.let { Uri.decode(it).substringAfterLast(':').substringAfterLast('/') }
+        libraryLabel.text = getString(R.string.label_library) + " : " + (name ?: getString(R.string.library_none))
+    }
+
+    @Deprecated("API Activity simple, suffisante ici")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_LIBRARY && resultCode == RESULT_OK) data?.data?.let { onLibraryChosen(it) }
+    }
+
+    /** Dossier des livres choisi : on garde l'accès après redémarrage. */
+    fun onLibraryChosen(uri: Uri) {
+        runCatching { contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+        graph.settings.libraryUri = uri.toString()
+        updateLibraryLabel()
+    }
+
     fun save() {
         val s = graph.settings
         val advice = AssistantNameRules.check(nameField.text.toString())
@@ -219,6 +249,10 @@ class SettingsActivity : Activity() {
         geminiKeyField.setText(""); claudeKeyField.setText(""); tavilyKeyField.setText("")
         if (graph.secrets.has(AppGraph.SECRET_TAVILY)) tavilyKeyField.setHint(R.string.key_saved_hint)
         s.newsLocalFeed = newsFeedField.text.toString()
+        s.mailAddress = mailField.text.toString()
+        mailPasswordField.text.toString().replace(" ", "").takeIf { it.isNotEmpty() }?.let { graph.secrets.put(AppGraph.SECRET_MAIL, it) }
+        mailPasswordField.setText("")
+        if (graph.secrets.has(AppGraph.SECRET_MAIL)) mailPasswordField.setHint(R.string.key_saved_hint)
         if (graph.secrets.has(AppGraph.SECRET_GEMINI)) geminiKeyField.setHint(R.string.key_saved_hint)
         if (graph.secrets.has(AppGraph.SECRET_CLAUDE)) claudeKeyField.setHint(R.string.key_saved_hint)
         s.geminiModel = geminiModelField.text.toString()
@@ -269,4 +303,8 @@ class SettingsActivity : Activity() {
     }
 
     override fun onDestroy() { scope.cancel(); super.onDestroy() }
+
+    companion object {
+        const val REQUEST_LIBRARY = 41
+    }
 }

@@ -130,6 +130,16 @@ class AssistantSettings(private val store: KeyValueStore) {
         get() = store.getString(K_NEWS_LOCAL) ?: ""
         set(value) = store.putString(K_NEWS_LOCAL, value.trim())
 
+    /** Dossier des livres (adresse donnée par le sélecteur de fichiers Android), vide = aucun. */
+    var libraryUri: String
+        get() = store.getString(K_LIBRARY) ?: ""
+        set(value) = store.putString(K_LIBRARY, value.trim())
+
+    /** Adresse Gmail pour lire et envoyer les mails (le mot de passe d'application est stocké chiffré à part). */
+    var mailAddress: String
+        get() = store.getString(K_MAIL) ?: ""
+        set(value) = store.putString(K_MAIL, value.trim())
+
     /** Ordre des fournisseurs IA, ex. "gemini,claude". */
     var providerOrder: List<String>
         get() = (store.getString(K_PROVIDERS) ?: "gemini,claude").split(',').map { it.trim() }.filter { it.isNotEmpty() }
@@ -184,5 +194,7 @@ class AssistantSettings(private val store: KeyValueStore) {
         private const val K_SPEAKER = "calls.speakerOnAnswer"
         private const val K_VOLUME_KEY = "trigger.volumeKey"
         private const val K_NEWS_LOCAL = "news.localFeed"
+        private const val K_LIBRARY = "media.libraryUri"
+        private const val K_MAIL = "mail.address"
     }
 }

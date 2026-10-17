@@ -113,7 +113,15 @@ class CommunicationSkill(
 
     // ------------------------------------------------------------------ SMS
 
+    /** Nombre de SMS pas encore lus par l'assistant (pour le point du jour). */
+    fun unreadSmsCount(): Int {
+        val now = device.now()
+        val readUntil = store.getString(K_SMS_READ)?.toLongOrNull() ?: now.minusDays(1).toInstant().toEpochMilli()
+        return sms.inbox(30).count { it.time.toInstant().toEpochMilli() > readUntil }
+    }
+
     fun readMessages(onlyLast: Boolean): AssistantReply {
+        dialog.lastTopic = "sms"
         val now = device.now()
         val all = sms.inbox(30).sortedBy { it.time }
         if (all.isEmpty()) return AssistantReply("Vous n'avez aucun message.")
@@ -192,6 +200,7 @@ class CommunicationSkill(
     // ------------------------------------------------------------------ notifications
 
     fun readNotifications(): AssistantReply {
+        dialog.lastTopic = "sms"
         val now = device.now()
         val list = notifications.recent().sortedByDescending { it.time }.take(5)
         if (list.isEmpty()) return AssistantReply("Vous n'avez pas de notification.")
@@ -256,6 +265,7 @@ class CommunicationSkill(
     fun announceIncomingSms(m: SmsMessage, readFull: Boolean): String {
         val who = directory.describe(m.address, m.name)
         lastConversation = Conversation(m.address, who, null)
+        dialog.lastTopic = "sms"
         if (!readFull) return "Nouveau message de $who. Pour l'entendre, dites : lis mes messages."
         store.putString(K_SMS_READ, m.time.toInstant().toEpochMilli().toString())
         val verdict = ScamDetector.check(m.body, senderKnown = directory.isKnown(m.address))

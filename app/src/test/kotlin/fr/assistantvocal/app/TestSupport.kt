@@ -156,6 +156,65 @@ class AppFakeInfo {
     )
 }
 
+/** Lecteur, bibliothèque, agenda et mails simulés (phase 6). */
+class AppFakeMedia {
+    var playing = false
+    var pos: fr.assistantvocal.core.media.Pos? = null
+    val plays = mutableListOf<String>()
+    var recorded: Long? = 4_000
+    val sentMails = mutableListOf<String>()
+    val player = object : fr.assistantvocal.core.media.AudioPlayer {
+        override var onFinished: (() -> Unit)? = null
+        override fun play(tracks: List<fr.assistantvocal.core.media.Track>, start: fr.assistantvocal.core.media.Pos, speed: Float, live: Boolean) {
+            plays += tracks[start.track].uri; pos = start; playing = true
+        }
+        override fun pause() { playing = false }
+        override fun resume() { if (pos != null) playing = true }
+        override fun stop() { playing = false; pos = null }
+        override fun seek(pos: fr.assistantvocal.core.media.Pos) { this@AppFakeMedia.pos = pos }
+        override fun setSpeed(speed: Float) {}
+        override fun isPlaying() = playing
+        override fun position() = pos
+        override fun durationOf(track: Int): Long? = null
+    }
+    fun backend() = MediaBackend(
+        player = player,
+        library = object : fr.assistantvocal.core.media.LibrarySource {
+            override suspend fun scan() = listOf(fr.assistantvocal.core.media.Book("b1", "Le Comte de Monte-Cristo", fr.assistantvocal.core.media.Shelf.DAISY,
+                listOf(fr.assistantvocal.core.media.Track("content://livre/1.mp3", "1", 60_000), fr.assistantvocal.core.media.Track("content://livre/2.mp3", "2", 60_000)),
+                listOf(fr.assistantvocal.core.media.Heading("Marseille, l'arrivée", 1, 0, 0), fr.assistantvocal.core.media.Heading("Le père et le fils", 1, 1, 0))))
+        },
+        radios = object : fr.assistantvocal.core.media.RadioSearch { override suspend fun search(name: String) = emptyList<fr.assistantvocal.core.media.Station>() },
+        podcasts = object : fr.assistantvocal.core.media.PodcastDirectory {
+            override suspend fun search(term: String) = emptyList<fr.assistantvocal.core.media.PodcastShow>()
+            override suspend fun episodes(feedUrl: String) = emptyList<fr.assistantvocal.core.media.Episode>()
+        },
+        music = object : fr.assistantvocal.core.media.MusicSource {
+            override suspend fun local(query: String?) = emptyList<fr.assistantvocal.core.media.Track>()
+            override fun playExternal(query: String) = false
+            override fun controlExternal(action: String) = false
+        },
+        memos = object : fr.assistantvocal.core.media.MemoStore {
+            override fun list() = emptyList<fr.assistantvocal.core.media.Memo>()
+            override fun delete(memo: fr.assistantvocal.core.media.Memo) = false
+        },
+        recordMemo = { recorded },
+        calendar = object : fr.assistantvocal.core.skills.CalendarSource {
+            override fun events(from: java.time.LocalDateTime, to: java.time.LocalDateTime) =
+                listOf(fr.assistantvocal.core.skills.CalEvent("Kiné", java.time.LocalDateTime.of(2026, 10, 17, 16, 0), null)).filter { it.start >= from && it.start < to }
+            override fun add(title: String, start: java.time.LocalDateTime, minutes: Int) = true
+        },
+        mail = object : fr.assistantvocal.core.skills.MailSource {
+            override fun isConfigured() = true
+            override suspend fun unread(max: Int) = emptyList<fr.assistantvocal.core.skills.MailHeader>()
+            override suspend fun body(id: String): String? = null
+            override suspend fun markRead(id: String) {}
+            override suspend fun send(to: String, subject: String, body: String, inReplyTo: String?): Boolean { sentMails += to; return true }
+        },
+        emailContacts = { emptyList() },
+    )
+}
+
 fun testGraph(
     app: App,
     input: SpeechInput = FakeInput(),
@@ -168,9 +227,10 @@ fun testGraph(
     phone: AppFakePhone = AppFakePhone(),
     vision: AppFakeVision = AppFakeVision(),
     info: AppFakeInfo = AppFakeInfo(),
+    media: AppFakeMedia = AppFakeMedia(),
 ): AppGraph = AppGraph(
     app, InMemoryStore(), secrets, device, { input }, { output }, { sounds }, { wake },
-    phoneFactory = { _, _ -> phone.backend() }, visionFactory = { vision.backend() }, infoFactory = { _, key -> info.backend(key) }, sosCountdownMs = 300, geminiBaseUrl = geminiBaseUrl,
+    phoneFactory = { _, _ -> phone.backend() }, visionFactory = { vision.backend() }, infoFactory = { _, key -> info.backend(key) }, mediaFactory = { _, _ -> media.backend() }, sosCountdownMs = 300, geminiBaseUrl = geminiBaseUrl,
 ).also { it.settings.name = "Orphée"; app.graph = it }
 
 /** Fait tourner la boucle principale jusqu'à ce que [done] soit vrai (les appels réseau se font sur un autre fil). */
