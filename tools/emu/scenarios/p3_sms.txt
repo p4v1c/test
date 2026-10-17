@@ -1,0 +1,4 @@
+10|lis mes messages
+8|réponds
+8|d'accord à demain
+8|oui
