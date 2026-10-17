@@ -1,0 +1,7 @@
+10|envoie un message à Paul Martin pour lui dire que j'arrive
+8|oui
+8|minuteur de 1 minute pour les pâtes
+6|combien de temps reste-t-il ?
+8|rappelle-moi de prendre mon Lasilix tous les jours à 00 heures 24
+8|quels sont mes rappels ?
+8|qui m'a appelé ?

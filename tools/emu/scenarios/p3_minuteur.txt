@@ -1,0 +1,2 @@
+8|minuteur de 1 minute pour les pâtes
+6|combien de temps reste-t-il ?

@@ -55,6 +55,20 @@ Tests automatiques au départ : 273 / 273 OK (2 tests d'intégration ignorés : 
 | 3 | Surnom | Pierre Dupont, c'est mon fils | « C'est noté : « mon fils », c'est Pierre Dupont… » | OK | |
 | 3 | Appel + refus | appelle mon fils → non | « Appeler Pierre Dupont sur son portable ? » → « D'accord, j'annule. » ; aucun appel | OK | |
 | 3 | Homonymes | appelle Paul | « J'ai trouvé Paul Martin et Paul Durand. Lequel voulez-vous appeler ? » | OK | Ne choisit pas au hasard |
+| 3 | Appel confirmé | appelle mon fils → oui → raccroche | « J'appelle Pierre Dupont sur son portable. » → « Appel terminé. » ; journal d'appels : sortant vers 06 11 22 33 44 | OK | Modem simulé |
+| 3 | Appel entrant connu | (simulé) 06 12 34 56 78 | « Appel de Paul Martin. Pour décrocher, dites « Hector, décroche »… » | OK | `tools/emu/appel_entrant.sh` ; décrocher non testable (pas de vrai appel) |
+| 3 | Appel entrant inconnu | (simulé) 06 99 88 77 66 | « Appel d'un numéro inconnu, le 06 99 88 77 66. Méfiez-vous… » | OK | |
+| 3 | SMS entrant | « Coucou papa, je passe te voir demain vers midi » | « Nouveau message de Paul Martin : Coucou papa… » ; « lis mes messages » → « pas de nouveau message, pour réentendre… » ; « lis mon dernier message » → relu | OK | `tools/emu/sms_entrant.sh`. « 0 heures 18 » : on dirait « minuit 18 » (détail) |
+| 3 | Réponse SMS | réponds → d'accord à demain → oui | « Que voulez-vous dire à Paul Martin ? » → relecture → « Message envoyé à Paul Martin. » ; présent dans les envoyés | OK | |
+| 3 | SMS d'arnaque | « Votre colis est bloqué, payez 1,99 € sur http://x.top » | Lecture + « Attention, ce message ressemble à une arnaque : il contient un lien, il parle d'un colis… » | OK | « de le 06… » corrigé (bug 9) |
+| 3 | SMS dicté d'une traite | envoie un message à Paul Martin pour lui dire que j'arrive → oui | « Je vais envoyer à Paul Martin : « J'arrive. » » → envoyé | OK | |
+| 3 | Minuteur | minuteur de 1 minute pour les pâtes | Avant : **plantage de l'app** ; après : « Minuteur des pâtes de 1 minute, c'est parti. » | KO → corrigé | Bug 10 |
+| 3 | Temps restant | combien de temps reste-t-il ? | Avant : liste des rappels (IA) ; après : temps du minuteur | KO → corrigé | Bug 11 |
+| 3 | Médicament | rappel quotidien à heure + 2 min → « c'est fait » → « ai-je pris mon Lasilix ? » | Sonne à l'heure (répété une fois) ; « C'est noté : lasilix, à 0 heures 28. » ; « Oui, vous avez pris lasilix aujourd'hui… » ; Doliprane : « Je n'ai rien noté aujourd'hui… » | OK | |
+| 3 | Rappels | quels sont mes rappels ? | Liste correcte | OK | |
+| 3 | Batterie faible | genyshell 19 % puis 9 % | 19 % pendant une écoute : **annonce perdue** ; 9 % au repos : « Batterie faible : 9 pour cent… » | KO → corrigé | Bug 12 |
+| — | Marche / arrêt | interrupteur de l'écran | Confirmation, « Assistant arrêté… », plus aucun service ; volume haut 3,5 s → pas de SOS ; reste éteint après mise à jour ; rallumé : « Assistant activé… », rappels reprogrammés | OK | Nouvelle fonction demandée |
+| 2 | Micro du PC | « Hector » prononcé près du micro du PC | Vosk : « candidat hector confiance 1.00 » → bip | OK | Le micro de Genymotion marche ; après le bip, pas de reconnaissance (pas de Google) |
 | 3 | Domicile | appelle Pierre à la maison → non | « Appeler Pierre Dupont sur son numéro domicile ? » → annulé | OK | |
 
 ## Bugs trouvés et corrigés (un commit chacun)
@@ -72,8 +86,22 @@ Tests automatiques au départ : 273 / 273 OK (2 tests d'intégration ignorés : 
    ou un appui sur un bouton volume pendant les 10 s du compte à rebours coupaient l'alerte : ni SMS, ni appel, ni message.
    Désormais, ces demandes attendent la fin de l'alerte et seul « stop » annule. Tests dans `Phase3ServiceTest`.
 
-5. **Rappels effacés par « Forcer l'arrêt »** (`voir git log`) : reprogrammés seulement au démarrage du téléphone.
+5. **Rappels effacés par « Forcer l'arrêt »** (`a7d0f4c` environ, voir `git log`) : reprogrammés seulement au démarrage du téléphone.
    Ils sont maintenant reprogrammés à chaque démarrage du service. Test dans `Phase3ServiceTest`.
+
+6. **Il se réveillait en entendant son propre nom** à la fin d'une phrase (« dites « Hector » ») : ignoré 1,5 s après une phrase contenant son nom.
+7. **Alertes et SMS perdus pendant un échange ou un appel** : mis en attente et dits après (5 au plus).
+8. *(outil de test)* `awaitMain` ne signalait pas un délai dépassé : un test pouvait passer à tort. Il échoue maintenant.
+9. **« Nouveau message de le 06… »** : « du 06… », « au 06… », « d'Anne ». Test dans `TextAndNameTest`.
+10. **Plantage du minuteur sur Android 10 et 11** (`Duration.toMinutesPart`, absente avant Android 12). Test qui interdit ces méthodes dans `core` et `llm`.
+11. **« Combien de temps reste-t-il ? »** sans le mot « minuteur » partait à l'IA.
+
+## Nouvelles fonctions (demandées)
+
+- **Interrupteur marche / arrêt** sur l'écran principal. Éteint : plus rien (écoute, annonces, rappels, secours, boutons volume
+  rendus à Android), le service s'arrête et ne redémarre ni au démarrage ni après une mise à jour. Éteindre demande une confirmation
+  et l'assistant le dit ; rallumer reprogramme les rappels. Non inclus dans les sauvegardes. Tests : `PowerSwitchTest`.
+- **Nouveau design** : thème sombre contrasté, grand bouton rond « Parler », état visible (pastille verte / rouge), réglages en sections.
 
 ## Bugs trouvés non corrigés (avec proposition)
 
@@ -91,13 +119,13 @@ Tests automatiques au départ : 273 / 273 OK (2 tests d'intégration ignorés : 
 
 ## Reste à faire (campagne en pause)
 
-- Phase 3 : appel « oui » et raccrocher, appel entrant (`tools/emu/appel_entrant.sh`), SMS entrant normal et arnaque
-  (`tools/emu/sms_entrant.sh`), « réponds », envoi de SMS, minuteur, médicament « c'est fait », batterie basse.
 - Phases 4 à 8, étape 4 (robustesse, TalkBack). Fichiers de test prêts : `tools/emu/generer_fichiers.py`.
 - Pas encore de verdict.
 
 ## Remarques sur l'installation (`tools/install.sh`)
 
+- **« Forcer l'arrêt » retire le rôle « assistant par défaut »** (Android 11) : c'est ce qui l'avait fait disparaître au premier
+  redémarrage. Une mise à jour de l'app ne le retire pas. L'écran Réglages affiche alors ✘ : il faut le rechoisir.
 - Le rôle « assistant par défaut » n'avait pas été pris au premier passage, alors que la commande ne signalait aucune erreur.
   `cmd role add-role-holder --user 0 …` a marché ensuite. À vérifier sur le Pixel : l'écran Réglages affiche ✔ / ✘, il fait foi.
 - Après un `am force-stop` de l'app, Android 11 marque le service d'accessibilité (boutons volume) comme « crashé » et ne le relance plus
