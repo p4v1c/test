@@ -114,7 +114,8 @@ En cas de doute (deux « Paul »), l'assistant demande lequel ; il ne choisit ja
 | Appeler | « appelle mon fils », « appelle Paul Martin », « appelle Pierre à la maison », « appelle le numéro 1 », « appelle le 06 12 34 56 78 » |
 | Appels reçus | Il annonce « Appel de Paul Martin » (ou « numéro inconnu… méfiez-vous ») ; pour décrocher : dire le nom ou appuyer sur le bouton du casque ; « décroche », « raccroche », « mets le haut-parleur » ; pendant l'appel : volume bas gardé 1 s = raccrocher |
 | Journal | « qui m'a appelé ? », « rappelle-le » |
-| SMS | « lis mes messages », « lis mon dernier message », « envoie un message à Marie pour lui dire que j'arrive », « écris à Paul » (il demande quoi), « réponds » |
+| SMS | « lis mes messages », « lis mon dernier message », « envoie un message à Marie pour lui dire que j'arrive » (envoyé **mot pour mot**), « écris à Paul » (il demande quoi), « réponds » |
+| Messages rédigés par l'IA | « **rédige** un message pour Marie pour lui souhaiter son anniversaire », « écris un message **gentil** à Paul pour lui dire que j'arrive en retard », « envoie un message **poli** au docteur pour annuler », « **aide-moi à écrire** un mail à Paul » : Gemini rédige, l'assistant **relit le texte** et l'envoie seulement après « oui » |
 | Notifications | « lis mes notifications » (Gmail, Meet…), « réponds » quand l'application le permet ; annonce automatique des nouveaux messages (réglable) |
 | Surnoms | « Pierre Dupont, c'est mon fils », puis « appelle mon fils » |
 | Réveil | « réveille-moi demain à 7 heures », « réveille-moi en semaine à 7 h 30 » |

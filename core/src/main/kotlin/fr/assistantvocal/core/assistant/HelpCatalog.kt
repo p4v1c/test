@@ -57,7 +57,7 @@ class HelpCatalog(private val topics: List<HelpTopic>) {
         val MESSAGES = HelpTopic(
             "les messages", listOf("messages", "sms", "texto", "notifications", "ecrire"),
             listOf("lis mes messages", "lis mon dernier message", "envoie un message à Marie pour lui dire que j'arrive",
-                "réponds", "lis mes notifications"),
+                "rédige un message gentil pour Marie pour lui souhaiter son anniversaire", "réponds", "lis mes notifications"),
         )
         val REMINDERS = HelpTopic(
             "les réveils, minuteurs et rappels", listOf("rappels", "rappel", "reveil", "minuteur", "medicaments", "medicament"),
