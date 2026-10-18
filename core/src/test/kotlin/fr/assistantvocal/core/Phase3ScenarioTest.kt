@@ -85,7 +85,8 @@ class FakePhone : PhoneActions, ContactsSource, CallLogSource, SmsSource, SmsSen
     override fun reply(key: String, text: String): Boolean { replies += key to text; return true }
     override fun schedule(id: Int, atEpochMs: Long) { scheduled[id] = atEpochMs }
     override fun cancel(id: Int) { scheduled.remove(id) }
-    override suspend fun current(timeoutMs: Long) = point
+    val locationTimeouts = mutableListOf<Long>()
+    override suspend fun current(timeoutMs: Long): GeoPoint? { locationTimeouts += timeoutMs; return point }
 }
 
 class Phase3ScenarioTest {

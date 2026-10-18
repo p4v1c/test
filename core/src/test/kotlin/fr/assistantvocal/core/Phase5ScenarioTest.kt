@@ -386,6 +386,13 @@ class Phase5ScenarioTest {
         assertEquals("C'est enregistré. Vous pourrez dire : à quelle distance est la maison, ou : emmène-moi à la maison.", say("oui"))
     }
 
+    @Test fun `la meteo n'attend pas le GPS 15 secondes, ou suis-je si`() = runTest {
+        say("quel temps fait-il ?")
+        assertTrue(phone.locationTimeouts.toString(), phone.locationTimeouts.last() <= 3_000) // la ville suffit
+        say("où suis-je ?")
+        assertEquals(15_000L, phone.locationTimeouts.last()) // il faut la rue exacte
+    }
+
 }
 
 /** InfoSkill neuf, sans actualités chargées. */

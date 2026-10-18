@@ -100,6 +100,9 @@ class InfoSkill(
 
     private suspend fun position(): GeoPoint? = s.location.current(15_000)
 
+    /** Position à la commune près (météo) : pas question d'attendre le GPS 15 s à l'intérieur ; sinon la dernière connue. */
+    private suspend fun roughPosition(): GeoPoint? = s.location.current(3_000)
+
     // ------------------------------------------------------------------ où suis-je
 
     private val streetType = Regex("^(?i)(\\d+\\w* )?(rue|route|avenue|place|chemin|impasse|allée|allee|boulevard|quai|cours|square|passage|sentier|voie|montée|montee|côte|cote|grande rue|faubourg|lotissement|résidence|residence|hameau|lieu-dit|parvis|esplanade|promenade|ruelle)\\b")
@@ -295,7 +298,7 @@ class InfoSkill(
             placeName = r.city ?: r.label
             GeoPoint(r.lat, r.lon, null)
         } else {
-            position() ?: saved.find("maison")?.let { GeoPoint(it.lat, it.lon, null) }
+            roughPosition() ?: saved.find("maison")?.let { GeoPoint(it.lat, it.lon, null) }
                 ?: return "$noPosition Vous pouvez aussi demander la météo d'une commune, par exemple : météo à Lyon."
         }
         val f: Forecast = runCatching { s.weather.forecast(point.lat, point.lon) }.getOrNull()
